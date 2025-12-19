@@ -43,13 +43,13 @@ const InventoryPage: React.FC = () => {
     navigate(tabRoutes[index]);
   };
 
-  const tabs = [
+  const tabs = React.useMemo(() => [
     { label: "BOM", content: <BomPage /> },
     { label: "Inwards", content: <InwardPage /> },
     { label: "Outwards", content: <OutwardPage /> },
     { label: "Transfers", content: <TransferPage /> },
     { label: "Procurement", content: <ProcurementPage /> }
-  ];
+  ], []);
 
   return (
     <div className="inventory-page">

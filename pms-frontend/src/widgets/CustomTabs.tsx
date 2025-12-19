@@ -15,8 +15,21 @@ interface CustomTabsProps {
 
 const CustomTabs: React.FC<CustomTabsProps> = ({ tabs, defaultIndex = 0, activeIndex: controlledIndex, onTabChange }) => {
     const [internalIndex, setInternalIndex] = useState(defaultIndex);
+    const [visitedTabs, setVisitedTabs] = useState<Set<number>>(new Set([controlledIndex !== undefined ? controlledIndex : defaultIndex]));
 
     const activeIndex = controlledIndex !== undefined ? controlledIndex : internalIndex;
+
+    // Update visited tabs whenever active index changes
+    React.useEffect(() => {
+        setVisitedTabs(prev => {
+            const newSet = new Set(prev);
+            if (!newSet.has(activeIndex)) {
+                newSet.add(activeIndex);
+                return newSet;
+            }
+            return prev;
+        });
+    }, [activeIndex]);
 
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         if (controlledIndex === undefined) {
@@ -36,21 +49,25 @@ const CustomTabs: React.FC<CustomTabsProps> = ({ tabs, defaultIndex = 0, activeI
                     ))}
                 </Tabs>
             </Box>
-            {tabs.map((tab, index) => (
-                <div
-                    key={index}
-                    role="tabpanel"
-                    hidden={activeIndex !== index}
-                    id={`simple-tabpanel-${index}`}
-                    aria-labelledby={`simple-tab-${index}`}
-                >
-                    {activeIndex === index && (
+            {tabs.map((tab, index) => {
+                // Only render if the tab has been visited at least once
+                if (!visitedTabs.has(index)) return null;
+
+                return (
+                    <div
+                        key={index}
+                        role="tabpanel"
+                        hidden={activeIndex !== index}
+                        id={`simple-tabpanel-${index}`}
+                        aria-labelledby={`simple-tab-${index}`}
+                        style={{ display: activeIndex === index ? 'block' : 'none' }}
+                    >
                         <Box sx={{ p: 3 }}>
                             {tab.content}
                         </Box>
-                    )}
-                </div>
-            ))}
+                    </div>
+                );
+            })}
         </Box>
     );
 };

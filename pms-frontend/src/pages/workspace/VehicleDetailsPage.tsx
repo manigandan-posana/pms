@@ -136,6 +136,61 @@ const VehicleDetailsPage: React.FC = () => {
     };
   }, [filteredDailyData]);
 
+  // Enhanced daily logs with fuel entry correlation
+  const enhancedDailyLogs = useMemo(() => {
+    return vehicleDailyLogs.map((log) => {
+      const logDate = new Date(log.date);
+      
+      // Find the fuel entry that was active during this daily log
+      // A fuel entry is active if the log date is on or after the fuel entry date
+      // and before the next fuel entry date (or if it's the latest entry)
+      const sortedEntries = [...vehicleFuelEntries]
+        .filter(e => new Date(e.date) <= logDate)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      const activeFuelEntry = sortedEntries[0];
+      
+      if (activeFuelEntry && activeFuelEntry.status === 'OPEN') {
+        // Calculate running km from daily logs during this fuel entry period
+        const fuelEntryDate = new Date(activeFuelEntry.date);
+        const dailyLogsInPeriod = vehicleDailyLogs.filter(dl => {
+          const dlDate = new Date(dl.date);
+          return dlDate >= fuelEntryDate && dlDate <= logDate && dl.status === 'CLOSED';
+        });
+        
+        const runningKm = dailyLogsInPeriod.reduce((sum, dl) => sum + (dl.distance || 0), 0);
+        const avgMileage = activeFuelEntry.litres > 0 ? runningKm / activeFuelEntry.litres : 0;
+        
+        return {
+          ...log,
+          fuelEntryId: activeFuelEntry.id,
+          fuelEntryDate: activeFuelEntry.date,
+          runningKm,
+          avgMileage,
+          fuelLitres: activeFuelEntry.litres
+        };
+      } else if (activeFuelEntry && activeFuelEntry.status === 'CLOSED') {
+        // For closed fuel entries, use the fuel entry's own calculations
+        return {
+          ...log,
+          fuelEntryId: activeFuelEntry.id,
+          fuelEntryDate: activeFuelEntry.date,
+          runningKm: activeFuelEntry.distance || 0,
+          avgMileage: activeFuelEntry.mileage || 0,
+          fuelLitres: activeFuelEntry.litres
+        };
+      }
+      
+      return {
+        ...log,
+        fuelEntryId: null,
+        fuelEntryDate: null,
+        runningKm: 0,
+        avgMileage: 0,
+        fuelLitres: 0
+      };
+    });
+  }, [vehicleDailyLogs, vehicleFuelEntries]);
 
   const numberTemplate = (value: number, decimals = 2) => value.toFixed(decimals);
   const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -155,12 +210,13 @@ const VehicleDetailsPage: React.FC = () => {
   const entryColumns: ColumnDef<any>[] = [
     { field: "date", header: "Date", sortable: true, body: (row) => new Date(row.date).toLocaleDateString() },
     { field: "supplierName", header: "Supplier", sortable: true, body: (row) => <span className="font-semibold text-slate-700">{row.supplierName}</span> },
-    { field: "litres", header: "Litres", sortable: true, body: (row) => numberTemplate(row.litres, 2) },
+    { field: "litres", header: "Quantity (L)", sortable: true, body: (row) => <span className="font-medium text-blue-600">{numberTemplate(row.litres, 2)}</span> },
+    { field: "pricePerLitre", header: "Unit Price", sortable: true, body: (row) => <span className="font-medium text-slate-700">{formatCurrency(row.pricePerLitre || 0)}/L</span> },
+    { field: "totalCost", header: "Total Cost", sortable: true, body: (row) => <span className="font-semibold text-slate-800">{formatCurrency(row.totalCost || 0)}</span> },
     { field: "openingKm", header: "Opening KM", sortable: true, body: (row) => numberTemplate(row.openingKm, 1) },
     { field: "closingKm", header: "Closing KM", sortable: true, body: (row) => row.closingKm ? numberTemplate(row.closingKm, 1) : "—" },
     { field: "distance", header: "Distance", sortable: true, body: (row) => row.distance ? <span className="text-green-600 font-medium">{numberTemplate(row.distance, 1)} km</span> : "—" },
     { field: "mileage", header: "Mileage", sortable: true, body: (row) => row.mileage ? `${numberTemplate(row.mileage, 2)} km/l` : "—" },
-    { field: "totalCost", header: "Cost", sortable: true, body: (row) => <span className="font-medium text-slate-700">{formatCurrency(row.totalCost || 0)}</span> },
     { field: "status", header: "Status", sortable: true, body: (row) => <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${row.status === 'CLOSED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{row.status === "CLOSED" ? "Closed" : "Open"}</span> },
   ];
 
@@ -169,13 +225,53 @@ const VehicleDetailsPage: React.FC = () => {
     { field: "openingKm", header: "Opening KM", sortable: true, body: (row) => numberTemplate(row.openingKm, 1) },
     { field: "closingKm", header: "Closing KM", sortable: true, body: (row) => row.closingKm ? numberTemplate(row.closingKm, 1) : "—" },
     {
-      field: "distance", header: "Distance (Diff)", sortable: true, body: (row) => {
+      field: "distance", header: "Distance", sortable: true, body: (row) => {
         if (row.closingKm && row.openingKm) {
           const diff = row.closingKm - row.openingKm;
           return <span className="text-green-600 font-medium">{numberTemplate(diff, 1)} km</span>;
         }
         return row.distance ? <span className="text-green-600 font-medium">{numberTemplate(row.distance, 1)} km</span> : "—";
       }
+    },
+    {
+      field: "fuelEntryDate",
+      header: "Fuel Entry",
+      sortable: true,
+      body: (row) => row.fuelEntryDate ? (
+        <span className="text-xs text-slate-600">
+          {new Date(row.fuelEntryDate).toLocaleDateString()}
+        </span>
+      ) : "—"
+    },
+    {
+      field: "runningKm",
+      header: "Running KM",
+      sortable: true,
+      body: (row) => row.runningKm > 0 ? (
+        <span className="text-blue-600 font-medium">
+          {numberTemplate(row.runningKm, 1)} km
+        </span>
+      ) : "—"
+    },
+    {
+      field: "fuelLitres",
+      header: "Fuel (L)",
+      sortable: true,
+      body: (row) => row.fuelLitres > 0 ? (
+        <span className="text-slate-600">
+          {numberTemplate(row.fuelLitres, 2)} L
+        </span>
+      ) : "—"
+    },
+    {
+      field: "avgMileage",
+      header: "Avg Mileage",
+      sortable: true,
+      body: (row) => row.avgMileage > 0 ? (
+        <span className="text-purple-600 font-medium">
+          {numberTemplate(row.avgMileage, 2)} km/l
+        </span>
+      ) : "—"
     },
     { field: "status", header: "Status", sortable: true, body: (row) => <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${row.status === 'CLOSED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{row.status === "CLOSED" ? "Closed" : "Open"}</span> },
   ];
@@ -348,7 +444,7 @@ const VehicleDetailsPage: React.FC = () => {
             {
               label: "Daily Logs",
               content: (
-                <CustomTable data={vehicleDailyLogs} columns={dailyLogColumns} loading={loading} pagination rows={10} />
+                <CustomTable data={enhancedDailyLogs} columns={dailyLogColumns} loading={loading} pagination rows={10} />
               )
             },
             {

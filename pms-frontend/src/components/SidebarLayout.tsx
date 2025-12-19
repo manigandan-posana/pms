@@ -12,7 +12,6 @@ import {
   Box,
   Tooltip,
   Divider,
-  useTheme,
   styled
 } from "@mui/material";
 import type { CSSObject, Theme } from "@mui/material";
@@ -21,11 +20,8 @@ import {
   FiBox,
   FiBarChart2,
   FiFile,
-  FiRepeat,
-  FiUsers,
   FiTruck,
   FiSettings,
-  FiLogOut
 } from "react-icons/fi";
 import {
   FaChevronLeft,
@@ -106,6 +102,66 @@ const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'ope
   }),
 );
 
+// Styled components for better performance than inline SX
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const StyledListItemButton = styled(ListItemButton, {
+  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'open',
+})<{ active?: boolean; open?: boolean; component?: React.ElementType; to?: string }>(({ theme, active, open }) => ({
+  minHeight: 48,
+  justifyContent: open ? 'initial' : 'center',
+  paddingLeft: theme.spacing(2.5),
+  paddingRight: theme.spacing(2.5),
+  borderRadius: theme.spacing(1),
+  backgroundColor: active ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+  color: active ? '#2563eb' : '#475569',
+  transition: 'all 0.2s',
+  marginBottom: 4,
+  '&:hover': {
+    backgroundColor: active ? 'rgba(37, 99, 235, 0.12)' : '#f8fafc',
+    color: active ? '#2563eb' : '#1e293b',
+  },
+}));
+
+const StyledListItemIcon = styled(ListItemIcon, {
+  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'open',
+})<{ active?: boolean; open?: boolean }>(({ theme, open }) => ({
+  minWidth: 0,
+  marginRight: open ? theme.spacing(2) : 'auto',
+  justifyContent: 'center',
+  color: 'inherit',
+  fontSize: 20,
+}));
+
+// Memoized Sidebar Item Component to prevent unnecessary re-renders
+const SidebarItem = React.memo(({ item, open, isActive }: { item: NavItem; open: boolean; isActive: boolean }) => {
+  const Icon = item.icon;
+  return (
+    <ListItem disablePadding sx={{ display: 'block' }}>
+      <Tooltip title={!open ? item.label : ""} placement="right">
+        <StyledListItemButton
+          component={NavLink}
+          to={item.path}
+          active={isActive}
+          open={open}
+        >
+          <StyledListItemIcon active={isActive} open={open}>
+            <Icon size={20} />
+          </StyledListItemIcon>
+          <ListItemText
+            primary={item.label}
+            primaryTypographyProps={{
+              fontSize: '0.875rem',
+              fontWeight: isActive ? 600 : 500,
+              fontFamily: '"Google Sans", "Roboto", sans-serif'
+            }}
+            sx={{ opacity: open ? 1 : 0 }}
+          />
+        </StyledListItemButton>
+      </Tooltip>
+    </ListItem>
+  );
+});
+
 const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   children,
   userRole,
@@ -116,7 +172,6 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   showProjectSelector = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const theme = useTheme();
   const location = useLocation();
 
   const isAdmin = userRole === "ADMIN";
@@ -126,17 +181,6 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     const baseItems: NavItem[] = [
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
-    ];
-
-    const adminItems: NavItem[] = [
-      { id: "dashboard", label: "Project Management", icon: FiBarChart2, path: "/admin/project-details" },
-      { id: "materials", label: "Materials", icon: FiBox, path: "/admin/materials" },
-      { id: "projects", label: "Projects", icon: FiFile, path: "/admin/projects" },
-      // Flatten hierarchy for sidebar if needed, or handle recursive render. 
-      // For now, let's keep it simple and flat or just top-level as AdminSidebar usually handles admin routes.
-      // But SidebarLayout is for NON-ADMIN pages usually, or shared. 
-      // If userRole is ADMIN, typically AdminDashboard is used. 
-      // Let's assume standard Items for generic workspace.
     ];
 
     if (userRole === "CEO" || userRole === "COO") {
@@ -156,7 +200,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     }
 
     return baseItems;
-  }, [userRole, isAdmin]);
+  }, [userRole]);
 
   const handleToggle = () => {
     setCollapsed(!collapsed);
@@ -183,77 +227,29 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
         <Divider sx={{ borderColor: '#f1f5f9' }} />
 
         <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
-          {navItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
-            const Icon = item.icon;
-
-            return (
-              <ListItem key={item.id} disablePadding sx={{ display: 'block', mb: 0.5 }}>
-                <Tooltip title={!open ? item.label : ""} placement="right">
-                  <ListItemButton
-                    component={NavLink}
-                    to={item.path}
-                    sx={{
-                      minHeight: 48,
-                      justifyContent: open ? 'initial' : 'center',
-                      px: 2.5,
-                      borderRadius: 2,
-                      backgroundColor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent', // blue-600
-                      color: isActive ? '#2563eb' : '#475569',
-                      '&:hover': {
-                        backgroundColor: isActive ? 'rgba(37, 99, 235, 0.12)' : '#f8fafc',
-                        color: isActive ? '#2563eb' : '#1e293b',
-                      },
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 0,
-                        mr: open ? 2 : 'auto',
-                        justifyContent: 'center',
-                        color: 'inherit',
-                        fontSize: 20
-                      }}
-                    >
-                      <Icon size={20} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: '0.875rem',
-                        fontWeight: isActive ? 600 : 500,
-                        fontFamily: '"Google Sans", "Roboto", sans-serif'
-                      }}
-                      sx={{ opacity: open ? 1 : 0 }}
-                    />
-                  </ListItemButton>
-                </Tooltip>
-              </ListItem>
-            );
-          })}
+          {navItems.map((item) => (
+            <SidebarItem
+              key={item.id}
+              item={item}
+              open={open}
+              isActive={location.pathname.startsWith(item.path)}
+            />
+          ))}
         </List>
 
         <Box sx={{ p: 1.5, borderTop: '1px solid #f1f5f9' }}>
           {onOpenAdmin && !isAdmin && (
             <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
               <Tooltip title={!open ? "Admin" : ""} placement="right">
-                <ListItemButton
+                <StyledListItemButton
                   onClick={onOpenAdmin}
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: open ? 'initial' : 'center',
-                    px: 2.5,
-                    borderRadius: 2,
-                    color: '#475569',
-                    '&:hover': { backgroundColor: '#f8fafc', color: '#1e293b' },
-                  }}
+                  open={open}
                 >
-                  <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 'auto', justifyContent: 'center', color: 'inherit' }}>
+                  <StyledListItemIcon open={open}>
                     <FiSettings size={18} />
-                  </ListItemIcon>
+                  </StyledListItemIcon>
                   <ListItemText primary="Admin" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
-                </ListItemButton>
+                </StyledListItemButton>
               </Tooltip>
             </ListItem>
           )}
@@ -261,22 +257,19 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           {onLogout && (
             <ListItem disablePadding sx={{ display: 'block' }}>
               <Tooltip title={!open ? "Logout" : ""} placement="right">
-                <ListItemButton
+                <StyledListItemButton
                   onClick={onLogout}
+                  open={open}
                   sx={{
-                    minHeight: 48,
-                    justifyContent: open ? 'initial' : 'center',
-                    px: 2.5,
-                    borderRadius: 2,
                     color: '#ef4444',
-                    '&:hover': { backgroundColor: '#fef2f2' },
+                    '&:hover': { backgroundColor: '#fef2f2', color: '#ef4444' }, // Override default hover
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 'auto', justifyContent: 'center', color: 'inherit' }}>
+                  <StyledListItemIcon open={open}>
                     <FaSignOutAlt size={18} />
-                  </ListItemIcon>
+                  </StyledListItemIcon>
                   <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
-                </ListItemButton>
+                </StyledListItemButton>
               </Tooltip>
             </ListItem>
           )}
@@ -301,5 +294,4 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     </div>
   );
 };
-
 export default SidebarLayout;
