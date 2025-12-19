@@ -1,0 +1,585 @@
+package com.vebops.store.service;
+
+import com.vebops.store.dto.AnalyticsDto;
+import com.vebops.store.dto.CreateProjectRequest;
+import com.vebops.store.dto.CreateUserRequest;
+import com.vebops.store.dto.PaginatedResponse;
+import com.vebops.store.dto.ProjectActivityDto;
+import com.vebops.store.dto.ProjectActivityEntryDto;
+import com.vebops.store.dto.ProjectDto;
+import com.vebops.store.dto.UpdateProjectRequest;
+import com.vebops.store.dto.UpdateUserRequest;
+import com.vebops.store.dto.UserDto;
+import com.vebops.store.exception.BadRequestException;
+import com.vebops.store.exception.NotFoundException;
+import com.vebops.store.model.AccessType;
+import com.vebops.store.model.Project;
+import com.vebops.store.model.Role;
+import com.vebops.store.model.UserAccount;
+import com.vebops.store.repository.BomLineRepository;
+import com.vebops.store.repository.InwardRecordRepository;
+import com.vebops.store.repository.MaterialRepository;
+import com.vebops.store.repository.OutwardRecordRepository;
+import com.vebops.store.repository.ProcurementRequestRepository;
+import com.vebops.store.repository.ProjectRepository;
+import com.vebops.store.repository.TransferRecordRepository;
+import com.vebops.store.repository.UserRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+@Service
+public class AdminService {
+
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+    private final MaterialRepository materialRepository;
+    private final BomLineRepository bomLineRepository;
+    private final InwardRecordRepository inwardRecordRepository;
+    private final OutwardRecordRepository outwardRecordRepository;
+    private final TransferRecordRepository transferRecordRepository;
+    private final ProcurementRequestRepository procurementRequestRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private static final int MAX_RECENT_ITEMS = 5;
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    public AdminService(
+        ProjectRepository projectRepository,
+        UserRepository userRepository,
+        MaterialRepository materialRepository,
+        BomLineRepository bomLineRepository,
+        InwardRecordRepository inwardRecordRepository,
+        OutwardRecordRepository outwardRecordRepository,
+        TransferRecordRepository transferRecordRepository,
+        ProcurementRequestRepository procurementRequestRepository,
+        PasswordEncoder passwordEncoder
+    ) {
+        this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
+        this.materialRepository = materialRepository;
+        this.bomLineRepository = bomLineRepository;
+        this.inwardRecordRepository = inwardRecordRepository;
+        this.outwardRecordRepository = outwardRecordRepository;
+        this.transferRecordRepository = transferRecordRepository;
+        this.procurementRequestRepository = procurementRequestRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public PaginatedResponse<ProjectDto> searchProjects(
+        String search,
+        List<String> prefixes,
+        String allocationFilter,
+        int page,
+        int size
+    ) {
+        int safePage = normalizePage(page);
+        int safeSize = normalizeSize(size);
+        Specification<Project> spec = Specification.where(null);
+        if (StringUtils.hasText(search)) {
+            String query = "%" + search.trim().toLowerCase() + "%";
+            spec = spec.and((root, q, cb) -> {
+                Predicate code = cb.like(cb.lower(root.get("code")), query);
+                Predicate name = cb.like(cb.lower(root.get("name")), query);
+                return cb.or(code, name);
+            });
+        }
+        if (prefixes != null && !prefixes.isEmpty()) {
+            Set<String> normalized = prefixes
+                .stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(prefix -> prefix.substring(0, 1).toUpperCase())
+                .collect(Collectors.toSet());
+            if (!normalized.isEmpty()) {
+                spec = spec.and((root, q, cb) -> cb.upper(cb.substring(root.get("code"), 1, 1)).in(normalized));
+            }
+        }
+        if (StringUtils.hasText(allocationFilter)) {
+            Set<Long> allocatedProjects = bomLineRepository.projectIdsWithAllocations();
+            if ("WITH_ALLOCATIONS".equalsIgnoreCase(allocationFilter)) {
+                if (allocatedProjects.isEmpty()) {
+                    spec = spec.and((root, q, cb) -> cb.disjunction());
+                } else {
+                    spec = spec.and((root, q, cb) -> root.get("id").in(allocatedProjects));
+                }
+            } else if ("WITHOUT_ALLOCATIONS".equalsIgnoreCase(allocationFilter) && !allocatedProjects.isEmpty()) {
+                spec = spec.and((root, q, cb) -> cb.not(root.get("id").in(allocatedProjects)));
+            }
+        }
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize, Sort.by("code").ascending());
+        Page<Project> result = projectRepository.findAll(spec, pageable);
+        List<ProjectDto> items = result.stream().map(this::toProjectDto).toList();
+        List<String> prefixOptions = projectRepository
+            .distinctCodePrefixes()
+            .stream()
+            .filter(StringUtils::hasText)
+            .map(String::trim)
+            .map(prefix -> prefix.substring(0, 1))
+            .sorted()
+            .toList();
+        Map<String, List<String>> filters = Map.of("prefixes", prefixOptions);
+        return new PaginatedResponse<>(
+            items,
+            result.getTotalElements(),
+            safePage,
+            safeSize,
+            result.getTotalPages(),
+            result.hasNext(),
+            result.hasPrevious(),
+            filters
+        );
+    }
+
+    public ProjectDto createProject(CreateProjectRequest request) {
+        if (request == null || !StringUtils.hasText(request.code()) || !StringUtils.hasText(request.name())) {
+            throw new BadRequestException("Project code and name are required");
+        }
+        projectRepository
+            .findByCodeIgnoreCase(request.code())
+            .ifPresent(existing -> {
+                throw new BadRequestException("Project code already exists");
+            });
+        Project project = new Project();
+        project.setCode(request.code().trim());
+        project.setName(request.name().trim());
+        return toProjectDto(projectRepository.save(project));
+    }
+
+    public ProjectDto updateProject(Long id, UpdateProjectRequest request) {
+        Project project = projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found"));
+        if (request == null || (!StringUtils.hasText(request.code()) && !StringUtils.hasText(request.name()))) {
+            throw new BadRequestException("Project code or name is required");
+        }
+        if (StringUtils.hasText(request.code())) {
+            String nextCode = request.code().trim();
+            projectRepository
+                .findByCodeIgnoreCase(nextCode)
+                .ifPresent(existing -> {
+                    if (!existing.getId().equals(id)) {
+                        throw new BadRequestException("Project code already exists");
+                    }
+                });
+            project.setCode(nextCode);
+        }
+        if (StringUtils.hasText(request.name())) {
+            project.setName(request.name().trim());
+        }
+        return toProjectDto(projectRepository.save(project));
+    }
+
+    public void deleteProject(Long id) {
+        if (!projectRepository.existsById(id)) {
+            throw new NotFoundException("Project not found");
+        }
+        projectRepository.deleteById(id);
+    }
+
+    public PaginatedResponse<UserDto> searchUsers(
+        AuthService authService,
+        String search,
+        List<String> roles,
+        List<String> accessTypes,
+        List<String> projectIds,
+        int page,
+        int size
+    ) {
+        int safePage = normalizePage(page);
+        int safeSize = normalizeSize(size);
+        Specification<UserAccount> spec = Specification.where(null);
+        if (StringUtils.hasText(search)) {
+            String query = "%" + search.trim().toLowerCase() + "%";
+            spec = spec.and((root, q, cb) -> {
+                Predicate name = cb.like(cb.lower(root.get("name")), query);
+                Predicate email = cb.like(cb.lower(root.get("email")), query);
+                Predicate roleMatch = cb.like(cb.lower(root.get("role")), query);
+                return cb.or(name, email, roleMatch);
+            });
+        }
+        if (roles != null && !roles.isEmpty()) {
+            Set<Role> resolvedRoles = roles
+                .stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .map(this::parseRoleValue)
+                .collect(Collectors.toSet());
+            if (!resolvedRoles.isEmpty()) {
+                spec = spec.and((root, q, cb) -> root.get("role").in(resolvedRoles));
+            }
+        }
+        if (accessTypes != null && !accessTypes.isEmpty()) {
+            Set<AccessType> resolved = accessTypes
+                .stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .map(this::parseAccessValue)
+                .collect(Collectors.toSet());
+            if (!resolved.isEmpty()) {
+                spec = spec.and((root, q, cb) -> root.get("accessType").in(resolved));
+            }
+        }
+        if (projectIds != null && !projectIds.isEmpty()) {
+            Set<Long> resolved = projectIds
+                .stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(this::parseProjectId)
+                .collect(Collectors.toSet());
+            if (!resolved.isEmpty()) {
+                spec = spec.and((root, q, cb) -> {
+                    q.distinct(true);
+                    Join<UserAccount, Project> join = root.join("projects", JoinType.LEFT);
+                    return join.get("id").in(resolved);
+                });
+            }
+        }
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize, Sort.by("name").ascending().and(Sort.by("email").ascending()));
+        Page<UserAccount> result = userRepository.findAll(spec, pageable);
+        List<UserDto> items = result.stream().map(authService::toUserDto).toList();
+        List<String> projectFilters = projectRepository
+            .findAll(Sort.by("code").ascending())
+            .stream()
+            .map(Project::getId)
+            .map(String::valueOf)
+            .toList();
+        Map<String, List<String>> filters = Map.of(
+            "roles",
+            Stream.of(Role.values()).map(Role::name).sorted().toList(),
+            "accessTypes",
+            Stream.of(AccessType.values()).map(AccessType::name).sorted().toList(),
+            "projects",
+            projectFilters
+        );
+        return new PaginatedResponse<>(
+            items,
+            result.getTotalElements(),
+            safePage,
+            safeSize,
+            result.getTotalPages(),
+            result.hasNext(),
+            result.hasPrevious(),
+            filters
+        );
+    }
+
+    public UserDto createUser(CreateUserRequest request, AuthService authService) {
+        // Validate name and email (password is not used for Microsoft authentication)
+        if (!StringUtils.hasText(request.name()) || !StringUtils.hasText(request.email())) {
+            throw new BadRequestException("Name and email are required");
+        }
+        
+        userRepository
+            .findByEmailIgnoreCase(request.email())
+            .ifPresent(existing -> {
+                throw new BadRequestException("Email already in use");
+            });
+        
+        // Validate that project-scoped roles have at least one project assigned
+        Role role = Role.valueOf(request.role());
+        boolean requiresProjects = (role == Role.PROJECT_MANAGER || role == Role.USER);
+        if (requiresProjects && (request.projectIds() == null || request.projectIds().isEmpty())) {
+            throw new BadRequestException("At least one project must be assigned for this role");
+        }
+        
+        UserAccount user = new UserAccount();
+        applyUserFields(user, request.name(), request.role(), request.accessType());
+        user.setEmail(request.email().trim());
+        // For Microsoft-authenticated users, no local password is stored. Use a fixed
+        // placeholder so the NOT NULL constraint is satisfied but never used.
+        user.setPasswordHash("$2a$10$AZURE_AD_USER_NO_PASSWORD_NEEDED");
+        
+        assignProjects(user, request.projectIds());
+        return authService.toUserDto(userRepository.save(user));
+    }
+
+    public UserDto updateUser(Long id, UpdateUserRequest request, AuthService authService) {
+        UserAccount user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found"));
+        if (StringUtils.hasText(request.name())) {
+            user.setName(request.name().trim());
+        }
+        // Ignore password updates entirely for Microsoft-authenticated users.
+        Role nextRole = user.getRole();
+        if (StringUtils.hasText(request.role())) {
+            nextRole = Role.valueOf(request.role());
+            user.setRole(nextRole);
+        }
+        AccessType nextAccess = resolveAccessType(nextRole, request.accessType());
+        user.setAccessType(nextAccess);
+        if (request.projectIds() != null) {
+            assignProjects(user, request.projectIds());
+        }
+        return authService.toUserDto(userRepository.save(user));
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    public AnalyticsDto analytics() {
+        long totalProjects = projectRepository.count();
+        long totalMaterials = materialRepository.count();
+        long totalUsers = userRepository.count();
+        double received = materialRepository.findAll().stream().mapToDouble(m -> m.getReceivedQty()).sum();
+        double utilized = materialRepository.findAll().stream().mapToDouble(m -> m.getUtilizedQty()).sum();
+        return new AnalyticsDto(totalProjects, totalMaterials, totalUsers, received, utilized);
+    }
+
+    public List<ProjectActivityDto> projectActivityOverview() {
+        List<Project> projects = projectRepository.findAll(Sort.by("code").ascending());
+        Map<Long, ProjectActivityAccumulator> byId = new LinkedHashMap<>();
+        for (Project project : projects) {
+            byId.put(project.getId(), new ProjectActivityAccumulator(project));
+        }
+
+        inwardRecordRepository.findAllByOrderByEntryDateDesc().forEach(record -> {
+            Project project = record.getProject();
+            if (project == null) {
+                return;
+            }
+            ProjectActivityAccumulator acc = byId.get(project.getId());
+            if (acc != null) {
+                String date = record.getEntryDate() != null ? DATE_FMT.format(record.getEntryDate()) : null;
+                int lineCount = record.getLines() != null ? record.getLines().size() : 0;
+                String status = record.isValidated() ? "Validated" : "Pending";
+                acc.addInward(new ProjectActivityEntryDto(
+                    record.getId() != null ? String.valueOf(record.getId()) : null,
+                    record.getCode(),
+                    date,
+                    record.getSupplierName(),
+                    status,
+                    lineCount,
+                    "INWARD"
+                ));
+            }
+        });
+
+        outwardRecordRepository.findAllByOrderByEntryDateDesc().forEach(record -> {
+            Project project = record.getProject();
+            if (project == null) {
+                return;
+            }
+            ProjectActivityAccumulator acc = byId.get(project.getId());
+            if (acc != null) {
+                String date = record.getDate() != null ? DATE_FMT.format(record.getDate()) : null;
+                int lineCount = record.getLines() != null ? record.getLines().size() : 0;
+                String status = record.getStatus() != null ? record.getStatus().name() : (record.isValidated() ? "Validated" : "Pending");
+                acc.addOutward(new ProjectActivityEntryDto(
+                    record.getId() != null ? String.valueOf(record.getId()) : null,
+                    record.getCode(),
+                    date,
+                    record.getIssueTo(),
+                    status,
+                    lineCount,
+                    "OUTWARD"
+                ));
+            }
+        });
+
+        transferRecordRepository.findAllByOrderByTransferDateDesc().forEach(record -> {
+            Project from = record.getFromProject();
+            Project to = record.getToProject();
+            String date = record.getTransferDate() != null ? DATE_FMT.format(record.getTransferDate()) : null;
+            int lineCount = record.getLines() != null ? record.getLines().size() : 0;
+            String direction = (from != null ? from.getName() : "-") + " → " + (to != null ? to.getName() : "-");
+
+            if (from != null) {
+                ProjectActivityAccumulator acc = byId.get(from.getId());
+                if (acc != null) {
+                    acc.addTransfer(new ProjectActivityEntryDto(
+                        record.getId() != null ? String.valueOf(record.getId()) : null,
+                        record.getCode(),
+                        date,
+                        to != null ? to.getName() : "To project not set",
+                        "Dispatched",
+                        lineCount,
+                        direction
+                    ));
+                }
+            }
+
+            if (to != null) {
+                ProjectActivityAccumulator acc = byId.get(to.getId());
+                if (acc != null) {
+                    acc.addTransfer(new ProjectActivityEntryDto(
+                        record.getId() != null ? String.valueOf(record.getId()) : null,
+                        record.getCode(),
+                        date,
+                        from != null ? from.getName() : "From project not set",
+                        "Received",
+                        lineCount,
+                        direction
+                    ));
+                }
+            }
+        });
+
+        procurementRequestRepository.findAllByOrderByCreatedAtDesc().forEach(request -> {
+            Project project = request.getProject();
+            if (project == null) {
+                return;
+            }
+            ProjectActivityAccumulator acc = byId.get(project.getId());
+            if (acc != null) {
+                String date = request.getCreatedAt() != null ? request.getCreatedAt().toLocalDate().format(DATE_FMT) : null;
+                String materialName = request.getMaterial() != null ? request.getMaterial().getName() : "Material not set";
+                String status = request.getStatus() != null ? request.getStatus().name() : "PENDING";
+                acc.addProcurement(new ProjectActivityEntryDto(
+                    request.getId() != null ? String.valueOf(request.getId()) : null,
+                    null,
+                    date,
+                    materialName,
+                    status,
+                    null,
+                    "PROCUREMENT"
+                ));
+            }
+        });
+
+        return byId.values().stream().map(ProjectActivityAccumulator::toDto).toList();
+    }
+
+    private static class ProjectActivityAccumulator {
+        private final Project project;
+        private int inwardCount = 0;
+        private int outwardCount = 0;
+        private int transferCount = 0;
+        private int procurementCount = 0;
+        private final List<ProjectActivityEntryDto> recentInwards = new ArrayList<>();
+        private final List<ProjectActivityEntryDto> recentOutwards = new ArrayList<>();
+        private final List<ProjectActivityEntryDto> recentTransfers = new ArrayList<>();
+        private final List<ProjectActivityEntryDto> recentProcurements = new ArrayList<>();
+
+        ProjectActivityAccumulator(Project project) {
+            this.project = project;
+        }
+
+        void addInward(ProjectActivityEntryDto dto) {
+            inwardCount++;
+            addIfRoom(recentInwards, dto);
+        }
+
+        void addOutward(ProjectActivityEntryDto dto) {
+            outwardCount++;
+            addIfRoom(recentOutwards, dto);
+        }
+
+        void addTransfer(ProjectActivityEntryDto dto) {
+            transferCount++;
+            addIfRoom(recentTransfers, dto);
+        }
+
+        void addProcurement(ProjectActivityEntryDto dto) {
+            procurementCount++;
+            addIfRoom(recentProcurements, dto);
+        }
+
+        ProjectActivityDto toDto() {
+            return new ProjectActivityDto(
+                project.getId(),
+                project.getCode(),
+                project.getName(),
+                inwardCount,
+                outwardCount,
+                transferCount,
+                procurementCount,
+                recentInwards,
+                recentOutwards,
+                recentTransfers,
+                recentProcurements
+            );
+        }
+
+        private void addIfRoom(List<ProjectActivityEntryDto> items, ProjectActivityEntryDto dto) {
+            if (items.size() < MAX_RECENT_ITEMS) {
+                items.add(dto);
+            }
+        }
+    }
+
+    private void applyUserFields(UserAccount user, String name, String role, String accessType) {
+        user.setName(name.trim());
+        Role resolvedRole = StringUtils.hasText(role) ? Role.valueOf(role) : Role.USER;
+        user.setRole(resolvedRole);
+        user.setAccessType(resolveAccessType(resolvedRole, accessType));
+    }
+
+    private AccessType resolveAccessType(Role role, String requestedAccessType) {
+        return switch (role) {
+            case ADMIN, CEO, COO, PROCUREMENT_MANAGER, PROJECT_HEAD -> AccessType.ALL;
+            case PROJECT_MANAGER, USER ->
+                StringUtils.hasText(requestedAccessType) ? AccessType.valueOf(requestedAccessType) : AccessType.PROJECTS;
+        };
+    }
+
+    private void assignProjects(UserAccount user, List<String> projectIds) {
+        if (projectIds == null) {
+            user.getProjects().clear();
+            return;
+        }
+        Set<Project> projects = projectIds
+            .stream()
+            .filter(StringUtils::hasText)
+            .map(Long::valueOf)
+            .map(id -> projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found")))
+            .collect(Collectors.toSet());
+        user.getProjects().clear();
+        user.getProjects().addAll(projects);
+    }
+
+    private ProjectDto toProjectDto(Project project) {
+        return new ProjectDto(String.valueOf(project.getId()), project.getCode(), project.getName());
+    }
+
+    private int normalizePage(int page) {
+        return page <= 0 ? 1 : page;
+    }
+
+    private int normalizeSize(int size) {
+        if (size <= 0) {
+            return 10;
+        }
+        return Math.min(size, 100);
+    }
+
+    private Role parseRoleValue(String value) {
+        try {
+            return Role.valueOf(value);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Unknown role: " + value);
+        }
+    }
+
+    private AccessType parseAccessValue(String value) {
+        try {
+            return AccessType.valueOf(value);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Unknown access type: " + value);
+        }
+    }
+
+    private Long parseProjectId(String value) {
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException ex) {
+            throw new BadRequestException("Invalid project id: " + value);
+        }
+    }
+}

@@ -1,0 +1,842 @@
+@import "tailwindcss";
+
+:root {
+  /* theme colors */
+  --color-primary: #202124;
+  --color-brand-green: #0a7326;
+  --color-white: #fff;
+
+  /* Colors */
+  --color-body-bg: #f1f1f1;
+  --color-light-green: #eaffe5;
+  --color-text-grey: #676767;
+  --color-border-grey: #d0d5dd;
+  --color-black: #000000;
+  --color-border-light-grey: #e7e7e7;
+  --color-light-sky-blue-shade: #fcfcfd;
+  --color-text-grey2: #667085;
+  --color-border-light: #eaecf0;
+  --color-link-blue: #007aff;
+  --color-dull-text-grey: #666666;
+  --color-bg-light-grey-shade: #ececec;
+  --color-light-icon-success-green: #009084;
+  --color-card-grey-background: #f0f0f0;
+  --color-accordion-header-bg-color: #eeeeee;
+  --color-progress-blue: #0088ff;
+  --color-progress-red: #ff0000;
+
+  --color-stat-card-green: #15b6a1;
+  --color-stat-card-blue: #34a1dd;
+  --color-stat-card-orange: #f7bc57;
+  --color-stat-card-indigo: #41528a;
+
+  --color-stat-card-green-icon-bg: #daf4f0;
+  --color-stat-card-blue-icon-bg: #dff0fa;
+  --color-stat-card-orange-icon-bg: #fef4e4;
+  --color-stat-card-indigo-icon-bg: #e2e5ed;
+
+  --color-stat-card-bg: #f9f9f9;
+  --color-stat-card-subtitle-color: #9b9b9b;
+}
+
+/* Apply theme to body */
+body {
+  background-color: var(--color-body-bg);
+  color: var(--color-primary);
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+}
+
+/* Compact DataTable Styling with Visual Hierarchy */
+.p-datatable {
+  background: var(--color-white);
+  border: 1px solid var(--color-border-light-grey);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.p-datatable .p-datatable-thead>tr>th {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  background-color: var(--color-accordion-header-bg-color) !important;
+  color: var(--color-primary) !important;
+  border: 1px solid var(--color-border-light-grey) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Reduce sort and filter icon sizes */
+.p-datatable .p-datatable-thead>tr>th .p-sortable-column-icon,
+.p-datatable .p-datatable-thead>tr>th .p-column-filter-menu-button-icon,
+.p-datatable .p-datatable-thead>tr>th .pi {
+  font-size: 0.65rem !important;
+}
+
+.p-datatable .p-datatable-tbody>tr>td {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border-light) !important;
+  transition: background-color 0.15s ease;
+}
+
+.p-datatable .p-datatable-tbody>tr:hover {
+  background-color: var(--color-light-sky-blue-shade) !important;
+  cursor: pointer;
+}
+
+/* Zebra striping for better readability */
+.p-datatable .p-datatable-tbody>tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.p-datatable .p-datatable-tbody>tr:nth-child(even):hover {
+  background-color: var(--color-light-sky-blue-shade) !important;
+}
+
+/* Ultra Compact Table Styling */
+.compact-table .p-datatable-tbody>tr>td {
+  padding: 0.25rem 0.5rem !important;
+  line-height: 1.3 !important;
+}
+
+.compact-table .p-datatable-thead>tr>th {
+  padding: 0.35rem 0.5rem !important;
+  font-weight: 600 !important;
+}
+
+.p-datatable .p-paginator {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border-light-grey);
+}
+
+/* Column Filter Input Styling - Fix for proper display */
+.p-datatable .p-column-filter {
+  width: 100% !important;
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.7rem !important;
+  border: 1px solid var(--color-border-light-grey) !important;
+  border-radius: 4px !important;
+  background: var(--color-white) !important;
+  min-height: 1.75rem !important;
+}
+
+.p-datatable .p-column-filter:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+}
+
+.p-datatable .p-column-filter-row {
+  background: #f8fafc !important;
+  border-bottom: 1px solid var(--color-border-light-grey) !important;
+}
+
+.p-datatable .p-column-filter-row>th {
+  padding: 0.5rem 0.5rem !important;
+  background: #f8fafc !important;
+}
+
+/* Filter menu button */
+.p-datatable .p-column-filter-menu-button {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  margin-left: 0.25rem !important;
+}
+
+.p-datatable .p-column-filter-menu-button-icon {
+  font-size: 0.65rem !important;
+}
+
+/* ============================================
+   CUSTOM PAGINATOR STYLES - Professional Design
+   ============================================ */
+
+.custom-paginator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border-light-grey);
+  flex-wrap: wrap;
+}
+
+.custom-paginator-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  margin: 0 0.125rem;
+  border: 1px solid var(--color-border-grey);
+  border-radius: 6px;
+  background: var(--color-white);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.custom-paginator-btn:hover:not(.custom-paginator-disabled) {
+  background: var(--color-light-green);
+  border-color: var(--color-brand-green);
+  color: var(--color-brand-green);
+}
+
+.custom-paginator-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(10, 115, 38, 0.2);
+}
+
+.custom-paginator-nav {
+  background: var(--color-light-sky-blue-shade);
+}
+
+.custom-paginator-nav:hover:not(.custom-paginator-disabled) {
+  background: var(--color-brand-green);
+  border-color: var(--color-brand-green);
+  color: var(--color-white);
+}
+
+.custom-paginator-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.custom-paginator-page-active {
+  background: var(--color-brand-green) !important;
+  border-color: var(--color-brand-green) !important;
+  color: var(--color-white) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(10, 115, 38, 0.3);
+}
+
+.custom-paginator-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  color: var(--color-text-grey);
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  user-select: none;
+}
+
+.custom-paginator-rows-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--color-border-light-grey);
+}
+
+.custom-paginator-rows-label {
+  font-size: 0.7rem;
+  color: var(--color-text-grey);
+  font-weight: 500;
+}
+
+.custom-paginator-dropdown.p-dropdown {
+  width: auto !important;
+  min-width: 4rem;
+  border: 1px solid var(--color-border-grey) !important;
+  border-radius: 6px !important;
+}
+
+.custom-paginator-dropdown .p-dropdown-label {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 500;
+}
+
+.custom-paginator-dropdown .p-dropdown-trigger {
+  width: 1.75rem;
+}
+
+.custom-paginator-report {
+  font-size: 0.7rem;
+  color: var(--color-text-grey);
+  font-weight: 500;
+  margin-left: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--color-border-light-grey);
+  white-space: nowrap;
+}
+
+.custom-paginator-goto {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: 0.5rem;
+}
+
+.custom-paginator-goto-label {
+  font-size: 0.7rem;
+  color: var(--color-text-grey);
+  font-weight: 500;
+}
+
+.custom-paginator-input.p-inputtext {
+  width: 2.5rem !important;
+  padding: 0.25rem 0.375rem !important;
+  font-size: 0.7rem !important;
+  text-align: center;
+  border-radius: 4px !important;
+}
+
+/* Default PrimeReact Paginator Override */
+.p-paginator .p-paginator-pages .p-paginator-page,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  min-width: 2rem !important;
+  height: 2rem !important;
+  font-size: 0.75rem !important;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border-grey);
+  border-radius: 6px;
+  margin: 0 0.125rem;
+  transition: all 0.2s ease;
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page:hover,
+.p-paginator .p-paginator-first:hover,
+.p-paginator .p-paginator-prev:hover,
+.p-paginator .p-paginator-next:hover,
+.p-paginator .p-paginator-last:hover {
+  background: var(--color-light-green) !important;
+  border-color: var(--color-brand-green) !important;
+  color: var(--color-brand-green) !important;
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: var(--color-brand-green) !important;
+  border-color: var(--color-brand-green) !important;
+  color: var(--color-white) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(10, 115, 38, 0.3);
+}
+
+.p-paginator .p-dropdown {
+  border: 1px solid var(--color-border-grey) !important;
+  border-radius: 6px !important;
+  margin-left: 0.5rem;
+}
+
+.p-paginator .p-dropdown .p-dropdown-label {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.7rem !important;
+}
+
+.p-paginator .p-paginator-current {
+  font-size: 0.7rem !important;
+  color: var(--color-text-grey);
+  font-weight: 500;
+  margin: 0 0.5rem;
+}
+
+/* FloatLabel - Proper Alignment */
+.p-float-label {
+  position: relative;
+  display: block;
+}
+
+.p-float-label>label {
+  position: absolute;
+  pointer-events: none;
+  top: 50%;
+  margin-top: -0.5rem;
+  transition: all 0.2s ease;
+  line-height: 1;
+  left: 0.5rem;
+  color: var(--color-text-grey);
+  font-size: 0.75rem !important;
+  background: transparent;
+  padding: 0 0.25rem;
+  z-index: 1;
+}
+
+.p-float-label>.p-inputtext:focus~label,
+.p-float-label>.p-inputtext.p-filled~label,
+.p-float-label>.p-inputwrapper-focus~label,
+.p-float-label>.p-inputwrapper-filled~label,
+.p-float-label>.p-dropdown:focus~label,
+.p-float-label>.p-dropdown.p-filled~label,
+.p-float-label>input:focus~label,
+.p-float-label>input.p-filled~label,
+.p-float-label>.p-inputnumber:focus~label,
+.p-float-label>.p-inputnumber.p-filled~label,
+.p-float-label>.p-inputnumber-input:focus~label {
+  top: -0.5rem !important;
+  margin-top: 0;
+  font-size: 0.65rem !important;
+  color: var(--color-brand-green) !important;
+  background: var(--color-white);
+  padding: 0 0.25rem;
+}
+
+/* Compact Input Components with Better Visual Feedback */
+.p-inputtext,
+.p-inputnumber-input,
+.p-dropdown {
+  font-size: 0.75rem !important;
+  border: 1px solid var(--color-border-grey) !important;
+  border-radius: 4px;
+  color: var(--color-primary) !important;
+  background: var(--color-white) !important;
+  transition: all 0.2s ease;
+}
+
+.p-inputtext:focus,
+.p-inputnumber-input:focus,
+.p-dropdown:focus {
+  border-color: var(--color-brand-green) !important;
+  box-shadow: 0 0 0 0.2rem rgba(10, 115, 38, 0.1) !important;
+  outline: 0 none;
+}
+
+.p-inputtext-sm {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  height: 2rem;
+}
+
+.p-dropdown.p-inputtext-sm {
+  padding: 0 !important;
+}
+
+.p-dropdown.p-inputtext-sm .p-dropdown-label {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+
+.p-dropdown.p-inputtext-sm .p-dropdown-trigger {
+  width: 2rem;
+}
+
+.p-inputnumber .p-inputtext {
+  padding: 0.35rem 0.5rem !important;
+}
+
+.p-inputnumber-input {
+  font-size: 0.75rem !important;
+  height: 2rem;
+}
+
+/* Compact Dialog */
+.p-dialog {
+  border: 1px solid var(--color-border-light-grey);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.p-dialog .p-dialog-header {
+  padding: 0.75rem !important;
+  font-size: 0.875rem !important;
+  background: var(--color-white);
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.p-dialog .p-dialog-content {
+  padding: 0.75rem !important;
+  background: var(--color-white);
+}
+
+.p-dialog .p-dialog-footer {
+  padding: 0.5rem 0.75rem !important;
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* Compact Buttons */
+.p-button {
+  font-size: 0.75rem !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 4px;
+  background: var(--color-brand-green) !important;
+  border: 1px solid var(--color-brand-green) !important;
+  color: var(--color-white) !important;
+}
+
+.p-button:hover {
+  background: #095e1f !important;
+  border-color: #095e1f !important;
+}
+
+.p-button-sm {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+
+.p-button.p-button-outlined {
+  background: transparent !important;
+  color: var(--color-brand-green) !important;
+  border: 1px solid var(--color-brand-green) !important;
+}
+
+.p-button.p-button-outlined:hover {
+  background: var(--color-light-green) !important;
+  color: var(--color-brand-green) !important;
+}
+
+.p-button.p-button-text {
+  background: transparent !important;
+  color: var(--color-text-grey) !important;
+  border: none !important;
+}
+
+.p-button.p-button-text:hover {
+  background: var(--color-bg-light-grey-shade) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Dropdown Panel */
+.p-dropdown-panel {
+  border: 1px solid var(--color-border-grey);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  color: var(--color-primary);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
+  background: var(--color-light-green);
+  color: var(--color-brand-green);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+  background: var(--color-brand-green);
+  color: var(--color-white);
+}
+
+
+
+.section-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-brand-green);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-subheader {
+  font-size: 0.75rem;
+  color: var(--color-text-grey);
+  margin-top: 0.25rem;
+}
+
+/* Search and Filter Bar */
+.filter-bar {
+  background: var(--color-white);
+  border: 1px solid var(--color-border-light-grey);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Tooltip and Hover Information */
+.info-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.info-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-primary);
+  color: var(--color-white);
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Badge and Status Indicators */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Data Highlight */
+.data-highlight {
+  font-weight: 600;
+  color: var(--color-brand-green);
+}
+
+/* Expandable Row Animation */
+.expandable-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.expandable-content.expanded {
+  max-height: 500px;
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Custom Button Styling for React Icons (Feather Icons) */
+button.p-button.p-component {
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+button.p-button.p-button-text {
+  background: transparent;
+  border-color: transparent;
+  color: #475569;
+}
+
+button.p-button.p-button-text:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+button.p-button.p-button-text.p-button-danger {
+  color: #dc2626;
+}
+
+button.p-button.p-button-text.p-button-danger:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+button.p-button.p-button-outlined {
+  background: white;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+button.p-button.p-button-outlined:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+button.p-button.p-button-success {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+button.p-button.p-button-success:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+}
+
+button.p-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.p-button svg {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Root dropdown (input) */
+.project-dropdown.p-dropdown {
+  border: none;
+  background: #f8fafc;
+  /* slate-50 */
+  border-radius: 9999px;
+  /* pill shape */
+  padding-inline: 0.5rem;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
+  /* soft outline instead of hard border */
+  transition: box-shadow 150ms ease, background-color 150ms ease, transform 150ms ease;
+  font-size: 11px;
+}
+
+.project-dropdown.p-dropdown:not(.p-disabled):hover {
+  background: #f9fafb;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45);
+  /* subtle blue on hover */
+}
+
+.project-dropdown.p-dropdown.p-focus {
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.6),
+    0 12px 24px rgba(15, 23, 42, 0.16);
+  background: #ffffff;
+  transform: translateY(-0.5px);
+}
+
+/* Selected label inside */
+.project-dropdown .p-dropdown-label {
+  padding-block: 0.25rem;
+  padding-inline: 0.25rem 0.5rem;
+  font-size: 11px;
+  color: #0f172a;
+  /* slate-900 */
+}
+
+/* Placeholder style */
+.project-dropdown .p-dropdown-label.p-placeholder {
+  color: #94a3b8;
+  /* slate-400 */
+}
+
+/* Trigger (chevron area) */
+.project-dropdown .p-dropdown-trigger {
+  border-left: none;
+}
+
+.project-dropdown .p-dropdown-trigger-icon {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+/* Panel (dropdown list) */
+.project-dropdown-panel.p-dropdown-panel {
+  border-radius: 0.9rem;
+  border: none;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+  padding-block: 0.25rem;
+  overflow: hidden;
+}
+
+/* Options */
+.project-dropdown-panel .p-dropdown-items {
+  padding-block: 0.15rem;
+}
+
+.project-dropdown-panel .p-dropdown-item {
+  font-size: 11px;
+  padding: 0.35rem 0.85rem;
+  color: #0f172a;
+}
+
+.project-dropdown-panel .p-dropdown-item.p-highlight {
+  background: #eff6ff;
+  /* blue-50 */
+  color: #1d4ed8;
+  /* blue-700 */
+}
+
+.project-dropdown-panel .p-dropdown-item:not(.p-highlight):hover {
+  background: #f1f5f9;
+  /* slate-100 */
+}
+
+/* ========================================
+   FloatLabel Date Input Alignment Fix
+   ======================================== */
+
+/* Fix FloatLabel alignment for date inputs */
+.p-float-label input[type="date"] {
+  padding-top: 1.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.p-float-label input[type="date"]+label {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  transition: all 0.2s ease;
+}
+
+.p-float-label input[type="date"]:focus+label,
+.p-float-label input[type="date"].p-filled+label {
+  top: 0.25rem !important;
+  transform: translateY(0) !important;
+  font-size: 0.75rem !important;
+}
+
+/* Ensure date input value is visible */
+.p-float-label input[type="date"]::-webkit-datetime-edit {
+  padding-top: 0.25rem;
+}
+
+.p-float-label input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-top: 0.25rem;
+}
