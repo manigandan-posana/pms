@@ -76,6 +76,28 @@ public class FuelManagementService {
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
                 .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + request.getSupplierId()));
 
+        // Check if there's an open daily log for this vehicle
+        List<DailyLog> vehicleDailyLogs = dailyLogRepository.findByVehicleId(request.getVehicleId());
+        boolean hasOpenDailyLog = vehicleDailyLogs.stream()
+                .anyMatch(log -> log.getStatus() == EntryStatus.OPEN);
+        
+        if (hasOpenDailyLog) {
+            throw new BadRequestException("Cannot create fuel entry. Please close the open daily log first.");
+        }
+
+        // Get the last closed daily log's closing KM
+        DailyLog lastClosedLog = vehicleDailyLogs.stream()
+                .filter(log -> log.getStatus() == EntryStatus.CLOSED && log.getClosingKm() != null)
+                .max((a, b) -> a.getDate().compareTo(b.getDate()))
+                .orElse(null);
+        
+        if (lastClosedLog != null && request.getOpeningKm() <= lastClosedLog.getClosingKm()) {
+            throw new BadRequestException(
+                String.format("Fuel opening KM (%.1f) must be greater than last daily log closing KM (%.1f)",
+                    request.getOpeningKm(), lastClosedLog.getClosingKm())
+            );
+        }
+
         FuelEntry entry = new FuelEntry();
         entry.setDate(request.getDate());
         entry.setProject(project);

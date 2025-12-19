@@ -344,6 +344,30 @@ const VehicleManagementPage: React.FC = () => {
       return;
     }
 
+    const openingKm = Number(fuelForm.openingKm);
+    
+    // Get the vehicle's daily logs to check if there are any open logs
+    const vehicleDailyLogs = dailyLogs.filter((log) => log.vehicleId === Number(fuelForm.vehicleId));
+    const openDailyLog = vehicleDailyLogs.find((log) => log.status === "OPEN");
+    
+    if (openDailyLog) {
+      toast.error("Please close the open daily log before creating a new fuel entry");
+      return;
+    }
+
+    // Get the last closed daily log's closing KM
+    const closedDailyLogs = vehicleDailyLogs
+      .filter((log) => log.status === "CLOSED" && log.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    if (closedDailyLogs.length > 0) {
+      const lastClosingKm = closedDailyLogs[0].closingKm!;
+      if (openingKm <= lastClosingKm) {
+        toast.error(`Fuel opening KM (${openingKm.toFixed(1)}) must be greater than last daily log closing KM (${lastClosingKm.toFixed(1)} km)`);
+        return;
+      }
+    }
+
     try {
       await dispatch(createFuelEntry({
         date: fuelForm.date.toISOString().split('T')[0],
@@ -351,7 +375,7 @@ const VehicleManagementPage: React.FC = () => {
         vehicleId: Number(fuelForm.vehicleId),
         supplierId: Number(fuelForm.supplierId),
         litres: Number(fuelForm.litres),
-        openingKm: Number(fuelForm.openingKm),
+        openingKm: openingKm,
         pricePerLitre: Number(fuelForm.pricePerLitre),
       })).unwrap();
 

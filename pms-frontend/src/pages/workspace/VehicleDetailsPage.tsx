@@ -300,47 +300,76 @@ const VehicleDetailsPage: React.FC = () => {
             <div className="flex justify-between text-xs"><span className="text-slate-500">Start</span><span className="font-medium">{vehicle.startDate ? new Date(vehicle.startDate).toLocaleDateString() : 'N/A'}</span></div>
           </div>
 
-          {/* Metrics */}
-          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FiMapPin /></div>
-              <div>
-                <div className="text-xs text-slate-500">Total Distance</div>
-                <div className="text-xs font-bold text-slate-800">{numberTemplate(vehicleStats.fuelTotalKm, 1)} km</div>
-              </div>
+          {/* Fuel Entry Metrics */}
+          <div className="space-y-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="text-xs font-semibold text-blue-800 uppercase tracking-wide mb-2">Fuel Entry Metrics</div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Total KM</span>
+              <span className="text-xs font-bold text-blue-700">{numberTemplate(vehicleStats.fuelTotalKm, 1)} km</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 text-green-600 rounded-lg"><FiActivity /></div>
-              <div>
-                <div className="text-xs text-slate-500">Avg Mileage</div>
-                <div className="text-xs font-bold text-slate-800">{numberTemplate(vehicleStats.fuelAvgMileage, 2)} km/l</div>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Avg Mileage</span>
+              <span className="text-xs font-bold text-blue-700">{numberTemplate(vehicleStats.fuelAvgMileage, 2)} km/l</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Total Quantity</span>
+              <span className="text-xs font-bold text-blue-700">{numberTemplate(vehicleStats.totalLitres, 1)} L</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Total Cost</span>
+              <span className="text-xs font-bold text-blue-700">{formatCurrency(vehicleStats.totalCost)}</span>
             </div>
           </div>
 
-          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><FiZap /></div>
-              <div>
-                <div className="text-xs text-slate-500">Total Fuel</div>
-                <div className="text-xs font-bold text-slate-800">{numberTemplate(vehicleStats.totalLitres, 1)} L</div>
-              </div>
+          {/* Daily Log Metrics */}
+          <div className="space-y-2 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-xs font-semibold text-green-800 uppercase tracking-wide mb-2">Daily Log Metrics</div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Total KM</span>
+              <span className="text-xs font-bold text-green-700">{numberTemplate(vehicleStats.dailyLogTotalKm, 1)} km</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><TbCurrencyRupee /></div>
-              <div>
-                <div className="text-xs text-slate-500">Total Cost</div>
-                <div className="text-xs font-bold text-slate-800">{formatCurrency(vehicleStats.totalCost)}</div>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Avg Mileage</span>
+              <span className="text-xs font-bold text-green-700">{numberTemplate(vehicleStats.dailyLogAvgMileage, 2)} km/l</span>
+            </div>
+          </div>
+
+          {/* Cost Analysis */}
+          <div className="space-y-2 p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="text-xs font-semibold text-purple-800 uppercase tracking-wide mb-2">Cost Analysis</div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Avg Cost/Unit</span>
+              <span className="text-xs font-bold text-purple-700">{formatCurrency(vehicleStats.avgCostPerLitre)}/L</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Avg Cost/KM</span>
+              <span className="text-xs font-bold text-purple-700">{formatCurrency(vehicleStats.avgCostPerKm)}/km</span>
+            </div>
+          </div>
+
+          {/* KM Difference */}
+          <div className="space-y-2 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Variance</div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">KM Difference</span>
+              <span className={`text-xs font-bold ${vehicleStats.kmDifference >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {vehicleStats.kmDifference >= 0 ? '+' : ''}{numberTemplate(vehicleStats.kmDifference, 1)} km
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-600">Mileage Variance</span>
+              <span className={`text-xs font-bold ${vehicleStats.mileageDifference >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {vehicleStats.mileageDifference >= 0 ? '+' : ''}{numberTemplate(vehicleStats.mileageDifference, 2)} km/l
+              </span>
             </div>
           </div>
 
           {vehicleStats.totalRentCost > 0 && (
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-3">
-              <div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><TbCurrencyRupee /></div>
-              <div>
-                <div className="text-xs text-slate-500">Rent Cost</div>
-                <div className="text-xs font-bold text-slate-800">{formatCurrency(vehicleStats.totalRentCost)}</div>
+            <div className="space-y-2 p-4 bg-rose-50 rounded-lg border border-rose-200">
+              <div className="text-xs font-semibold text-rose-800 uppercase tracking-wide mb-2">Rent Cost</div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-600">Total Rent</span>
+                <span className="text-xs font-bold text-rose-700">{formatCurrency(vehicleStats.totalRentCost)}</span>
               </div>
             </div>
           )}
