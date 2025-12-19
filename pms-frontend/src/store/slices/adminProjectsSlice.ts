@@ -42,6 +42,7 @@ export type RequestStatus = "idle" | "loading" | "succeeded" | "failed";
 
 export interface AdminProject {
   id?: string;
+  code?: string;
   name?: string;
   prefix?: string;
   // extend with whatever fields your backend returns

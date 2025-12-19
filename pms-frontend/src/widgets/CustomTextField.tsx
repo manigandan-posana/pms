@@ -13,6 +13,7 @@ const CustomTextField: React.FC<CustomInputProps> = ({
     InputProps,
     size = "small",
     variant = "outlined",
+    type,
     ...props
 }) => {
     return (
@@ -20,6 +21,12 @@ const CustomTextField: React.FC<CustomInputProps> = ({
             size={size}
             variant={variant}
             fullWidth
+            type={type}
+            onWheel={(e) => {
+                if (type === 'number') {
+                    (e.target as HTMLInputElement).blur();
+                }
+            }}
             InputProps={{
                 ...InputProps,
                 startAdornment: startAdornment ? (

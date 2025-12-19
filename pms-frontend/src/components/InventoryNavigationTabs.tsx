@@ -7,10 +7,11 @@ const InventoryNavigationTabs: React.FC = () => {
   const location = useLocation();
 
   const tabs = [
-    { label: "Inwards", path: "/workspace/inwards", icon: FiPackage },
-    { label: "Outwards", path: "/workspace/outwards", icon: FiTruck },
-    { label: "Transfers", path: "/workspace/transfers", icon: FiRepeat },
-    { label: "Procurement", path: "/workspace/procurement", icon: FiShoppingCart },
+    { label: "BOM", path: "/workspace/inventory/bom", icon: FiPackage },
+    { label: "Inwards", path: "/workspace/inventory/inwards", icon: FiPackage },
+    { label: "Outwards", path: "/workspace/inventory/outwards", icon: FiTruck },
+    { label: "Transfers", path: "/workspace/inventory/transfers", icon: FiRepeat },
+    { label: "Procurement", path: "/workspace/inventory/procurement", icon: FiShoppingCart },
   ];
 
   const isActive = (path: string) => {
@@ -29,10 +30,9 @@ const InventoryNavigationTabs: React.FC = () => {
               onClick={() => navigate(tab.path)}
               className={`
                 flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
-                ${
-                  active
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                ${active
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                 }
               `}
             >

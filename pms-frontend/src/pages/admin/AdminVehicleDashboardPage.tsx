@@ -1,6 +1,5 @@
 
 import React, { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FiTruck, FiMapPin, FiZap } from "react-icons/fi";
 import { TbCurrencyRupee } from "react-icons/tb";
@@ -14,7 +13,6 @@ import CustomTable from "../../widgets/CustomTable";
 import type { ColumnDef } from "../../widgets/CustomTable";
 
 const AdminVehicleDashboardPage: React.FC = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { vehicles, fuelEntries } = useSelector((state: RootState) => state.vehicles);
   const { projects } = useSelector((state: RootState) => state.workspace);
@@ -331,7 +329,7 @@ const AdminVehicleDashboardPage: React.FC = () => {
                   },
                 ]}
                 height={200}
-                slotProps={{ legend: { hidden: true } }}
+                slotProps={{ legend: { position: { vertical: 'bottom', horizontal: 'center' } } }}
               />
             ) : <div className="text-xs text-slate-400">No data</div>}
           </div>
