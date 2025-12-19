@@ -128,6 +128,20 @@ public class FuelManagementService {
             throw new BadRequestException("Closing km cannot be less than opening km");
         }
 
+        // Check if closing km is valid compared to last closed daily log
+        List<DailyLog> vehicleDailyLogs = dailyLogRepository.findByVehicleId(entry.getVehicle().getId());
+        DailyLog lastClosedLog = vehicleDailyLogs.stream()
+                .filter(log -> log.getStatus() == EntryStatus.CLOSED && log.getClosingKm() != null)
+                .max((a, b) -> a.getDate().compareTo(b.getDate()))
+                .orElse(null);
+        
+        if (lastClosedLog != null && request.getClosingKm() < lastClosedLog.getClosingKm()) {
+            throw new BadRequestException(
+                String.format("Fuel closing KM (%.1f) must be greater than or equal to last daily log closing KM (%.1f)",
+                    request.getClosingKm(), lastClosedLog.getClosingKm())
+            );
+        }
+
         entry.setClosingKm(request.getClosingKm());
         entry.setClosingKmPhoto(request.getClosingKmPhoto());
         entry.setDistance(request.getClosingKm() - entry.getOpeningKm());

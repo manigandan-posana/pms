@@ -405,8 +405,8 @@ const VehicleManagementPage: React.FC = () => {
 
     const latestDailyLogClosingKm = vehicleDailyLogs.length > 0 ? vehicleDailyLogs[0].closingKm : null;
 
-    if (latestDailyLogClosingKm != null && km > latestDailyLogClosingKm) {
-      toast.error(`Fuel closing km (${km.toFixed(1)}) must be ≤ daily log closing km (${latestDailyLogClosingKm.toFixed(1)} km)`);
+    if (latestDailyLogClosingKm != null && km < latestDailyLogClosingKm) {
+      toast.error(`Fuel closing km (${km.toFixed(1)}) must be ≥ daily log closing km (${latestDailyLogClosingKm.toFixed(1)} km)`);
       return;
     }
 
