@@ -1042,7 +1042,7 @@ const VehicleManagementPage: React.FC = () => {
                         <button
                           key={mode}
                           className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${fuelViewMode === mode ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                          onClick={() => { setFuelViewMode(mode as any); setFuelVehicleFilter(null); }}
+                          onClick={() => { setFuelViewMode(mode as any); setFuelVehicleFilter(null); setActiveFuelType('DIESEL'); }}
                         >
                           {mode.charAt(0).toUpperCase() + mode.slice(1)}
                         </button>

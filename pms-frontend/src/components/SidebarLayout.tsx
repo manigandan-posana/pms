@@ -171,7 +171,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   pageHeading = "Inventory",
   showProjectSelector = false,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
 
   const isAdmin = userRole === "ADMIN";
