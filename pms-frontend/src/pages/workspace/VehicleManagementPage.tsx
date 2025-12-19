@@ -359,12 +359,39 @@ const VehicleManagementPage: React.FC = () => {
       .filter((log) => log.status === "CLOSED" && log.closingKm != null)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    if (closedDailyLogs.length > 0) {
-      const lastClosingKm = closedDailyLogs[0].closingKm!;
-      if (openingKm <= lastClosingKm) {
-        toast.error(`Fuel opening KM (${openingKm.toFixed(1)}) must be greater than last daily log closing KM (${lastClosingKm.toFixed(1)} km)`);
-        return;
+    const lastDailyLogClosingKm = closedDailyLogs.length > 0 ? closedDailyLogs[0].closingKm! : null;
+
+    // Get the last closed fuel entry's closing KM
+    const vehicleFuelEntries = fuelEntries.filter((entry) => entry.vehicleId === Number(fuelForm.vehicleId));
+    const closedFuelEntries = vehicleFuelEntries
+      .filter((entry) => entry.status === "CLOSED" && entry.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const lastFuelEntryClosingKm = closedFuelEntries.length > 0 ? closedFuelEntries[0].closingKm! : null;
+
+    // Determine the maximum closing KM from both sources
+    let maxClosingKm: number | null = null;
+    let source = "";
+
+    if (lastDailyLogClosingKm !== null && lastFuelEntryClosingKm !== null) {
+      if (lastDailyLogClosingKm >= lastFuelEntryClosingKm) {
+        maxClosingKm = lastDailyLogClosingKm;
+        source = "daily log";
+      } else {
+        maxClosingKm = lastFuelEntryClosingKm;
+        source = "fuel entry";
       }
+    } else if (lastDailyLogClosingKm !== null) {
+      maxClosingKm = lastDailyLogClosingKm;
+      source = "daily log";
+    } else if (lastFuelEntryClosingKm !== null) {
+      maxClosingKm = lastFuelEntryClosingKm;
+      source = "fuel entry";
+    }
+
+    if (maxClosingKm !== null && openingKm < maxClosingKm) {
+      toast.error(`Fuel opening KM (${openingKm.toFixed(1)}) must be ≥ last ${source} closing KM (${maxClosingKm.toFixed(1)} km)`);
+      return;
     }
 
     try {

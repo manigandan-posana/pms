@@ -86,15 +86,44 @@ public class FuelManagementService {
         }
 
         // Get the last closed daily log's closing KM
-        DailyLog lastClosedLog = vehicleDailyLogs.stream()
+        Double lastDailyLogClosingKm = vehicleDailyLogs.stream()
                 .filter(log -> log.getStatus() == EntryStatus.CLOSED && log.getClosingKm() != null)
                 .max((a, b) -> a.getDate().compareTo(b.getDate()))
+                .map(DailyLog::getClosingKm)
                 .orElse(null);
         
-        if (lastClosedLog != null && request.getOpeningKm() <= lastClosedLog.getClosingKm()) {
+        // Get the last closed fuel entry's closing KM
+        List<FuelEntry> vehicleFuelEntries = fuelEntryRepository.findByVehicleId(request.getVehicleId());
+        Double lastFuelEntryClosingKm = vehicleFuelEntries.stream()
+                .filter(entry -> entry.getStatus() == EntryStatus.CLOSED && entry.getClosingKm() != null)
+                .max((a, b) -> a.getDate().compareTo(b.getDate()))
+                .map(FuelEntry::getClosingKm)
+                .orElse(null);
+        
+        // Determine the maximum closing KM from both sources
+        Double maxClosingKm = null;
+        String source = "";
+        
+        if (lastDailyLogClosingKm != null && lastFuelEntryClosingKm != null) {
+            if (lastDailyLogClosingKm >= lastFuelEntryClosingKm) {
+                maxClosingKm = lastDailyLogClosingKm;
+                source = "daily log";
+            } else {
+                maxClosingKm = lastFuelEntryClosingKm;
+                source = "fuel entry";
+            }
+        } else if (lastDailyLogClosingKm != null) {
+            maxClosingKm = lastDailyLogClosingKm;
+            source = "daily log";
+        } else if (lastFuelEntryClosingKm != null) {
+            maxClosingKm = lastFuelEntryClosingKm;
+            source = "fuel entry";
+        }
+        
+        if (maxClosingKm != null && request.getOpeningKm() < maxClosingKm) {
             throw new BadRequestException(
-                String.format("Fuel opening KM (%.1f) must be greater than last daily log closing KM (%.1f)",
-                    request.getOpeningKm(), lastClosedLog.getClosingKm())
+                String.format("Fuel opening KM (%.1f) must be greater than or equal to last %s closing KM (%.1f)",
+                    request.getOpeningKm(), source, maxClosingKm)
             );
         }
 
