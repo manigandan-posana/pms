@@ -10,7 +10,7 @@ import {
 import type { RootState, AppDispatch } from "../../store/store";
 import { searchInwardHistory, searchOutwardHistory, searchTransferHistory } from "../../store/slices/historySlice";
 import { listProcurementRequests } from "../../store/slices/procurementSlice";
-import { listProjects } from "../../store/slices/adminProjectsSlice";
+import { listProjects, setSelectedAdminProject } from "../../store/slices/adminProjectsSlice";
 
 import CustomTable from "../../widgets/CustomTable";
 import type { ColumnDef } from "../../widgets/CustomTable";
@@ -85,10 +85,10 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { token } = useSelector((state: RootState) => state.auth);
+  const { selectedAdminProjectId } = useSelector((state: RootState) => state.adminProjects);
 
   // Project selection
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // State
@@ -115,7 +115,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   }, [token]);
 
   useEffect(() => {
-    if (selectedProjectId) {
+    if (selectedAdminProjectId) {
       loadInwards();
       loadOutwards();
       loadTransfers();
@@ -126,7 +126,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
       setTransferRecords([]);
       setProcurementRequests([]);
     }
-  }, [selectedProjectId]);
+  }, [selectedAdminProjectId]);
 
   // ========================
   // Loaders
@@ -140,8 +140,8 @@ const UnifiedProjectDetailsPage: React.FC = () => {
       const data = response?.items || response?.content || response?.data?.content || [];
       const list = Array.isArray(data) ? data : [];
       setProjects(list);
-      if (!selectedProjectId && list.length > 0) {
-        setSelectedProjectId(String(list[0].id));
+      if (!selectedAdminProjectId && list.length > 0) {
+        dispatch(setSelectedAdminProject(String(list[0].id)));
       }
     } catch (error) {
       console.error("Failed to load projects", error);
@@ -152,10 +152,10 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   };
 
   const loadInwards = async () => {
-    if (!selectedProjectId) return;
+    if (!selectedAdminProjectId) return;
     setInwardLoading(true);
     try {
-      const response = await dispatch(searchInwardHistory({ projectId: Number(selectedProjectId), page: 1, size: 100 })).unwrap();
+      const response = await dispatch(searchInwardHistory({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
       const data = response?.items || response?.content || [];
       setInwardRecords(data);
       setInwardTotal(response?.totalItems || data.length);
@@ -167,10 +167,10 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   };
 
   const loadOutwards = async () => {
-    if (!selectedProjectId) return;
+    if (!selectedAdminProjectId) return;
     setOutwardLoading(true);
     try {
-      const response = await dispatch(searchOutwardHistory({ projectId: Number(selectedProjectId), page: 1, size: 100 })).unwrap();
+      const response = await dispatch(searchOutwardHistory({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
       const data = response?.items || response?.content || [];
       setOutwardRecords(data);
       setOutwardTotal(response?.totalItems || data.length);
@@ -182,10 +182,10 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   };
 
   const loadTransfers = async () => {
-    if (!selectedProjectId) return;
+    if (!selectedAdminProjectId) return;
     setTransferLoading(true);
     try {
-      const response = await dispatch(searchTransferHistory({ projectId: Number(selectedProjectId), page: 1, size: 100 })).unwrap();
+      const response = await dispatch(searchTransferHistory({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
       const data = response?.items || response?.content || [];
       setTransferRecords(data);
       setTransferTotal(response?.totalItems || data.length);
@@ -197,9 +197,9 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   };
 
   const loadProcurements = async () => {
-    if (!selectedProjectId) return;
+    if (!selectedAdminProjectId) return;
     try {
-      const response = await dispatch(listProcurementRequests({ projectId: Number(selectedProjectId), page: 1, size: 100 })).unwrap();
+      const response = await dispatch(listProcurementRequests({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
       const data = response?.items || response?.content || [];
       setProcurementRequests(data);
     } catch {
@@ -307,7 +307,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     }
   ];
 
-  const selectedProject = projects.find(p => String(p.id) === String(selectedProjectId));
+  const selectedProject = projects.find(p => String(p.id) === String(selectedAdminProjectId));
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -330,9 +330,9 @@ const UnifiedProjectDetailsPage: React.FC = () => {
             <div className="w-64">
               <CustomDropdown
                 label=""
-                value={selectedProjectId || ''}
+                value={selectedAdminProjectId || ''}
                 options={projects.map(p => ({ label: `${p.code ? p.code + ' - ' : ''}${p.name}`, value: String(p.id) }))}
-                onChange={(value) => setSelectedProjectId(value)}
+                onChange={(value) => dispatch(setSelectedAdminProject(value))}
               />
             </div>
             <CustomButton startIcon={<FiBox />} onClick={() => navigate('/admin/projects')}>
@@ -341,7 +341,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        {!selectedProjectId ? (
+        {!selectedAdminProjectId ? (
           <div className="flex flex-col items-center justify-center h-64 bg-white rounded-xl border border-slate-200">
             {loading ? <CustomLoader message="Loading projects..." /> : <span className="text-slate-400 text-sm">Select a project to view details</span>}
           </div>

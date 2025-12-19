@@ -70,6 +70,7 @@ export interface AdminProjectsState {
   status: RequestStatus;
   error: string;
   availableFilters: AdminProjectsFilters;
+  selectedAdminProjectId: string | null;
 }
 
 // ---- Initial State ---- //
@@ -81,6 +82,7 @@ const initialState: AdminProjectsState = {
   status: "idle",
   error: "",
   availableFilters: { prefixes: [] },
+  selectedAdminProjectId: null,
 };
 
 // ---- Thunks ---- //
@@ -180,6 +182,9 @@ const adminProjectsSlice = createSlice({
     clearProjectError(state) {
       state.error = "";
     },
+    setSelectedAdminProject(state, action) {
+      state.selectedAdminProjectId = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -234,5 +239,5 @@ const adminProjectsSlice = createSlice({
 
 // ---- Exports ---- //
 
-export const { clearProjectError } = adminProjectsSlice.actions;
+export const { clearProjectError, setSelectedAdminProject } = adminProjectsSlice.actions;
 export default adminProjectsSlice.reducer;

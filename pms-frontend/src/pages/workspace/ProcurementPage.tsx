@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 import { submitProcurementRequest } from "../../store/slices/workspaceSlice";
 import {
   setProcurementField,
@@ -154,7 +155,8 @@ const ProcurementPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
+      <InventoryNavigationTabs />
       <div>
         <h1 className="text-xs font-semibold text-slate-800">Procurement</h1>
       </div>

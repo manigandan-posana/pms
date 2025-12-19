@@ -1,8 +1,10 @@
+
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Chart } from "primereact/chart"; // Keeping for data viz specific needs for now
-import { FiArrowLeft, FiMapPin, FiActivity, FiZap, FiDollarSign, FiMap, FiTrendingUp } from "react-icons/fi"; // Using react-icons
+import { LineChart } from "@mui/x-charts/LineChart";
+import { FiArrowLeft, FiMapPin, FiActivity, FiZap, FiMap, FiTrendingUp } from "react-icons/fi";
+import { TbCurrencyRupee } from "react-icons/tb";
 
 import type { RootState } from "../../store/store";
 import CustomButton from "../../widgets/CustomButton";
@@ -127,63 +129,12 @@ const VehicleDetailsPage: React.FC = () => {
   const chartData = useMemo(() => {
     const sortedData = [...filteredDailyData].reverse().slice(-30);
     return {
-      labels: sortedData.map((d) => d.date.toLocaleDateString("en-IN", { month: "short", day: "numeric" })),
-      datasets: [
-        {
-          label: "Distance (km)",
-          data: sortedData.map((d) => d.distance),
-          borderColor: "#3b82f6",
-          backgroundColor: "rgba(59, 130, 246, 0.1)",
-          tension: 0.35,
-          fill: true,
-        },
-      ],
+      labels: sortedData.map((d) => d.date),
+      distance: sortedData.map((d) => d.distance),
+      fuel: sortedData.map((d) => d.litres),
+      cost: sortedData.map((d) => d.cost)
     };
   }, [filteredDailyData]);
-
-  const fuelChartData = useMemo(() => {
-    const sortedData = [...filteredDailyData].reverse().slice(-30);
-    return {
-      labels: sortedData.map((d) => d.date.toLocaleDateString("en-IN", { month: "short", day: "numeric" })),
-      datasets: [
-        {
-          label: "Fuel (Litres)",
-          data: sortedData.map((d) => d.litres),
-          borderColor: "#10b981",
-          backgroundColor: "rgba(16, 185, 129, 0.1)",
-          tension: 0.35,
-          fill: true,
-        },
-      ],
-    };
-  }, [filteredDailyData]);
-
-  const costChartData = useMemo(() => {
-    const sortedData = [...filteredDailyData].reverse().slice(-30);
-    return {
-      labels: sortedData.map((d) => d.date.toLocaleDateString("en-IN", { month: "short", day: "numeric" })),
-      datasets: [
-        {
-          label: "Cost (₹)",
-          data: sortedData.map((d) => d.cost),
-          borderColor: "#f59e0b",
-          backgroundColor: "rgba(245, 158, 11, 0.1)",
-          tension: 0.35,
-          fill: true,
-        },
-      ],
-    };
-  }, [filteredDailyData]);
-
-  const chartOptions = {
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.05)" }, ticks: { font: { size: 10 } } },
-      x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-    },
-  };
-
 
 
   const numberTemplate = (value: number, decimals = 2) => value.toFixed(decimals);
@@ -280,7 +231,7 @@ const VehicleDetailsPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><FiDollarSign /></div>
+              <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><TbCurrencyRupee /></div>
               <div>
                 <div className="text-xs text-slate-500">Total Cost</div>
                 <div className="text-xs font-bold text-slate-800">{formatCurrency(vehicleStats.totalCost)}</div>
@@ -290,7 +241,7 @@ const VehicleDetailsPage: React.FC = () => {
 
           {vehicleStats.totalRentCost > 0 && (
             <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-3">
-              <div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><FiDollarSign /></div>
+              <div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><TbCurrencyRupee /></div>
               <div>
                 <div className="text-xs text-slate-500">Rent Cost</div>
                 <div className="text-xs font-bold text-slate-800">{formatCurrency(vehicleStats.totalRentCost)}</div>
@@ -323,20 +274,35 @@ const VehicleDetailsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                       <h4 className="text-xs font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiMap className="text-blue-500" /> Distance Trend</h4>
-                      <div className="h-48">
-                        <Chart type="line" data={chartData} options={chartOptions} />
+                      <div className="h-48 w-full">
+                        <LineChart
+                          xAxis={[{ scaleType: 'point', data: chartData.labels, valueFormatter: (d) => d.toLocaleDateString("en-IN", { month: "short", day: "numeric" }) }]}
+                          series={[{ data: chartData.distance, label: 'Distance', color: '#3b82f6', area: true }]}
+                          height={200}
+                          slotProps={{ legend: { hidden: true } as any }}
+                        />
                       </div>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                       <h4 className="text-xs font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiZap className="text-green-500" /> Fuel Consumption</h4>
-                      <div className="h-48">
-                        <Chart type="line" data={fuelChartData} options={chartOptions} />
+                      <div className="h-48 w-full">
+                        <LineChart
+                          xAxis={[{ scaleType: 'point', data: chartData.labels, valueFormatter: (d) => d.toLocaleDateString("en-IN", { month: "short", day: "numeric" }) }]}
+                          series={[{ data: chartData.fuel, label: 'Fuel', color: '#10b981', area: true }]}
+                          height={200}
+                          slotProps={{ legend: { hidden: true } as any }}
+                        />
                       </div>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                       <h4 className="text-xs font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiTrendingUp className="text-amber-500" /> Cost Trend</h4>
-                      <div className="h-48">
-                        <Chart type="line" data={costChartData} options={chartOptions} />
+                      <div className="h-48 w-full">
+                        <LineChart
+                          xAxis={[{ scaleType: 'point', data: chartData.labels, valueFormatter: (d) => d.toLocaleDateString("en-IN", { month: "short", day: "numeric" }) }]}
+                          series={[{ data: chartData.cost, label: 'Cost', color: '#f59e0b', area: true }]}
+                          height={200}
+                          slotProps={{ legend: { hidden: true } as any }}
+                        />
                       </div>
                     </div>
                   </div>

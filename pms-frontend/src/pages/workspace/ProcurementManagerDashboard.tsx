@@ -4,7 +4,7 @@ import { FiShoppingCart, FiRefreshCw } from "react-icons/fi";
 
 import { Get as apiGet } from "../../utils/apiService";
 import { getErrorMessage } from "../../utils/errorHandler";
-import CustomTable, { ColumnDef } from "../../widgets/CustomTable";
+import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomSelect from "../../widgets/CustomSelect";
 import CustomButton from "../../widgets/CustomButton";
 

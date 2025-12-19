@@ -5,6 +5,7 @@ import { useAppDispatch } from "../../store/hooks";
 import { getInwardById, updateInward, validateInward } from "../../store/slices/inventorySlice";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiSave, FiCheckCircle, FiInfo, FiSearch } from "react-icons/fi";
+import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 import type { RootState } from "../../store/store";
 
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
@@ -292,6 +293,11 @@ const InwardDetailPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50">
+      {/* Inventory Navigation Tabs */}
+      <div className="px-6 pt-6">
+        <InventoryNavigationTabs />
+      </div>
+      
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

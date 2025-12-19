@@ -1,8 +1,11 @@
+
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Chart } from "primereact/chart";
-import { FiTruck, FiMapPin, FiZap, FiDollarSign, FiBarChart2 } from "react-icons/fi";
+import { FiTruck, FiMapPin, FiZap } from "react-icons/fi";
+import { TbCurrencyRupee } from "react-icons/tb";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { PieChart } from "@mui/x-charts/PieChart";
 
 import type { RootState } from "../../store/store";
 import CustomSelect from "../../widgets/CustomSelect";
@@ -96,15 +99,11 @@ const VehicleDashboardPage: React.FC = () => {
     return { petrol, diesel, electric };
   }, [projectFuelEntries]);
 
-  const fuelTypeChartData = {
-    labels: ["Petrol", "Diesel", "Electric"],
-    datasets: [
-      {
-        data: [fuelByType.petrol, fuelByType.diesel, fuelByType.electric],
-        backgroundColor: ["#10b981", "#f59e0b", "#3b82f6"],
-      },
-    ],
-  };
+  const pieData = [
+    { id: 0, value: fuelByType.petrol, label: 'Petrol', color: '#10b981' },
+    { id: 1, value: fuelByType.diesel, label: 'Diesel', color: '#f59e0b' },
+    { id: 2, value: fuelByType.electric, label: 'Electric', color: '#3b82f6' }
+  ].filter(d => d.value > 0);
 
   const monthlyTrendData = useMemo(() => {
     const currentDate = new Date();
@@ -112,52 +111,46 @@ const VehicleDashboardPage: React.FC = () => {
     const currentYear = currentDate.getFullYear();
 
     const labels = [];
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      labels.push(date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" }));
-    }
+    const petrolData = [];
+    const dieselData = [];
+    const electricData = [];
 
-    const petrolData: Record<string, number> = {};
-    const dieselData: Record<string, number> = {};
-    const electricData: Record<string, number> = {};
+    const pDataMap: Record<string, number> = {};
+    const dDataMap: Record<string, number> = {};
+    const eDataMap: Record<string, number> = {};
 
     for (let i = 11; i >= 0; i--) {
       const date = new Date(currentYear, currentMonth - i, 1);
       const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      petrolData[monthKey] = 0;
-      dieselData[monthKey] = 0;
-      electricData[monthKey] = 0;
+      labels.push(date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" }));
+      pDataMap[monthKey] = 0;
+      dDataMap[monthKey] = 0;
+      eDataMap[monthKey] = 0;
     }
 
     fuelEntries.filter(e => e.status === "CLOSED").forEach((entry) => {
       const date = new Date(entry.date);
       const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      if (petrolData[monthKey] !== undefined) {
-        if (entry.fuelType === "PETROL") petrolData[monthKey] += entry.litres;
-        else if (entry.fuelType === "DIESEL") dieselData[monthKey] += entry.litres;
-        else if (entry.fuelType === "ELECTRIC") electricData[monthKey] += entry.litres;
+      if (pDataMap[monthKey] !== undefined) {
+        if (entry.fuelType === "PETROL") pDataMap[monthKey] += entry.litres;
+        else if (entry.fuelType === "DIESEL") dDataMap[monthKey] += entry.litres;
+        else if (entry.fuelType === "ELECTRIC") eDataMap[monthKey] += entry.litres;
       }
     });
-
-    const getPetrolArray = [];
-    const getDieselArray = [];
-    const getElectricArray = [];
 
     for (let i = 11; i >= 0; i--) {
       const date = new Date(currentYear, currentMonth - i, 1);
       const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      getPetrolArray.push(petrolData[monthKey]);
-      getDieselArray.push(dieselData[monthKey]);
-      getElectricArray.push(electricData[monthKey]);
+      petrolData.push(pDataMap[monthKey]);
+      dieselData.push(dDataMap[monthKey]);
+      electricData.push(eDataMap[monthKey]);
     }
 
     return {
       labels,
-      datasets: [
-        { label: "Petrol", data: getPetrolArray, backgroundColor: "#10b981" },
-        { label: "Diesel", data: getDieselArray, backgroundColor: "#f59e0b" },
-        { label: "Electric", data: getElectricArray, backgroundColor: "#3b82f6" },
-      ],
+      petrolData,
+      dieselData,
+      electricData
     };
   }, [fuelEntries]);
 
@@ -198,31 +191,6 @@ const VehicleDashboardPage: React.FC = () => {
       .sort((a, b) => b.performanceRate - a.performanceRate)
       .slice(0, 5);
   }, [projectVehicles, projectFuelEntries]);
-
-  const chartOptions = {
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-      y: { grid: { color: "#f3f4f6" }, ticks: { font: { size: 10 } } },
-    },
-  };
-
-  const donutOptions = {
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-  };
-
-  const barOptions = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true, position: "bottom" as const, labels: { usePointStyle: true, padding: 15, font: { size: 11 } } },
-    },
-    scales: {
-      x: { stacked: false, grid: { display: true, color: "#f3f4f6" }, ticks: { font: { size: 10 } } },
-      y: { stacked: false, grid: { display: false }, ticks: { font: { size: 10 } } },
-    },
-  };
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
   const formatNumber = (value: number, decimals = 1) => value.toFixed(decimals);
@@ -289,13 +257,13 @@ const VehicleDashboardPage: React.FC = () => {
           <div><div className="text-xs text-slate-500">Total Fuel</div><div className="text-xs font-bold text-slate-800">{formatNumber(stats.totalLitres)} L</div></div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-rose-100 text-rose-600 rounded-lg"><FiDollarSign size={24} /></div>
+          <div className="p-3 bg-rose-100 text-rose-600 rounded-lg"><TbCurrencyRupee size={24} /></div>
           <div><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xs font-bold text-slate-800">{formatCurrency(stats.totalCost)}</div></div>
         </div>
 
         {stats.totalRentCost > 0 && (
           <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-purple-100 text-purple-600 rounded-lg"><FiDollarSign size={24} /></div>
+            <div className="p-3 bg-purple-100 text-purple-600 rounded-lg"><TbCurrencyRupee size={24} /></div>
             <div><div className="text-xs text-slate-500">Rent Cost</div><div className="text-xs font-bold text-slate-800">{formatCurrency(stats.totalRentCost)}</div></div>
           </div>
         )}
@@ -306,17 +274,41 @@ const VehicleDashboardPage: React.FC = () => {
         <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
           <h3 className="text-xs font-semibold text-slate-800 mb-4">Fuel Cost by Type</h3>
           <div className="h-64 flex flex-col items-center justify-center">
-            <Chart type="doughnut" data={fuelTypeChartData} options={donutOptions} className="w-full h-full" />
+            {pieData.length > 0 ? (
+              <PieChart
+                series={[
+                  {
+                    data: pieData,
+                    innerRadius: 60,
+                    paddingAngle: 5,
+                    cornerRadius: 5,
+                  },
+                ]}
+                height={200}
+                slotProps={{ legend: { hidden: true } as any }}
+              />
+            ) : <div className="text-xs text-slate-400">No data</div>}
           </div>
           <div className="flex justify-center gap-4 mt-4 text-xs">
-            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Petrol: {formatCurrency(fuelByType.petrol)}</div>
-            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Diesel: {formatCurrency(fuelByType.diesel)}</div>
+            {pieData.map(d => (
+              <div key={d.label} className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }}></span> {d.label}: {formatCurrency(d.value)}
+              </div>
+            ))}
           </div>
         </div>
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
           <h3 className="text-xs font-semibold text-slate-800 mb-4">12-Month Fuel Consumption</h3>
           <div className="h-72">
-            <Chart type="bar" data={monthlyTrendData} options={barOptions} />
+            <BarChart
+              xAxis={[{ scaleType: 'band', data: monthlyTrendData.labels }]}
+              series={[
+                { data: monthlyTrendData.petrolData, label: 'Petrol', color: '#10b981', stack: 'total' },
+                { data: monthlyTrendData.dieselData, label: 'Diesel', color: '#f59e0b', stack: 'total' },
+                { data: monthlyTrendData.electricData, label: 'Electric', color: '#3b82f6', stack: 'total' },
+              ]}
+              height={280}
+            />
           </div>
         </div>
       </div>

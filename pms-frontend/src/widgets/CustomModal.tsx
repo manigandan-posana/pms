@@ -7,8 +7,8 @@ import {
 } from '@mui/material';
 import type { DialogProps } from '@mui/material';
 
-interface CustomModalProps extends DialogProps {
-    title: string;
+interface CustomModalProps extends Omit<DialogProps, 'title'> {
+    title: React.ReactNode;
     onClose: () => void;
     footer?: React.ReactNode;
 }

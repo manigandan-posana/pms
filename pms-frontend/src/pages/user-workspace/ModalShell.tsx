@@ -1,5 +1,6 @@
+
 import { type FC, type ReactNode } from "react";
-import { Dialog } from 'primereact/dialog';
+import CustomModal from "../../widgets/CustomModal";
 
 export interface ModalShellProps {
   open: boolean;
@@ -17,19 +18,18 @@ const ModalShell: FC<ModalShellProps> = ({
   footer = null,
 }) => {
   return (
-    <Dialog
-      header={title}
-      visible={open}
-      onHide={onClose}
-      modal
-      blockScroll
-      draggable={false}
-      resizable={false}
-      style={{ width: 'min(100%, 960px)' }}
-      footer={footer ? <div>{footer}</div> : undefined}
+    <CustomModal
+      open={open}
+      onClose={onClose}
+      title={title}
+      maxWidth="md"
+      fullWidth
+      footer={footer}
     >
-      <div className="max-h-[70vh] overflow-y-auto py-3 text-slate-600">{children}</div>
-    </Dialog>
+      <div className="max-h-[70vh] overflow-y-auto text-slate-600">
+        {children}
+      </div>
+    </CustomModal>
   );
 };
 

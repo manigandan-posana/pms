@@ -13,10 +13,10 @@ import CustomTextField from "../../widgets/CustomTextField";
 
 interface TransferLine {
   id: number;
-  materialCode?: string | null;
-  materialName?: string | null;
+  code?: string | null;
+  name?: string | null;
   unit?: string | null;
-  quantity: number;
+  transferQty: number;
 }
 
 interface TransferDetail {
@@ -24,8 +24,9 @@ interface TransferDetail {
   code: string;
   fromProjectName?: string;
   toProjectName?: string;
-  transferDate?: string;
+  date?: string;
   remarks?: string;
+  items?: number;
   lines: TransferLine[];
 }
 
@@ -82,8 +83,8 @@ const AdminTransferDetailPage: React.FC = () => {
 
     const lowerQuery = searchQuery.toLowerCase();
     return record.lines.filter(line =>
-      line.materialCode?.toLowerCase().includes(lowerQuery) ||
-      line.materialName?.toLowerCase().includes(lowerQuery)
+      line.code?.toLowerCase().includes(lowerQuery) ||
+      line.name?.toLowerCase().includes(lowerQuery)
     );
   }, [record?.lines, searchQuery]);
 
@@ -116,21 +117,21 @@ const AdminTransferDetailPage: React.FC = () => {
 
   const columns: ColumnDef<TransferLine>[] = [
     {
-      field: 'materialCode',
+      field: 'code',
       header: 'Code',
       width: '150px',
       sortable: true,
-      body: (row) => <span className="font-mono text-xs font-semibold text-slate-700">{row.materialCode}</span>
+      body: (row) => <span className="font-mono text-xs font-semibold text-slate-700">{row.code}</span>
     },
-    { field: 'materialName', header: 'Material Name', sortable: true },
+    { field: 'name', header: 'Material Name', sortable: true },
     { field: 'unit', header: 'Unit', sortable: true, width: '100px', align: 'center' },
     {
-      field: 'quantity',
+      field: 'transferQty',
       header: 'Quantity',
       sortable: true,
       width: '150px',
       align: 'right',
-      body: (row) => <span className="font-bold text-purple-600">{row.quantity}</span>
+      body: (row) => <span className="font-bold text-purple-600">{row.transferQty}</span>
     }
   ];
 
@@ -179,7 +180,7 @@ const AdminTransferDetailPage: React.FC = () => {
               </div>
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Date</span>
-                <span className="font-semibold text-slate-800">{record.transferDate || '—'}</span>
+                <span className="font-semibold text-slate-800">{record.date || '—'}</span>
               </div>
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Total Items</span>

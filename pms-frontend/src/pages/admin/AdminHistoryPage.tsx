@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { FiArrowDown, FiArrowUp, FiRefreshCw, FiSearch, FiArrowRight, FiArrowLeft } from "react-icons/fi";
 
 import { Get as apiGet } from "../../utils/apiService";
-import type { RootState } from "../../store/store";
+import type { RootState, AppDispatch } from "../../store/store";
+import { setSelectedAdminProject } from "../../store/slices/adminProjectsSlice";
 import CustomTable, { ColumnDef } from "../../widgets/CustomTable";
 import CustomTabs from "../../widgets/CustomTabs";
 import CustomSelect from "../../widgets/CustomSelect";
@@ -62,11 +63,12 @@ interface PaginatedResponse<T> {
 
 const AdminHistoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { token } = useSelector((state: RootState) => state.auth);
+  const { selectedAdminProjectId } = useSelector((state: RootState) => state.adminProjects);
 
   const [activeTab, setActiveTab] = useState(0);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | string>("");
 
   // Inward state
   const [inwardRecords, setInwardRecords] = useState<InwardHistoryRecord[]>([]);
@@ -107,15 +109,15 @@ const AdminHistoryPage: React.FC = () => {
   // Load data when tab or filters change
   useEffect(() => {
     if (activeTab === 0) loadInwards();
-  }, [activeTab, inwardPage, inwardPageSize, inwardSearch, selectedProjectId, inwardDateFrom, inwardDateTo]);
+  }, [activeTab, inwardPage, inwardPageSize, inwardSearch, selectedAdminProjectId, inwardDateFrom, inwardDateTo]);
 
   useEffect(() => {
     if (activeTab === 1) loadOutwards();
-  }, [activeTab, outwardPage, outwardPageSize, outwardSearch, selectedProjectId, outwardDateFrom, outwardDateTo]);
+  }, [activeTab, outwardPage, outwardPageSize, outwardSearch, selectedAdminProjectId, outwardDateFrom, outwardDateTo]);
 
   useEffect(() => {
     if (activeTab === 2) loadTransfers();
-  }, [activeTab, transferPage, transferPageSize, transferSearch, selectedProjectId, transferDateFrom, transferDateTo]);
+  }, [activeTab, transferPage, transferPageSize, transferSearch, selectedAdminProjectId, transferDateFrom, transferDateTo]);
 
   const loadProjects = async () => {
     if (!token) return;
@@ -138,7 +140,7 @@ const AdminHistoryPage: React.FC = () => {
         page: inwardPage + 1,
         size: inwardPageSize,
         search: inwardSearch.trim() || undefined,
-        projectId: selectedProjectId || undefined,
+        projectId: selectedAdminProjectId || undefined,
         fromDate: inwardDateFrom ? inwardDateFrom.toISOString().split('T')[0] : undefined,
         toDate: inwardDateTo ? inwardDateTo.toISOString().split('T')[0] : undefined,
       };
@@ -163,7 +165,7 @@ const AdminHistoryPage: React.FC = () => {
         page: outwardPage + 1,
         size: outwardPageSize,
         search: outwardSearch.trim() || undefined,
-        projectId: selectedProjectId || undefined,
+        projectId: selectedAdminProjectId || undefined,
         fromDate: outwardDateFrom ? outwardDateFrom.toISOString().split('T')[0] : undefined,
         toDate: outwardDateTo ? outwardDateTo.toISOString().split('T')[0] : undefined,
       };
@@ -187,7 +189,7 @@ const AdminHistoryPage: React.FC = () => {
         page: transferPage + 1,
         size: transferPageSize,
         search: transferSearch.trim() || undefined,
-        projectId: selectedProjectId || undefined,
+        projectId: selectedAdminProjectId || undefined,
         fromDate: transferDateFrom ? transferDateFrom.toISOString().split('T')[0] : undefined,
         toDate: transferDateTo ? transferDateTo.toISOString().split('T')[0] : undefined,
       };
@@ -297,9 +299,9 @@ const AdminHistoryPage: React.FC = () => {
           <div className="w-full md:w-72 bg-white p-1 rounded-lg shadow-sm border border-slate-200">
             <CustomSelect
               label="Filter by Project"
-              value={selectedProjectId}
+              value={selectedAdminProjectId || ""}
               onChange={(v) => {
-                setSelectedProjectId(v);
+                dispatch(setSelectedAdminProject(v));
                 setInwardPage(0);
                 setOutwardPage(0);
                 setTransferPage(0);

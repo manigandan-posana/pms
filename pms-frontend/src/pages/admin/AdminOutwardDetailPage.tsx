@@ -13,11 +13,10 @@ import CustomTextField from "../../widgets/CustomTextField";
 
 interface OutwardLine {
   id: number;
-  materialCode?: string | null;
-  materialName?: string | null;
+  code?: string | null;
+  name?: string | null;
   unit?: string | null;
-  requestedQty: number;
-  issuedQty: number;
+  issueQty: number;
 }
 
 interface OutwardDetail {
@@ -26,9 +25,11 @@ interface OutwardDetail {
   projectName?: string;
   issueTo?: string;
   jobNo?: string;
-  registerDate?: string;
+  date?: string;
   remarks?: string;
   status?: string;
+  validated?: boolean;
+  items?: number;
   lines: OutwardLine[];
 }
 
@@ -85,8 +86,8 @@ const AdminOutwardDetailPage: React.FC = () => {
 
     const lowerQuery = searchQuery.toLowerCase();
     return record.lines.filter(line =>
-      line.materialCode?.toLowerCase().includes(lowerQuery) ||
-      line.materialName?.toLowerCase().includes(lowerQuery)
+      line.code?.toLowerCase().includes(lowerQuery) ||
+      line.name?.toLowerCase().includes(lowerQuery)
     );
   }, [record?.lines, searchQuery]);
 
@@ -119,43 +120,21 @@ const AdminOutwardDetailPage: React.FC = () => {
 
   const columns: ColumnDef<OutwardLine>[] = [
     {
-      field: 'materialCode',
+      field: 'code',
       header: 'Code',
       width: '120px',
       sortable: true,
-      body: (row) => <span className="font-mono text-xs font-semibold text-slate-700">{row.materialCode}</span>
+      body: (row) => <span className="font-mono text-xs font-semibold text-slate-700">{row.code}</span>
     },
-    { field: 'materialName', header: 'Material Name', sortable: true },
+    { field: 'name', header: 'Material Name', sortable: true },
     { field: 'unit', header: 'Unit', sortable: true, width: '80px', align: 'center' },
     {
-      field: 'requestedQty',
-      header: 'Requested',
+      field: 'issueQty',
+      header: 'Issued Qty',
       sortable: true,
-      width: '100px',
+      width: '120px',
       align: 'right',
-      body: (row) => <span className="font-medium text-slate-600">{row.requestedQty}</span>
-    },
-    {
-      field: 'issuedQty',
-      header: 'Issued',
-      sortable: true,
-      width: '100px',
-      align: 'right',
-      body: (row) => <span className="font-bold text-red-600">{row.issuedQty}</span>
-    },
-    {
-      field: 'id',
-      header: 'Variance',
-      width: '100px',
-      align: 'right',
-      body: (row) => {
-        const variance = row.issuedQty - row.requestedQty;
-        return (
-          <span className={`font-semibold ${variance === 0 ? 'text-slate-400' : variance > 0 ? 'text-blue-600' : 'text-orange-500'}`}>
-            {variance > 0 ? '+' : ''}{variance}
-          </span>
-        );
-      }
+      body: (row) => <span className="font-bold text-red-600">{row.issueQty}</span>
     }
   ];
 
@@ -200,7 +179,7 @@ const AdminOutwardDetailPage: React.FC = () => {
               </div>
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Date</span>
-                <span className="font-semibold text-slate-800">{record.registerDate || '—'}</span>
+                <span className="font-semibold text-slate-800">{record.date || '—'}</span>
               </div>
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Issue To</span>

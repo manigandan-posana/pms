@@ -1,15 +1,9 @@
+
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Dropdown } from "primereact/dropdown";
 import type { RootState } from "../store/store";
 import { setSelectedProject } from "../store/slices/workspaceSlice";
-
-interface Project {
-  id: string;
-  name?: string;
-  code?: string;
-  [key: string]: any;
-}
+import CustomSelect from "../widgets/CustomSelect";
 
 const ProjectSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -26,27 +20,39 @@ const ProjectSelector: React.FC = () => {
     }
   }, [selectedProjectId, projects, dispatch]);
 
-  const handleProjectChange = (e: { value: string }) => {
-    dispatch(setSelectedProject(e.value));
+  const handleProjectChange = (newValue: any) => {
+    const value = newValue.target ? newValue.target.value : newValue;
+    dispatch(setSelectedProject(value));
   };
 
-  const selectedProject = projects.find((p: Project) => p.id === selectedProjectId);
+  const projectOptions = projects.map((p) => ({
+    value: p.id,
+    label: p.name || `Project ${p.id}`,
+  }));
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-        Project
-      </span>
-      <Dropdown
-        value={selectedProjectId}
-        options={projects}
+      <CustomSelect
+        value={selectedProjectId || ''}
+        options={projectOptions}
         onChange={handleProjectChange}
-        optionLabel="name"
-        optionValue="id"
-        placeholder="Select Project"
-        className="project-dropdown"
-        panelClassName="project-dropdown-panel"
-        disabled={projects.length === 0}
+        label="Select Project"
+        size="small"
+        sx={{
+          minWidth: 200,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            backgroundColor: '#f8fafc',
+            '& fieldset': { borderColor: '#e2e8f0' },
+            '&:hover fieldset': { borderColor: '#cbd5e1' },
+            '&.Mui-focused fieldset': { borderColor: '#2563eb' },
+          },
+          '& .MuiSelect-select': {
+            py: 1,
+            fontWeight: 500,
+            color: '#334155'
+          }
+        }}
       />
     </div>
   );

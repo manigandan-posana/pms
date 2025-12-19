@@ -10,6 +10,7 @@ import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import { FiPlus } from "react-icons/fi";
+import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 // -------- Types -------- //
 
@@ -163,6 +164,7 @@ const InwardPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-slate-50">
       <div className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
+        <InventoryNavigationTabs />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xs font-bold text-slate-800">Inward History</h1>

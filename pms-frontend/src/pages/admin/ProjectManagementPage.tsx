@@ -384,12 +384,6 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
         >
           <div className="grid gap-4 py-2">
             <CustomTextField
-              label="Code (auto-generated if empty)"
-              value={modalState.fields.code}
-              onChange={(e) => handleFieldChange('code', e.target.value)}
-              placeholder="Leave empty for auto-generation"
-            />
-            <CustomTextField
               label="Project Name *"
               value={modalState.fields.name}
               onChange={(e) => handleFieldChange('name', e.target.value)}

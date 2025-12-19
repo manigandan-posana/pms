@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { Chart } from "primereact/chart";
 import toast from "react-hot-toast";
 import { getAnalytics } from "../../store/slices/adminUsersSlice";
 import { FiBox, FiFile, FiUsers, FiTrendingUp } from "react-icons/fi";
 import type { AppDispatch } from "../../store/store";
+import { BarChart } from "@mui/x-charts/BarChart";
 
 type AnalyticsSummary = {
   totalProjects: number;
@@ -45,81 +46,6 @@ const DashboardPage: React.FC = () => {
     };
   }, [dispatch]);
 
-  const chartBaseOptions = useMemo(
-    () => ({
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            color: "#334155",
-            font: { size: 10 },
-          },
-        },
-      },
-      layout: {
-        padding: { top: 8, right: 8, bottom: 8, left: 8 },
-      },
-      scales: {
-        x: {
-          ticks: { color: "#475569", font: { size: 10 } },
-          grid: { display: false },
-        },
-        y: {
-          ticks: { color: "#475569", font: { size: 10 } },
-          grid: { color: "#e2e8f0" },
-        },
-      },
-    }),
-    []
-  );
-
-  const totalsChartData = useMemo(() => {
-    const summary = analytics || {
-      totalProjects: 0,
-      totalMaterials: 0,
-      totalUsers: 0,
-      received: 0,
-      utilized: 0,
-    };
-    return {
-      labels: ["Projects", "Materials", "Users"],
-      datasets: [
-        {
-          type: "bar" as const,
-          label: "Totals",
-          backgroundColor: "#10b981",
-          borderRadius: 4,
-          data: [
-            summary.totalProjects,
-            summary.totalMaterials,
-            summary.totalUsers,
-          ],
-        },
-      ],
-    };
-  }, [analytics]);
-
-  const materialChartData = useMemo(() => {
-    const summary = analytics || {
-      totalProjects: 0,
-      totalMaterials: 0,
-      totalUsers: 0,
-      received: 0,
-      utilized: 0,
-    };
-    return {
-      labels: ["Received", "Utilized"],
-      datasets: [
-        {
-          label: "Quantity",
-          backgroundColor: ["#3b82f6", "#f59e0b"],
-          borderRadius: 4,
-          data: [summary.received, summary.utilized],
-        },
-      ],
-    };
-  }, [analytics]);
-
   const summary =
     analytics ||
     ({
@@ -130,8 +56,8 @@ const DashboardPage: React.FC = () => {
       utilized: 0,
     } as AnalyticsSummary);
 
-  const utilizationPercentage = summary.received > 0 
-    ? Math.round((summary.utilized / summary.received) * 100) 
+  const utilizationPercentage = summary.received > 0
+    ? Math.round((summary.utilized / summary.received) * 100)
     : 0;
 
   if (loadingAnalytics) {
@@ -224,21 +150,33 @@ const DashboardPage: React.FC = () => {
 
       {/* Charts */}
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm flex flex-col">
           <h2 className="text-xs font-semibold text-slate-900 mb-3">
             System Overview
           </h2>
-          <div style={{ height: "250px" }}>
-            <Chart type="bar" data={totalsChartData} options={chartBaseOptions} />
+          <div className="flex-1" style={{ width: '100%', minHeight: 250 }}>
+            <BarChart
+              xAxis={[{ scaleType: 'band', data: ['Projects', 'Materials', 'Users'] }]}
+              series={[{ data: [summary.totalProjects, summary.totalMaterials, summary.totalUsers], color: '#10b981' }]}
+              margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
+              height={250}
+              slotProps={{ legend: { hidden: true } }}
+            />
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm flex flex-col">
           <h2 className="text-xs font-semibold text-slate-900 mb-3">
             Material Inventory
           </h2>
-          <div style={{ height: "250px" }}>
-            <Chart type="bar" data={materialChartData} options={chartBaseOptions} />
+          <div className="flex-1" style={{ width: '100%', minHeight: 250 }}>
+            <BarChart
+              xAxis={[{ scaleType: 'band', data: ['Received', 'Utilized'] }]}
+              series={[{ data: [summary.received, summary.utilized], color: '#3b82f6' }]}
+              margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
+              height={250}
+              slotProps={{ legend: { hidden: true } }}
+            />
           </div>
         </div>
       </div>

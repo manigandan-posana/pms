@@ -1,8 +1,19 @@
+
 import React, { useState } from "react";
-import { InputText } from "primereact/inputtext";
-import { Dropdown } from "primereact/dropdown";
-import { MultiSelect } from "primereact/multiselect";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Autocomplete,
+  Button,
+  Chip,
+  Box,
+  Popover
+} from "@mui/material";
 import { FiFilter, FiX } from "react-icons/fi";
+import CustomSelect from "../widgets/CustomSelect";
 
 interface FilterOption {
   label: string;
@@ -30,75 +41,131 @@ export const CompactFilters: React.FC<CompactFiltersProps> = ({
   onChange,
   onReset,
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+
   const hasActiveFilters = Object.values(values).some(v => v && (Array.isArray(v) ? v.length > 0 : v !== ""));
+  const activeCount = Object.values(values).filter(v => v && (Array.isArray(v) ? v.length > 0 : true)).length;
 
   return (
-    <div className="space-y-1">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border transition ${
-          hasActiveFilters
-            ? "border-blue-300 bg-blue-50 text-blue-700"
-            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-        }`}
+    <div>
+      <Button
+        aria-describedby={id}
+        variant={hasActiveFilters ? "outlined" : "outlined"}
+        color={hasActiveFilters ? "primary" : "inherit"}
+        size="small"
+        onClick={handleClick}
+        startIcon={<FiFilter />}
+        sx={{
+          borderColor: hasActiveFilters ? 'primary.main' : 'divider',
+          backgroundColor: hasActiveFilters ? 'primary.50' : 'background.paper',
+          color: hasActiveFilters ? 'primary.main' : 'text.secondary',
+          textTransform: 'none',
+          minWidth: 'auto',
+          fontSize: '0.8125rem',
+          py: 0.5,
+          '&:hover': {
+            borderColor: hasActiveFilters ? 'primary.dark' : 'text.primary',
+            backgroundColor: hasActiveFilters ? 'primary.100' : 'action.hover',
+          }
+        }}
       >
-        <FiFilter size={12} />
-        <span>Filters</span>
-        {hasActiveFilters && <span className="text-[8px]">({Object.values(values).filter(v => v && (Array.isArray(v) ? v.length > 0 : true)).length})</span>}
-      </button>
-
-      {expanded && (
-        <div className="grid gap-1 rounded-md border border-slate-200 bg-white p-1 text-[9px] sm:grid-cols-2 lg:grid-cols-3">
+        Filters {hasActiveFilters && `(${activeCount})`}
+      </Button>
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        PaperProps={{
+          sx: { p: 2, width: 320, maxWidth: '100%' }
+        }}
+      >
+        <div className="flex flex-col gap-3">
           {filters.map((filter) => (
-            <div key={filter.id} className="flex flex-col gap-0.5">
-              <label className="font-semibold text-slate-700">{filter.label}</label>
+            <div key={filter.id} className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-slate-700">{filter.label}</span>
               {filter.type === "text" && (
-                <InputText
-                  type="text"
+                <TextField
+                  size="small"
+                  variant="outlined"
                   value={values[filter.id] || ""}
                   onChange={(e) => onChange(filter.id, e.target.value)}
-                  placeholder={filter.placeholder || ""}
-                  className="p-inputtext-xs w-full"
+                  placeholder={filter.placeholder}
+                  fullWidth
+                  InputProps={{ style: { fontSize: '0.875rem' } }}
                 />
               )}
               {filter.type === "select" && filter.options && (
-                <Dropdown
+                <CustomSelect
                   value={values[filter.id] || ""}
                   options={filter.options}
-                  onChange={(e) => onChange(filter.id, e.value)}
-                  placeholder={filter.placeholder || "Select"}
-                  className="p-dropdown-sm w-full"
-                  optionLabel="label"
-                  optionValue="value"
+                  onChange={(val) => onChange(filter.id, val)}
+                  placeholder={filter.placeholder}
+                  size="small"
                 />
               )}
               {filter.type === "multiselect" && filter.options && (
-                <MultiSelect
-                  value={values[filter.id] || []}
+                <Autocomplete
+                  multiple
+                  size="small"
                   options={filter.options}
-                  onChange={(e) => onChange(filter.id, e.value)}
-                  placeholder={filter.placeholder || "Select"}
-                  className="p-multiselect-sm w-full"
-                  optionLabel="label"
-                  optionValue="value"
-                  display="chip"
-                  maxSelectedLabels={1}
+                  getOptionLabel={(option) => option.label}
+                  value={filter.options.filter(opt => (values[filter.id] || []).includes(opt.value))}
+                  onChange={(_, newValue) => {
+                    onChange(filter.id, newValue.map(v => v.value));
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder={filter.placeholder} />
+                  )}
+                  renderTags={(tagValue, getTagProps) =>
+                    tagValue.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option.value}
+                        label={option.label}
+                        size="small"
+                      />
+                    ))
+                  }
                 />
               )}
             </div>
           ))}
+
           {onReset && hasActiveFilters && (
-            <button
-              onClick={onReset}
-              className="col-span-full mt-1 inline-flex items-center justify-center gap-1 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[8px] font-medium text-slate-700 hover:bg-slate-200"
-            >
-              <FiX size={10} />
-              Reset
-            </button>
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <Button
+                size="small"
+                startIcon={<FiX />}
+                onClick={onReset}
+                color="error"
+                sx={{ textTransform: 'none' }}
+              >
+                Reset Filters
+              </Button>
+            </div>
           )}
         </div>
-      )}
+      </Popover>
     </div>
   );
 };
