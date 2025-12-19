@@ -135,7 +135,7 @@ const ProjectManagerDashboard: React.FC = () => {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Project Manager Dashboard</h1>
+          <h1 className="text-xs font-bold text-slate-900">Project Manager Dashboard</h1>
           <p className="text-slate-600 mt-1">Manage project assignments and resources</p>
         </div>
         <CustomButton
@@ -156,7 +156,7 @@ const ProjectManagerDashboard: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 text-slate-800">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FiBriefcase /></div>
-            <h2 className="text-xl font-semibold">Project Assignments</h2>
+            <h2 className="text-xs font-semibold">Project Assignments</h2>
           </div>
           <CustomButton
             startIcon={<FiPlus />}
@@ -180,7 +180,7 @@ const ProjectManagerDashboard: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
         <div className="flex items-center gap-2 text-slate-800 mb-4">
           <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><FiUsers /></div>
-          <h2 className="text-xl font-semibold">Resource Allocations</h2>
+          <h2 className="text-xs font-semibold">Resource Allocations</h2>
         </div>
         <CustomTable
           data={resources}

@@ -156,7 +156,7 @@ const ProcurementPage: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">Procurement</h1>
+        <h1 className="text-xs font-semibold text-slate-800">Procurement</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
@@ -213,7 +213,7 @@ const ProcurementPage: React.FC = () => {
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-2 text-sm font-semibold text-slate-700">
+        <div className="mb-2 text-xs font-semibold text-slate-700">
           Requests
         </div>
         <div>

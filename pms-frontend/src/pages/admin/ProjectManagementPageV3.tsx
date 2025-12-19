@@ -115,7 +115,7 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="font-mono font-semibold text-sm">{row.code}</span>
+        <span className="font-mono font-semibold text-xs">{row.code}</span>
       ),
     },
     {
@@ -133,7 +133,7 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '20%',
       body: (row: Project) => (
-        <span className="text-sm text-gray-600 truncate">{row.description}</span>
+        <span className="text-xs text-gray-600 truncate">{row.description}</span>
       ),
     },
     {
@@ -167,7 +167,7 @@ export const ProjectManagementPageV3: React.FC = () => {
       sortable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-xs text-gray-600">
           {new Date(row.startDate).toLocaleDateString()}
         </span>
       ),
@@ -188,7 +188,7 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="text-sm">{row.manager || '-'}</span>
+        <span className="text-xs">{row.manager || '-'}</span>
       ),
     },
   ];

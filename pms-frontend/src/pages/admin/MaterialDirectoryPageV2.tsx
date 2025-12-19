@@ -225,7 +225,7 @@ export const MaterialDirectoryPageV2: React.FC = () => {
       filterable: true,
       width: "12%",
       body: (row: Material) => (
-        <span className="font-mono font-semibold text-sm">{row.code}</span>
+        <span className="font-mono font-semibold text-xs">{row.code}</span>
       ),
     },
     {
@@ -249,7 +249,7 @@ export const MaterialDirectoryPageV2: React.FC = () => {
       sortable: true,
       width: "10%",
       body: (row: Material) => (
-        <span className="text-sm text-gray-600">{row.unit}</span>
+        <span className="text-xs text-gray-600">{row.unit}</span>
       ),
     },
     {
@@ -273,7 +273,7 @@ export const MaterialDirectoryPageV2: React.FC = () => {
       sortable: true,
       width: "10%",
       body: (row: Material) => (
-        <span className="text-sm text-gray-600">{row.minStock}</span>
+        <span className="text-xs text-gray-600">{row.minStock}</span>
       ),
     },
     {
@@ -292,7 +292,7 @@ export const MaterialDirectoryPageV2: React.FC = () => {
       filterable: true,
       width: "11%",
       body: (row: Material) => (
-        <span className="text-sm">{row.supplier || "-"}</span>
+        <span className="text-xs">{row.supplier || "-"}</span>
       ),
     },
   ];
@@ -362,7 +362,7 @@ export const MaterialDirectoryPageV2: React.FC = () => {
       {/* Summary View */}
       {viewMode === 'summary' && (
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">Material Directory</h2>
+          <h2 className="text-xs font-bold text-slate-800 mb-6">Material Directory</h2>
           
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -370,12 +370,12 @@ export const MaterialDirectoryPageV2: React.FC = () => {
             <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600 uppercase tracking-wide mb-1">Total Materials</p>
-                  <h3 className="text-4xl font-bold text-blue-900">{totalMaterials}</h3>
-                  <p className="text-sm text-blue-700 mt-2">All materials in inventory</p>
+                  <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Total Materials</p>
+                  <h3 className="text-xs font-bold text-blue-900">{totalMaterials}</h3>
+                  <p className="text-xs text-blue-700 mt-2">All materials in inventory</p>
                 </div>
                 <div className="bg-blue-200 p-4 rounded-full">
-                  <i className="pi pi-box text-3xl text-blue-700"></i>
+                  <i className="pi pi-box text-xs text-blue-700"></i>
                 </div>
               </div>
             </div>
@@ -387,16 +387,16 @@ export const MaterialDirectoryPageV2: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 uppercase tracking-wide mb-1">Categories</p>
-                  <h3 className="text-4xl font-bold text-green-900">{totalCategories}</h3>
-                  <p className="text-sm text-green-700 mt-2">Click to view all categories</p>
+                  <p className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">Categories</p>
+                  <h3 className="text-xs font-bold text-green-900">{totalCategories}</h3>
+                  <p className="text-xs text-green-700 mt-2">Click to view all categories</p>
                 </div>
                 <div className="bg-green-200 p-4 rounded-full">
-                  <i className="pi pi-th-large text-3xl text-green-700"></i>
+                  <i className="pi pi-th-large text-xs text-green-700"></i>
                 </div>
               </div>
               <div className="mt-3 flex items-center text-green-700">
-                <span className="text-sm font-semibold">View Categories</span>
+                <span className="text-xs font-semibold">View Categories</span>
                 <i className="pi pi-arrow-right ml-2"></i>
               </div>
             </div>
@@ -420,7 +420,7 @@ export const MaterialDirectoryPageV2: React.FC = () => {
       {viewMode === 'categories' && (
         <div>
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-slate-800">Material Categories</h2>
+            <h2 className="text-xs font-bold text-slate-800">Material Categories</h2>
             <PrimeButton
               label="Back to Summary"
               icon="pi pi-arrow-left"
@@ -442,16 +442,16 @@ export const MaterialDirectoryPageV2: React.FC = () => {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">{categoryName}</h3>
+                    <h3 className="text-xs font-bold text-slate-800 mb-2">{categoryName}</h3>
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                         {items.length} {items.length === 1 ? 'material' : 'materials'}
                       </span>
                     </div>
                   </div>
-                  <i className="pi pi-angle-right text-2xl text-slate-400"></i>
+                  <i className="pi pi-angle-right text-xs text-slate-400"></i>
                 </div>
-                <p className="text-sm text-slate-600">Click to view materials in this category</p>
+                <p className="text-xs text-slate-600">Click to view materials in this category</p>
               </div>
             ))}
           </div>
@@ -473,10 +473,10 @@ export const MaterialDirectoryPageV2: React.FC = () => {
               size="small"
             />
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-800">
+              <h2 className="text-xs font-bold text-slate-800">
                 {selectedCategory}
               </h2>
-              <p className="text-sm text-slate-600">
+              <p className="text-xs text-slate-600">
                 {categoryMaterials.length} {categoryMaterials.length === 1 ? 'material' : 'materials'} in this category
               </p>
             </div>

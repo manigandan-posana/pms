@@ -56,22 +56,22 @@ const MasterPage: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">Material master</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xs font-semibold text-slate-800">Material master</h1>
+        <p className="text-xs text-slate-500">
           Read-only view of backend controlled materials.
         </p>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
+          <label className="flex flex-col gap-1 text-xs text-slate-700">
             Search
             <InputText value={search} onChange={(e) => setSearch((e.target as HTMLInputElement).value)} />
           </label>
-          <div className="text-sm text-slate-500">{rows.length} items</div>
+          <div className="text-xs text-slate-500">{rows.length} items</div>
         </div>
         <div className="overflow-x-auto">
-          <DataTable value={currentItems} dataKey="id" className="min-w-full text-sm">
+          <DataTable value={currentItems} dataKey="id" className="min-w-full text-xs">
             <Column header="Code" field="code" body={(row: any) => <span className="font-mono">{row.code}</span>} style={{ width: "150px", minWidth: "150px" }} />
             <Column header="Name" field="name" />
             <Column header="Category" field="category" />

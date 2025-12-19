@@ -59,7 +59,7 @@ export const CompactFilters: React.FC<CompactFiltersProps> = ({
                   value={values[filter.id] || ""}
                   onChange={(e) => onChange(filter.id, e.target.value)}
                   placeholder={filter.placeholder || ""}
-                  className="p-inputtext-sm w-full"
+                  className="p-inputtext-xs w-full"
                 />
               )}
               {filter.type === "select" && filter.options && (

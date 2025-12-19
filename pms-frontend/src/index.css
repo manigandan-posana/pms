@@ -417,22 +417,22 @@ h6 {
   outline: 0 none;
 }
 
-.p-inputtext-sm {
+.p-inputtext-xs {
   padding: 0.35rem 0.5rem !important;
   font-size: 0.75rem !important;
   height: 2rem;
 }
 
-.p-dropdown.p-inputtext-sm {
+.p-dropdown.p-inputtext-xs {
   padding: 0 !important;
 }
 
-.p-dropdown.p-inputtext-sm .p-dropdown-label {
+.p-dropdown.p-inputtext-xs .p-dropdown-label {
   padding: 0.35rem 0.5rem !important;
   font-size: 0.75rem !important;
 }
 
-.p-dropdown.p-inputtext-sm .p-dropdown-trigger {
+.p-dropdown.p-inputtext-xs .p-dropdown-trigger {
   width: 2rem;
 }
 

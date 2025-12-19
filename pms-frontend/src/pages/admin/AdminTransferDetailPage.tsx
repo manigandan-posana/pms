@@ -148,14 +148,14 @@ const AdminTransferDetailPage: React.FC = () => {
               <FiArrowLeft size={20} />
             </CustomButton>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                 Transfer Details
                 <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-lg text-purple-600">{record.code}</span>
+                <span className="font-mono text-xs text-purple-600">{record.code}</span>
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <span className="font-medium text-slate-700">{record.fromProjectName || 'Unknown'}</span>
             <FiArrowRight className="text-slate-400" />
             <span className="font-medium text-slate-700">{record.toProjectName || 'Unknown'}</span>
@@ -168,7 +168,7 @@ const AdminTransferDetailPage: React.FC = () => {
 
           {/* Info Card */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs">
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">From</span>
                 <span className="font-semibold text-slate-800">{record.fromProjectName || '—'}</span>

@@ -253,7 +253,7 @@ const InwardDetailPage: React.FC = () => {
                 }
               }));
             }}
-            className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         );
       }
@@ -283,7 +283,7 @@ const InwardDetailPage: React.FC = () => {
                 }
               }));
             }}
-            className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         );
       }
@@ -304,10 +304,10 @@ const InwardDetailPage: React.FC = () => {
               <FiArrowLeft size={20} />
             </CustomButton>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                 Inward Details
                 <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-lg text-blue-600">{record.code}</span>
+                <span className="font-mono text-xs text-blue-600">{record.code}</span>
               </h1>
             </div>
           </div>
@@ -349,35 +349,35 @@ const InwardDetailPage: React.FC = () => {
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Record Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <span className="text-sm text-slate-500 block mb-1">Project</span>
+                <span className="text-xs text-slate-500 block mb-1">Project</span>
                 <span className="font-semibold text-slate-800">{record.projectName || '—'}</span>
               </div>
               <div>
-                <span className="text-sm text-slate-500 block mb-1">Supplier</span>
+                <span className="text-xs text-slate-500 block mb-1">Supplier</span>
                 <span className="font-semibold text-slate-800">{record.supplierName || '—'}</span>
               </div>
               <div>
-                <span className="text-sm text-slate-500 block mb-1">Invoice No</span>
-                <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-sm inline-block">
+                <span className="text-xs text-slate-500 block mb-1">Invoice No</span>
+                <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs inline-block">
                   {record.invoiceNo || '—'}
                 </span>
               </div>
               <div>
-                <span className="text-sm text-slate-500 block mb-1">Entry Date</span>
+                <span className="text-xs text-slate-500 block mb-1">Entry Date</span>
                 <span className="font-medium text-slate-800">
                   {record.entryDate ? new Date(record.entryDate).toLocaleDateString() : '—'}
                 </span>
               </div>
               {record.vehicleNo && (
                 <div>
-                  <span className="text-sm text-slate-500 block mb-1">Vehicle No</span>
+                  <span className="text-xs text-slate-500 block mb-1">Vehicle No</span>
                   <span className="font-semibold text-slate-800">{record.vehicleNo}</span>
                 </div>
               )}
               {record.remarks && (
                 <div className="col-span-1 md:col-span-2 lg:col-span-4">
-                  <span className="text-sm text-slate-500 block mb-1">Remarks</span>
-                  <span className="text-slate-700 bg-slate-50 p-3 rounded-lg block text-sm border border-slate-100">
+                  <span className="text-xs text-slate-500 block mb-1">Remarks</span>
+                  <span className="text-slate-700 bg-slate-50 p-3 rounded-lg block text-xs border border-slate-100">
                     {record.remarks}
                   </span>
                 </div>
@@ -407,7 +407,7 @@ const InwardDetailPage: React.FC = () => {
             </div>
 
             {record.validated && (
-              <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center gap-2 text-sm text-amber-800">
+              <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center gap-2 text-xs text-amber-800">
                 <FiInfo className="flex-shrink-0" />
                 This record has been validated. Quantities cannot be edited.
               </div>

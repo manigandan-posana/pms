@@ -223,7 +223,7 @@ const CEODashboard: React.FC = () => {
     {
       field: "actions", header: "Actions", align: "right",
       body: (row) => {
-        if (row.status !== "PENDING") return <span className="text-slate-400 text-sm">No action</span>;
+        if (row.status !== "PENDING") return <span className="text-slate-400 text-xs">No action</span>;
         return (
           <div className="flex justify-end gap-2">
             <CustomButton size="small" className="text-green-600 hover:bg-green-50" variant="text" onClick={() => openDecisionDialog(row, "approve")} title="Approve">
@@ -259,7 +259,7 @@ const CEODashboard: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm">
-        <h2 className="text-2xl font-bold text-slate-800">CEO/COO Dashboard</h2>
+        <h2 className="text-xs font-bold text-slate-800">CEO/COO Dashboard</h2>
         <p className="text-slate-500 mt-1">Manage procurement requests and view all inward/outward transactions across all projects</p>
       </div>
 
@@ -354,7 +354,7 @@ const CEODashboard: React.FC = () => {
       >
         <div className="space-y-4 pt-2">
           {selectedRequest && (
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-2 text-sm text-slate-700">
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-2 text-xs text-slate-700">
               <div className="grid grid-cols-2 gap-2">
                 <span className="text-slate-500">Project:</span> <span className="font-medium">{selectedRequest.projectName}</span>
                 <span className="text-slate-500">Material:</span> <span className="font-medium">{selectedRequest.materialName}</span>

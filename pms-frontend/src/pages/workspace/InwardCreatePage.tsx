@@ -110,7 +110,7 @@ const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, onChange, o
         </div>
       }
     >
-      <div className="text-sm text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
+      <div className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
         <span className="font-semibold text-slate-700">{line.unit}</span>
         {" \u00b7 "}
         Allocated: <span className="font-semibold text-slate-700">{line.allocatedQty ?? (line as any).qty ?? 0}</span>
@@ -282,9 +282,9 @@ const InwardCreatePage: React.FC = () => {
           onClick={(e) => handleCheckboxClick(e, row)}
         >
           {row._selected ? (
-            <FiCheckCircle className="text-emerald-600 text-lg" />
+            <FiCheckCircle className="text-emerald-600 text-xs" />
           ) : (
-            <FiCircle className="text-slate-300 text-lg" />
+            <FiCircle className="text-slate-300 text-xs" />
           )}
         </div>
       )
@@ -371,12 +371,12 @@ const InwardCreatePage: React.FC = () => {
             <FiArrowLeft size={20} />
           </CustomButton>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Create Inward Entry</h1>
-            <p className="text-slate-500 text-sm">Record new material arrival</p>
+            <h1 className="text-xs font-bold text-slate-800">Create Inward Entry</h1>
+            <p className="text-slate-500 text-xs">Record new material arrival</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-slate-500 mr-2">
+          <div className="text-xs text-slate-500 mr-2">
             {selectedLineCount} items selected
           </div>
           <CustomButton
@@ -394,7 +394,7 @@ const InwardCreatePage: React.FC = () => {
       <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
         {/* Form Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Entry Details</h2>
+          <h2 className="text-xs font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Entry Details</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <CustomSelect
               label="Project *"
@@ -448,7 +448,7 @@ const InwardCreatePage: React.FC = () => {
         {projectId && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-800">Allocated Materials</h2>
+              <h2 className="text-xs font-bold text-slate-800">Allocated Materials</h2>
               {/* Search could be added here if needed */}
             </div>
 

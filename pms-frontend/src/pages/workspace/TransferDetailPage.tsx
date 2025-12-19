@@ -164,15 +164,15 @@ const TransferDetailPage: React.FC = () => {
               <FiArrowLeft size={20} />
             </CustomButton>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                 Transfer Details
                 <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-lg text-purple-600">{record.code}</span>
+                <span className="font-mono text-xs text-purple-600">{record.code}</span>
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className="flex items-center gap-1 font-medium text-slate-700">
               {record.fromProjectName || 'Unknown'}
               {record.fromSite && <span className="text-slate-400 font-normal">({record.fromSite})</span>}
@@ -195,10 +195,10 @@ const TransferDetailPage: React.FC = () => {
               <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
                 <FiRepeat size={20} />
               </div>
-              <h3 className="text-sm font-bold text-slate-800">Transfer Information</h3>
+              <h3 className="text-xs font-bold text-slate-800">Transfer Information</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-xs">
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Code</span>
                 <span className="font-mono font-semibold text-slate-800">{record.code}</span>

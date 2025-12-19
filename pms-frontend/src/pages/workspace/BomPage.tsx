@@ -112,7 +112,7 @@ const BomPage: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="text-sm text-slate-500 font-medium">
+          <div className="text-xs text-slate-500 font-medium">
             {rows.length} items
           </div>
         </div>

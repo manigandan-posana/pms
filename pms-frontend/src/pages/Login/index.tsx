@@ -305,7 +305,7 @@ export default function Login() {
           alt="posana logo"
           className="mx-auto mb-6 h-12 w-auto"
         />
-        <h2 className="text-center text-xl font-medium mb-8">
+        <h2 className="text-center text-xs font-medium mb-8">
           Sign in to your account
         </h2>
         
@@ -316,8 +316,8 @@ export default function Login() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-red-900 mb-1">Authentication Error</h3>
-                <p className="text-sm text-red-700">{loginError}</p>
+                <h3 className="text-xs font-semibold text-red-900 mb-1">Authentication Error</h3>
+                <p className="text-xs text-red-700">{loginError}</p>
               </div>
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function Login() {
           type="button"
           onClick={handleMicrosoftLogin}
           disabled={isLoading || inProgress !== "none"}
-          className="w-full rounded-lg bg-green-600 py-3 text-[14px] font-semibold text-white transition hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-lg bg-green-600 py-3 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading || inProgress !== "none" ? "Authenticating..." : "Login with Microsoft"}
         </button>

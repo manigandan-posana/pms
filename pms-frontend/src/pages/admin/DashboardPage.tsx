@@ -137,7 +137,7 @@ const DashboardPage: React.FC = () => {
   if (loadingAnalytics) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-sm text-slate-600">Loading analytics...</div>
+        <div className="text-xs text-slate-600">Loading analytics...</div>
       </div>
     );
   }
@@ -146,7 +146,7 @@ const DashboardPage: React.FC = () => {
     <div className="space-y-4">
       {/* Page Header */}
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Admin Dashboard</h1>
+        <h1 className="text-xs font-bold text-slate-900">Admin Dashboard</h1>
         <p className="text-xs text-slate-600 mt-1">
           Overview of inventory, projects, and user statistics
         </p>
@@ -160,7 +160,7 @@ const DashboardPage: React.FC = () => {
               <div className="text-xs font-medium text-slate-500 uppercase">
                 Total Projects
               </div>
-              <div className="text-2xl font-bold text-slate-900 mt-1">
+              <div className="text-xs font-bold text-slate-900 mt-1">
                 {summary.totalProjects}
               </div>
             </div>
@@ -176,7 +176,7 @@ const DashboardPage: React.FC = () => {
               <div className="text-xs font-medium text-slate-500 uppercase">
                 Total Materials
               </div>
-              <div className="text-2xl font-bold text-slate-900 mt-1">
+              <div className="text-xs font-bold text-slate-900 mt-1">
                 {summary.totalMaterials}
               </div>
             </div>
@@ -192,7 +192,7 @@ const DashboardPage: React.FC = () => {
               <div className="text-xs font-medium text-slate-500 uppercase">
                 Total Users
               </div>
-              <div className="text-2xl font-bold text-slate-900 mt-1">
+              <div className="text-xs font-bold text-slate-900 mt-1">
                 {summary.totalUsers}
               </div>
             </div>
@@ -208,7 +208,7 @@ const DashboardPage: React.FC = () => {
               <div className="text-xs font-medium text-slate-500 uppercase">
                 Utilization
               </div>
-              <div className="text-2xl font-bold text-slate-900 mt-1">
+              <div className="text-xs font-bold text-slate-900 mt-1">
                 {utilizationPercentage}%
               </div>
               <div className="text-xs text-slate-500 mt-1">
@@ -225,7 +225,7 @@ const DashboardPage: React.FC = () => {
       {/* Charts */}
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">
+          <h2 className="text-xs font-semibold text-slate-900 mb-3">
             System Overview
           </h2>
           <div style={{ height: "250px" }}>
@@ -234,7 +234,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">
+          <h2 className="text-xs font-semibold text-slate-900 mb-3">
             Material Inventory
           </h2>
           <div style={{ height: "250px" }}>
@@ -246,7 +246,7 @@ const DashboardPage: React.FC = () => {
       {/* Additional Info Cards */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-blue-50 p-4">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">
+          <h3 className="text-xs font-semibold text-blue-900 mb-2">
             Inventory Summary
           </h3>
           <div className="space-y-2 text-xs text-blue-800">
@@ -266,7 +266,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-green-50 p-4">
-          <h3 className="text-sm font-semibold text-green-900 mb-2">
+          <h3 className="text-xs font-semibold text-green-900 mb-2">
             Quick Stats
           </h3>
           <div className="space-y-2 text-xs text-green-800">

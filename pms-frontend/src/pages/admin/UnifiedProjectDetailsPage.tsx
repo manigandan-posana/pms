@@ -220,7 +220,13 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     try {
       const response = await dispatch(listProjects({ limit: 1000 })).unwrap();
       const data = response?.items || response?.content || response?.data?.content || [];
-      setProjects(Array.isArray(data) ? data : []);
+      const projectList = Array.isArray(data) ? data : [];
+      setProjects(projectList);
+      
+      // Auto-select first project if none is selected
+      if (!selectedProjectId && projectList.length > 0) {
+        setSelectedProjectId(Number(projectList[0].id));
+      }
     } catch (error) {
       console.error("Failed to load projects:", error);
       toast.error("Failed to load projects");
@@ -427,13 +433,14 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   // ========================
 
   const selectedProject = useMemo(() => {
-    return projects.find(p => Number(p.id) === selectedProjectId);
+    if (!selectedProjectId || !projects.length) return null;
+    return projects.find(p => Number(p.id) === Number(selectedProjectId));
   }, [projects, selectedProjectId]);
 
   const projectOptions = useMemo(() => {
     if (!Array.isArray(projects)) return [];
     return projects.map((p) => ({
-      label: `${p.code || ""} - ${p.name}`.trim(),
+      label: `${p.code || p.name} - ${p.name}`,
       value: Number(p.id),
     }));
   }, [projects]);
@@ -532,10 +539,10 @@ const UnifiedProjectDetailsPage: React.FC = () => {
         <div className="flex items-center justify-between gap-2 bg-white p-2 rounded shadow-sm border border-slate-200">
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-1.5 rounded">
-              <FiActivity className="text-white text-sm" />
+              <FiActivity className="text-white text-xs" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900">Project Operations Dashboard</h1>
+              <h1 className="text-xs font-bold text-slate-900">Project Management Dashboard</h1>
               <p className="text-[9px] text-slate-600">Comprehensive analytics & transaction management</p>
             </div>
           </div>
@@ -554,13 +561,20 @@ const UnifiedProjectDetailsPage: React.FC = () => {
               showClear
               loading={loading}
             />
+            <PrimeButton
+              label="Create Project"
+              icon="pi pi-plus"
+              onClick={() => navigate('/admin/projects')}
+              className="p-button-sm"
+              style={{ fontSize: '10px', height: '32px' }}
+            />
           </div>
         </div>
 
         {!selectedProjectId ? (
           <Card className="text-center py-8 bg-white shadow-sm border border-slate-200">
-            <FiBox className="mx-auto text-5xl text-slate-300 mb-2" />
-            <h2 className="text-sm font-bold text-slate-700 mb-1">No Project Selected</h2>
+            <FiBox className="mx-auto text-xs text-slate-300 mb-2" />
+            <h2 className="text-xs font-bold text-slate-700 mb-1">No Project Selected</h2>
             <p className="text-[10px] text-slate-500">Please select a project from the dropdown above</p>
           </Card>
         ) : (
@@ -569,9 +583,9 @@ const UnifiedProjectDetailsPage: React.FC = () => {
             <Card className="bg-white shadow-sm p-2">
               {/* Project Name Above Tabs */}
               <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200">
-                <FiBox className="text-blue-600 text-sm" />
+                <FiBox className="text-blue-600 text-xs" />
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900">{selectedProject?.name || 'Unknown Project'}</h2>
+                  <h2 className="text-xs font-bold text-slate-900">{selectedProject?.name || 'Unknown Project'}</h2>
                   <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[9px] font-mono">
                     {selectedProject?.code || 'N/A'}
                   </span>

@@ -28,7 +28,7 @@ const AdminTopBar: FC<AdminTopBarProps> = ({
       <div className="w-full mx-auto flex items-center justify-between gap-4 px-4 py-2">
         {/* Left: Page heading */}
         <div className="flex items-center gap-3">
-          <div className="text-lg font-semibold text-slate-900">{pageHeading}</div>
+          <div className="text-xs font-semibold text-slate-900">{pageHeading}</div>
         </div>
 
         {/* Right: Project selector + notifications + user */}
@@ -51,7 +51,7 @@ const AdminTopBar: FC<AdminTopBarProps> = ({
             {initials ? (
               initials
             ) : (
-              <FaUserCircle className="text-[18px] text-[var(--primary)]" />
+              <FaUserCircle className="text-xs text-[var(--primary)]" />
             )}
           </div>
         </div>

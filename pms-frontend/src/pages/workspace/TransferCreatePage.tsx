@@ -125,7 +125,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
         </div>
       }
     >
-      <div className="text-sm text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
+      <div className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
         <span className="font-semibold">{line.unit}</span>
         {" \u00b7 "}
         In stock: <span className="font-semibold text-slate-700">{line.availableQty ?? line.allocatedQty ?? line.qty ?? 0}</span>
@@ -181,22 +181,46 @@ const TransferCreatePage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState(10);
 
+  // Default project selection - select first project as FROM project if none selected
+  React.useEffect(() => {
+    if (!fromProject && assignedProjects.length > 0) {
+      dispatch(
+        setTransferField({
+          field: "fromProject",
+          value: String(assignedProjects[0].id),
+        })
+      );
+    }
+  }, [assignedProjects, dispatch, fromProject]);
+
+  // Clear selections when FROM project changes
+  React.useEffect(() => {
+    dispatch(clearTransferSelections());
+  }, [dispatch, fromProject]);
+
+  // Clear TO project if it becomes equal to FROM project
+  React.useEffect(() => {
+    if (fromProject && toProject && fromProject === toProject) {
+      dispatch(
+        setTransferField({
+          field: "toProject",
+          value: "",
+        })
+      );
+    }
+  }, [dispatch, fromProject, toProject]);
+
   const fromProjects = useMemo(
-    () =>
-      fromProject && toProject && fromProject === toProject
-        ? []
-        : assignedProjects || [],
-    [assignedProjects, fromProject, toProject]
+    () => assignedProjects || [],
+    [assignedProjects]
   );
 
   const toProjects = useMemo(
     () =>
-      fromProject && toProject && fromProject === toProject
-        ? []
-        : (projects || assignedProjects || []).filter(
-          (p) => String(p.id) !== String(fromProject)
-        ),
-    [projects, assignedProjects, fromProject, toProject]
+      (projects || assignedProjects || []).filter(
+        (p) => String(p.id) !== String(fromProject)
+      ),
+    [projects, assignedProjects, fromProject]
   );
 
   const fromProjectBom = useMemo(
@@ -340,9 +364,9 @@ const TransferCreatePage: React.FC = () => {
           onClick={(e) => handleCheckboxClick(e, row)}
         >
           {row._selected ? (
-            <FiCheckCircle className="text-emerald-600 text-lg" />
+            <FiCheckCircle className="text-emerald-600 text-xs" />
           ) : (
-            <FiCircle className="text-slate-300 text-lg" />
+            <FiCircle className="text-slate-300 text-xs" />
           )}
         </div>
       )
@@ -380,12 +404,12 @@ const TransferCreatePage: React.FC = () => {
             <FiArrowLeft size={20} />
           </CustomButton>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">New Transfer</h1>
-            <p className="text-slate-500 text-sm">Transfer materials between projects</p>
+            <h1 className="text-xs font-bold text-slate-800">New Transfer</h1>
+            <p className="text-slate-500 text-xs">Transfer materials between projects</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-slate-500 mr-2">
+          <div className="text-xs text-slate-500 mr-2">
             {selectedLineCount} items selected
           </div>
           <CustomButton
@@ -404,7 +428,7 @@ const TransferCreatePage: React.FC = () => {
         {/* Transfer Form */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-            <h2 className="text-lg font-bold text-slate-800">Transfer Details</h2>
+            <h2 className="text-xs font-bold text-slate-800">Transfer Details</h2>
           </div>
           <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
             <CustomSelect
@@ -414,11 +438,11 @@ const TransferCreatePage: React.FC = () => {
                 label: `${p.code} \u2014 ${p.name}`,
                 value: String(p.id),
               }))}
-              onChange={(e) =>
+              onChange={(value) =>
                 dispatch(
                   setTransferField({
                     field: "fromProject",
-                    value: String(e.target.value),
+                    value: String(value),
                   })
                 )
               }
@@ -442,11 +466,11 @@ const TransferCreatePage: React.FC = () => {
                 label: `${p.code} \u2014 ${p.name}`,
                 value: String(p.id),
               }))}
-              onChange={(e) =>
+              onChange={(value) =>
                 dispatch(
                   setTransferField({
                     field: "toProject",
-                    value: String(e.target.value),
+                    value: String(value),
                   })
                 )
               }
@@ -482,7 +506,7 @@ const TransferCreatePage: React.FC = () => {
         {fromProject && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-800">Select Materials to Transfer</h2>
+              <h2 className="text-xs font-bold text-slate-800">Select Materials to Transfer</h2>
               <div className="w-60">
                 <CustomTextField
                   placeholder="Search materials..."

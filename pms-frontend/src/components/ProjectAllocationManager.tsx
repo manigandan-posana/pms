@@ -264,7 +264,7 @@ function MultiAllocationPanel({
 
   if (!projectId) {
     return (
-      <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+      <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-500">
         Select a project above to see materials available for allocation.
       </div>
     );
@@ -296,8 +296,8 @@ function MultiAllocationPanel({
       <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">Assign Materials</h3>
-            <p className="text-slate-500 text-sm">Select materials to allocate to this project</p>
+            <h3 className="text-xs font-bold text-slate-800">Assign Materials</h3>
+            <p className="text-slate-500 text-xs">Select materials to allocate to this project</p>
           </div>
           <div className="flex items-center gap-2">
             {selectedCount > 0 && (
@@ -489,16 +489,56 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
     refreshBom(selectedProjectId);
   };
 
+  const handleEditAllocation = (line: AllocationWithMaterial) => {
+    setFormModal({
+      open: true,
+      mode: "edit",
+      materialId: String(line.materialId),
+      quantity: String(getLineQty(line)),
+      saving: false,
+      line: line,
+    });
+  };
+
+  const handleSaveForm = async () => {
+    if (!resolvedToken || !selectedProjectId) return;
+    const qty = Number(formModal.quantity);
+    if (isNaN(qty) || qty <= 0) {
+      toast.error("Enter a valid quantity");
+      return;
+    }
+
+    setFormModal(prev => ({ ...prev, saving: true }));
+    try {
+      if (formModal.mode === "edit" && formModal.materialId) {
+        await dispatch(updateProjectAllocation({
+          projectId: selectedProjectId,
+          materialId: formModal.materialId,
+          payload: { quantity: qty }
+        })).unwrap();
+        toast.success("Updated");
+      }
+      setFormModal(emptyFormState);
+      await refreshBom(selectedProjectId);
+      onProjectBomUpdate?.(selectedProjectId);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save");
+    } finally {
+      setFormModal(prev => ({ ...prev, saving: false }));
+    }
+  };
+
   // Columns for Allocated Table
   const allocColumns: ColumnDef<AllocationWithMaterial>[] = [
     { field: 'code', header: 'Code', body: (r) => <span className="font-mono text-slate-700">{r.code || '—'}</span> },
     { field: 'name', header: 'Material', body: (r) => <span className="font-medium text-slate-800">{r.name || '—'}</span> },
     { field: 'qty', header: 'Required Qty', align: 'right', body: (r) => <span className="font-bold text-slate-700">{Number(getLineQty(r)).toLocaleString()}</span> },
     {
-      field: 'id', header: 'Actions', align: 'right', width: '100px',
+      field: 'id', header: 'Actions', align: 'right', width: '150px',
       body: (r) => (
         <div className="flex justify-end gap-1">
-          <CustomButton variant="text" size="small" onClick={() => handleDelete(r)} className="text-red-500 hover:bg-red-50 p-1 min-w-0"><FiTrash2 /></CustomButton>
+          <CustomButton variant="text" size="small" onClick={() => handleEditAllocation(r)} className="text-blue-600 hover:bg-blue-50 p-1 min-w-0" title="Edit quantity"><FiEdit2 /></CustomButton>
+          <CustomButton variant="text" size="small" onClick={() => handleDelete(r)} className="text-red-500 hover:bg-red-50 p-1 min-w-0" title="Remove allocation"><FiTrash2 /></CustomButton>
         </div>
       )
     }
@@ -507,16 +547,17 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   return (
     <div className="flex flex-col gap-6">
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4 justify-between">
-        <div className="flex flex-col gap-1 min-w-[300px]">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Select Project</span>
+        <div className="flex flex-col gap-1 min-w-[300px] flex-1 max-w-md">
           <CustomSelect
+            label="Select Project"
             value={selectedProjectId}
             options={sortedProjects.map(p => ({ label: `${p.code} - ${p.name}`, value: String(p.id) }))}
-            onChange={(e) => setSelectedProjectId(e.target.value)}
+            onChange={(value) => setSelectedProjectId(value)}
+            size="small"
           />
         </div>
         {showAllocationTable && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 max-w-sm">
             <CustomTextField
               placeholder="Search allocations..."
               value={search}
@@ -551,6 +592,40 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
           />
         </div>
       )}
+
+      {/* Edit Allocation Modal */}
+      <CustomModal
+        open={formModal.open && formModal.mode === "edit"}
+        onClose={() => setFormModal(emptyFormState)}
+        title={formModal.line ? `Edit Allocation: ${formModal.line.name}` : "Edit Allocation"}
+        footer={
+          <div className="flex justify-end gap-2">
+            <CustomButton variant="text" onClick={() => setFormModal(emptyFormState)} disabled={formModal.saving}>Cancel</CustomButton>
+            <CustomButton onClick={handleSaveForm} loading={formModal.saving} disabled={formModal.saving}>Update</CustomButton>
+          </div>
+        }
+      >
+        <div className="py-2">
+          {formModal.line && (
+            <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="text-xs text-slate-500 space-y-1">
+                <div><span className="font-semibold">Code:</span> {formModal.line.code}</div>
+                <div><span className="font-semibold">Material:</span> {formModal.line.name}</div>
+                <div><span className="font-semibold">Unit:</span> {formModal.line.unit || '—'}</div>
+              </div>
+            </div>
+          )}
+          <CustomTextField
+            label="Required Quantity *"
+            type="number"
+            value={formModal.quantity}
+            onChange={(e) => setFormModal(prev => ({ ...prev, quantity: e.target.value }))}
+            placeholder="Enter quantity..."
+            autoFocus
+            required
+          />
+        </div>
+      </CustomModal>
     </div>
   );
 };

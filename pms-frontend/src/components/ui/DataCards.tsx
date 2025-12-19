@@ -33,13 +33,13 @@ export const StatCard: React.FC<StatCardProps> = ({
     <div className="p-3">
       <div className="flex items-center gap-3">
         <div className={`w-12 h-12 rounded-lg ${iconBgClasses[variant]} flex items-center justify-center`}>
-          <i className={`pi ${icon} text-xl ${variantClasses[variant]}`}></i>
+          <i className={`pi ${icon} text-xs ${variantClasses[variant]}`}></i>
         </div>
         <div className="flex-1">
           <div className="text-[0.7rem] uppercase tracking-wide" style={{ color: 'var(--color-stat-card-subtitle-color)' }}>
             {title}
           </div>
-          <div className={`text-2xl font-bold ${variantClasses[variant]}`}>
+          <div className={`text-xs font-bold ${variantClasses[variant]}`}>
             {value}
           </div>
           {subtitle && (
@@ -83,9 +83,9 @@ interface DataRowProps {
 export const DataRow: React.FC<DataRowProps> = ({ label, value, highlight, tooltip }) => {
   return (
     <div className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-      <span className="text-slate-600 text-sm">{label}</span>
+      <span className="text-slate-600 text-xs">{label}</span>
       <span 
-        className={`text-sm font-semibold ${highlight ? 'data-highlight' : 'text-slate-900'}`}
+        className={`text-xs font-semibold ${highlight ? 'data-highlight' : 'text-slate-900'}`}
         {...(tooltip && { 'data-tooltip': tooltip })}
       >
         {value}

@@ -9,6 +9,7 @@ import {
   FaSignOutAlt,
   FaBars,  
   FaChevronLeft,
+  FaCar,
 } from "react-icons/fa";
 
 /*
@@ -34,12 +35,10 @@ interface MenuItem {
 }
 
 const ADMIN_MENU: MenuItem[] = [
-  { label: "Project Operations", to: "/admin/project-details", icon: FaProjectDiagram },
-  { label: "Material Directory", to: "/admin/materials", icon: FaLayerGroup },
-  { label: "Material Allocations", to: "/admin/allocations", icon: FaClipboardList },
-  { label: "Allocated Materials", to: "/admin/allocated", icon: FaCheckCircle },
-  { label: "Project Management", to: "/admin/projects", icon: FaProjectDiagram },
+  { label: "Project Management", to: "/admin/project-details", icon: FaProjectDiagram },
+  { label: "Inventory", to: "/admin/inventory", icon: FaLayerGroup },
   { label: "User Management", to: "/admin/users", icon: FaUsers },
+  { label: "Vehicle Dashboard", to: "/admin/vehicles/dashboard", icon: FaCar },
 ];
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout, collapsed: collapsedProp, onToggleCollapse }) => {
@@ -53,7 +52,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout, collapsed: collap
     >
       {/* Logo and collapse toggle */}
       <div className="flex items-center justify-between px-3 py-2">
-          <NavLink to="/admin/materials" className="flex items-center gap-2">
+          <NavLink to="/admin/inventory" className="flex items-center gap-2">
           <img src="/posana-logo.svg" alt="Logo" className="h-6 w-auto" />
         </NavLink>
         <div className="flex items-center gap-2">

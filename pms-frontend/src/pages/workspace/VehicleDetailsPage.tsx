@@ -238,19 +238,19 @@ const VehicleDetailsPage: React.FC = () => {
             <FiArrowLeft size={20} />
           </CustomButton>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-slate-800">{vehicle.vehicleName}</h1>
-            <p className="text-slate-500 text-sm">{vehicle.vehicleNumber}</p>
+            <h1 className="text-xs font-bold text-slate-800">{vehicle.vehicleName}</h1>
+            <p className="text-slate-500 text-xs">{vehicle.vehicleNumber}</p>
           </div>
-          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${vehicle.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>{vehicle.status}</span>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${vehicle.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>{vehicle.status}</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Meta Info */}
           <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-800 mb-2">Details</h3>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Type</span><span className="font-medium">{vehicle.vehicleType}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Fuel</span><span className="font-medium">{vehicle.fuelType}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Start</span><span className="font-medium">{vehicle.startDate ? new Date(vehicle.startDate).toLocaleDateString() : 'N/A'}</span></div>
+            <h3 className="text-xs font-semibold text-slate-800 mb-2">Details</h3>
+            <div className="flex justify-between text-xs"><span className="text-slate-500">Type</span><span className="font-medium">{vehicle.vehicleType}</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-500">Fuel</span><span className="font-medium">{vehicle.fuelType}</span></div>
+            <div className="flex justify-between text-xs"><span className="text-slate-500">Start</span><span className="font-medium">{vehicle.startDate ? new Date(vehicle.startDate).toLocaleDateString() : 'N/A'}</span></div>
           </div>
 
           {/* Metrics */}
@@ -259,14 +259,14 @@ const VehicleDetailsPage: React.FC = () => {
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FiMapPin /></div>
               <div>
                 <div className="text-xs text-slate-500">Total Distance</div>
-                <div className="text-lg font-bold text-slate-800">{numberTemplate(vehicleStats.fuelTotalKm, 1)} km</div>
+                <div className="text-xs font-bold text-slate-800">{numberTemplate(vehicleStats.fuelTotalKm, 1)} km</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 text-green-600 rounded-lg"><FiActivity /></div>
               <div>
                 <div className="text-xs text-slate-500">Avg Mileage</div>
-                <div className="text-lg font-bold text-slate-800">{numberTemplate(vehicleStats.fuelAvgMileage, 2)} km/l</div>
+                <div className="text-xs font-bold text-slate-800">{numberTemplate(vehicleStats.fuelAvgMileage, 2)} km/l</div>
               </div>
             </div>
           </div>
@@ -276,14 +276,14 @@ const VehicleDetailsPage: React.FC = () => {
               <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><FiZap /></div>
               <div>
                 <div className="text-xs text-slate-500">Total Fuel</div>
-                <div className="text-lg font-bold text-slate-800">{numberTemplate(vehicleStats.totalLitres, 1)} L</div>
+                <div className="text-xs font-bold text-slate-800">{numberTemplate(vehicleStats.totalLitres, 1)} L</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><FiDollarSign /></div>
               <div>
                 <div className="text-xs text-slate-500">Total Cost</div>
-                <div className="text-lg font-bold text-slate-800">{formatCurrency(vehicleStats.totalCost)}</div>
+                <div className="text-xs font-bold text-slate-800">{formatCurrency(vehicleStats.totalCost)}</div>
               </div>
             </div>
           </div>
@@ -293,7 +293,7 @@ const VehicleDetailsPage: React.FC = () => {
               <div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><FiDollarSign /></div>
               <div>
                 <div className="text-xs text-slate-500">Rent Cost</div>
-                <div className="text-lg font-bold text-slate-800">{formatCurrency(vehicleStats.totalRentCost)}</div>
+                <div className="text-xs font-bold text-slate-800">{formatCurrency(vehicleStats.totalRentCost)}</div>
               </div>
             </div>
           )}
@@ -322,19 +322,19 @@ const VehicleDetailsPage: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      <h4 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiMap className="text-blue-500" /> Distance Trend</h4>
+                      <h4 className="text-xs font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiMap className="text-blue-500" /> Distance Trend</h4>
                       <div className="h-48">
                         <Chart type="line" data={chartData} options={chartOptions} />
                       </div>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      <h4 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiZap className="text-green-500" /> Fuel Consumption</h4>
+                      <h4 className="text-xs font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiZap className="text-green-500" /> Fuel Consumption</h4>
                       <div className="h-48">
                         <Chart type="line" data={fuelChartData} options={chartOptions} />
                       </div>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      <h4 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiTrendingUp className="text-amber-500" /> Cost Trend</h4>
+                      <h4 className="text-xs font-semibold text-slate-700 mb-4 flex items-center gap-2"><FiTrendingUp className="text-amber-500" /> Cost Trend</h4>
                       <div className="h-48">
                         <Chart type="line" data={costChartData} options={chartOptions} />
                       </div>
@@ -342,9 +342,9 @@ const VehicleDetailsPage: React.FC = () => {
                   </div>
 
                   <div className="pt-4">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Daily Breakdown</h3>
+                    <h3 className="text-xs font-bold text-slate-800 mb-4">Daily Breakdown</h3>
                     <div className="max-w-full overflow-x-auto">
-                      <table className="w-full text-sm text-left text-slate-600">
+                      <table className="w-full text-xs text-left text-slate-600">
                         <thead className="bg-slate-50 text-slate-700 font-semibold uppercase text-xs">
                           <tr>
                             <th className="px-4 py-3">Date</th>
@@ -390,7 +390,7 @@ const VehicleDetailsPage: React.FC = () => {
               content: (
                 <div className="p-4">
                   {vehicle.statusHistory && vehicle.statusHistory.length > 0 ? (
-                    <table className="w-full text-sm text-left text-slate-600">
+                    <table className="w-full text-xs text-left text-slate-600">
                       <thead className="bg-slate-50 text-slate-700 font-semibold">
                         <tr>
                           <th className="px-4 py-3">Status</th>

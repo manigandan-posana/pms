@@ -268,7 +268,7 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
         <div className="flex flex-col gap-4 sticky top-0 bg-slate-50 z-10 pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Projects</h1>
+              <h1 className="text-xs font-bold text-slate-800">Projects</h1>
               <p className="text-slate-500">Manage company projects and codes</p>
             </div>
             <CustomButton
@@ -276,7 +276,7 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
               onClick={openCreateProject}
               className="shadow-sm"
             >
-              Add Project
+              Create Project
             </CustomButton>
           </div>
 
@@ -336,7 +336,7 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
                   variant="text"
                   size="small"
                   onClick={() => { setFilters({ prefixes: [], allocation: '' }); setSearch(''); setPage(0); }}
-                  className="text-sm text-slate-500"
+                  className="text-xs text-slate-500"
                 >
                   Reset All Filters
                 </CustomButton>
@@ -367,7 +367,7 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
         {/* Add / Edit modal */}
         <CustomModal
           open={modalState.open}
-          title={modalState.mode === "edit" ? "Edit Project" : "Add Project"}
+          title={modalState.mode === "edit" ? "Edit Project" : "Create Project"}
           onClose={closeModal}
           footer={
             <div className="flex justify-end gap-2">

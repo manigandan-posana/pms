@@ -61,7 +61,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     ];
 
     const adminItems: NavItem[] = [
-      { id: "dashboard", label: "Project Operations", icon: FiBarChart2, path: "/admin/project-details" },
+      { id: "dashboard", label: "Project Management", icon: FiBarChart2, path: "/admin/project-details" },
       { id: "materials", label: "Materials", icon: FiBox, path: "/admin/materials" },
       { id: "projects", label: "Projects", icon: FiFile, path: "/admin/projects" },
       { 

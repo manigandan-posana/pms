@@ -115,7 +115,7 @@ const ProcurementManagerDashboard: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Procurement Manager Dashboard</h1>
+          <h1 className="text-xs font-bold text-slate-800">Procurement Manager Dashboard</h1>
           <p className="text-slate-600 mt-1">View all procurement requests from all projects (read-only)</p>
         </div>
         <div className="w-full md:w-auto flex gap-3">
@@ -137,7 +137,7 @@ const ProcurementManagerDashboard: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
         <div className="flex items-center gap-2 text-slate-800 mb-4">
           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FiShoppingCart /></div>
-          <h2 className="text-xl font-semibold">Procurement Requests</h2>
+          <h2 className="text-xs font-semibold">Procurement Requests</h2>
           <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full ml-2">{totalRecords}</span>
         </div>
         <CustomTable

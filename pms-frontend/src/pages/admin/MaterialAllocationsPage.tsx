@@ -49,13 +49,13 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
       {/* Navigation Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Allocation Manager</h1>
+          <h1 className="text-xs font-bold text-slate-800">Allocation Manager</h1>
           <p className="text-slate-500">Assign materials to projects in bulk</p>
         </div>
         <div className="flex items-center bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
           <CustomButton
-            variant={isActive("/admin/allocated") ? "secondary" : "text"}
-            onClick={() => navigate("/admin/allocated")}
+            variant={isActive("/admin/inventory/allocated") ? "secondary" : "text"}
+            onClick={() => navigate("/admin/inventory/allocated")}
             startIcon={<FiList />}
             size="small"
           >
@@ -63,8 +63,8 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
           </CustomButton>
           <div className="w-px h-4 bg-slate-200 mx-1"></div>
           <CustomButton
-            variant={isActive("/admin/materials") ? "secondary" : "text"}
-            onClick={() => navigate("/admin/materials")}
+            variant={isActive("/admin/inventory/materials") ? "secondary" : "text"}
+            onClick={() => navigate("/admin/inventory/materials")}
             startIcon={<FiGrid />}
             size="small"
           >
@@ -83,7 +83,7 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
           projects={projects as any}
           materials={materials as any}
           onProjectBomUpdate={onRequestReload}
-          onCreateMaterial={() => navigate("/admin/materials")}
+          onCreateMaterial={() => navigate("/admin/inventory/materials")}
           showAllocationTable={false}
           showMultiAllocator={true}
         />

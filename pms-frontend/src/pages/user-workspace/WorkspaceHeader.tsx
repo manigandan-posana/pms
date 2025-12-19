@@ -68,7 +68,7 @@ const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({
   return (
     <div className="flex flex-col gap-2 border-b border-[var(--border)] pb-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <div className="text-lg font-semibold text-black">{title}</div>
+        <div className="text-xs font-semibold text-black">{title}</div>
         {screen === "main" && (
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
             <span>Project</span>

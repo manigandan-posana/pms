@@ -323,7 +323,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
         <div className="flex flex-col gap-4 sticky top-0 bg-slate-50 z-10 pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Material Directory</h1>
+              <h1 className="text-xs font-bold text-slate-800">Material Directory</h1>
               <p className="text-slate-500">Manage all materials and master data</p>
             </div>
             <div className="flex items-center gap-2">

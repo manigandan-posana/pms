@@ -192,7 +192,7 @@ export default function App() {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
-            <p className="text-sm text-slate-600">Loading your workspace...</p>
+            <p className="text-xs text-slate-600">Loading your workspace...</p>
           </div>
         </div>
       </>

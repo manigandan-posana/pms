@@ -272,7 +272,7 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap gap-4 items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-slate-200">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Allocated Materials</h2>
+          <h2 className="text-xs font-bold text-slate-900">Allocated Materials</h2>
           <p className="text-xs text-slate-600">Manage material allocations for projects</p>
         </div>
         <div className="flex gap-3 items-center">
@@ -369,7 +369,7 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
         }
       >
         <div className="flex items-center gap-3 text-slate-700">
-          <FiAlertTriangle className="text-red-500 text-2xl flex-shrink-0" />
+          <FiAlertTriangle className="text-red-500 text-xs flex-shrink-0" />
           <p>
             Are you sure you want to delete the allocation for <strong>{allocationToDelete?.materialName}</strong> in project <strong>{allocationToDelete?.projectName}</strong>?
           </p>

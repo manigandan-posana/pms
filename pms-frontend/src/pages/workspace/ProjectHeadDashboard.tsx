@@ -122,7 +122,7 @@ const ProjectHeadDashboard: React.FC = () => {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Project Head Dashboard</h1>
+          <h1 className="text-xs font-bold text-slate-900">Project Head Dashboard</h1>
           <p className="text-slate-600 mt-1">Manage and monitor your assigned projects</p>
         </div>
         <CustomButton
@@ -141,7 +141,7 @@ const ProjectHeadDashboard: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
         <div className="flex items-center gap-2 text-slate-800 mb-4">
           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FiClipboard /></div>
-          <h2 className="text-xl font-semibold">Assigned Projects</h2>
+          <h2 className="text-xs font-semibold">Assigned Projects</h2>
         </div>
         <CustomTable
           data={projects}
@@ -157,7 +157,7 @@ const ProjectHeadDashboard: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
         <div className="flex items-center gap-2 text-slate-800 mb-4">
           <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><FiList /></div>
-          <h2 className="text-xl font-semibold">Project Tasks</h2>
+          <h2 className="text-xs font-semibold">Project Tasks</h2>
         </div>
         <CustomTable
           data={tasks}

@@ -115,7 +115,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
         </div>
       }
     >
-      <div className="text-sm text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
+      <div className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
         <span className="font-semibold">{line.unit}</span>
         {" \u00b7 "}
         In stock: <span className="font-semibold text-slate-700">{line.inStockQty ?? line.balanceQty ?? line.allocatedQty ?? line.qty ?? 0}</span>
@@ -176,6 +176,23 @@ const OutwardCreatePage: React.FC = () => {
       dispatch(setOutwardField({ field: "status", value: "OPEN" }));
     }
   }, [status, dispatch]);
+
+  // Default project selection - select first project if none selected
+  React.useEffect(() => {
+    if (!projectId && assignedProjects.length > 0) {
+      dispatch(
+        setOutwardField({
+          field: "projectId",
+          value: String(assignedProjects[0].id),
+        })
+      );
+    }
+  }, [assignedProjects, dispatch, projectId]);
+
+  // Clear selections when project changes
+  React.useEffect(() => {
+    dispatch(clearOutwardSelections());
+  }, [dispatch, projectId]);
 
   // Get selected project's BOM
   const selectedProjectBom = useMemo(
@@ -323,9 +340,9 @@ const OutwardCreatePage: React.FC = () => {
           onClick={(e) => handleCheckboxClick(e, row)}
         >
           {row._selected ? (
-            <FiCheckCircle className="text-emerald-600 text-lg" />
+            <FiCheckCircle className="text-emerald-600 text-xs" />
           ) : (
-            <FiCircle className="text-slate-300 text-lg" />
+            <FiCircle className="text-slate-300 text-xs" />
           )}
         </div>
       )
@@ -363,12 +380,12 @@ const OutwardCreatePage: React.FC = () => {
             <FiArrowLeft size={20} />
           </CustomButton>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">New Outward Detail</h1>
-            <p className="text-slate-500 text-sm">Issue materials from stock</p>
+            <h1 className="text-xs font-bold text-slate-800">New Outward Detail</h1>
+            <p className="text-slate-500 text-xs">Issue materials from stock</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-slate-500 mr-2">
+          <div className="text-xs text-slate-500 mr-2">
             {selectedLineCount} items selected
           </div>
           <CustomButton
@@ -386,7 +403,7 @@ const OutwardCreatePage: React.FC = () => {
       <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
         {/* Project and Details Form */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Issue Details</h2>
+          <h2 className="text-xs font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Issue Details</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <CustomSelect
               label="Project *"
@@ -431,8 +448,8 @@ const OutwardCreatePage: React.FC = () => {
               InputLabelProps={{ shrink: true }}
             />
             <div className="col-span-full flex items-center gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <label className="text-sm font-medium text-slate-700">Status:</label>
-              <span className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-semibold text-sm border border-blue-200">OPEN</span>
+              <label className="text-xs font-medium text-slate-700">Status:</label>
+              <span className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-200">OPEN</span>
               <span className="text-xs text-slate-500 italic">New outwards are always created as OPEN and can be closed later</span>
             </div>
           </div>
@@ -442,7 +459,7 @@ const OutwardCreatePage: React.FC = () => {
         {projectId && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-800">Select Issue Materials</h2>
+              <h2 className="text-xs font-bold text-slate-800">Select Issue Materials</h2>
               <div className="w-60">
                 <CustomTextField
                   placeholder="Search materials..."

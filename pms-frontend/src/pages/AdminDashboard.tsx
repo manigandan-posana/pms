@@ -9,17 +9,15 @@ import { createLogoutHandler } from "../services/LogoutService";
 
 // Helper to get page heading based on route
 const getAdminPageHeading = (pathname: string): string => {
-  if (pathname.includes("/admin/project-details")) return "Project Operations";
-  if (pathname.includes("/admin/project-details")) return "Project Operations Center";
+  if (pathname.includes("/admin/project-details")) return "Project Dashboard";
   if (pathname.includes("/admin/inward/")) return "Inward Transaction Details";
   if (pathname.includes("/admin/outward/")) return "Outward Transaction Details";
   if (pathname.includes("/admin/transfer/")) return "Transfer Transaction Details";
-  if (pathname.includes("/admin/materials")) return "Material Directory";
-  if (pathname.includes("/admin/allocations")) return "Material Allocations";
+  if (pathname.includes("/admin/inventory")) return "Inventory Management";
   if (pathname.includes("/admin/allocated-materials")) return "Allocated Materials";
-  if (pathname.includes("/admin/allocated")) return "Allocated Materials";
   if (pathname.includes("/admin/projects")) return "Project Management";
   if (pathname.includes("/admin/users")) return "User Management";
+  if (pathname.includes("/admin/vehicles")) return "Vehicle Dashboard";
   return "Admin";
 };
 

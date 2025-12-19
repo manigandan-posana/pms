@@ -166,7 +166,7 @@ const OutwardPage: React.FC = () => {
       <div className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Outward History</h1>
+            <h1 className="text-xs font-bold text-slate-800">Outward History</h1>
             <p className="text-slate-500">Manage and view outward material issues</p>
           </div>
           <CustomButton

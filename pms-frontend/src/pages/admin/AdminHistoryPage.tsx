@@ -290,8 +290,8 @@ const AdminHistoryPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Transaction History</h1>
-            <p className="text-slate-500 text-sm">View and analyze all inventory transactions across projects</p>
+            <h1 className="text-xs font-bold text-slate-900">Transaction History</h1>
+            <p className="text-slate-500 text-xs">View and analyze all inventory transactions across projects</p>
           </div>
 
           <div className="w-full md:w-72 bg-white p-1 rounded-lg shadow-sm border border-slate-200">
@@ -315,21 +315,21 @@ const AdminHistoryPage: React.FC = () => {
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div>
               <div className="text-xs text-blue-600 font-bold uppercase tracking-wider mb-1">Total Inwards</div>
-              <div className="text-3xl font-bold text-slate-800">{inwardTotal}</div>
+              <div className="text-xs font-bold text-slate-800">{inwardTotal}</div>
             </div>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-full"><FiArrowDown size={24} /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div>
               <div className="text-xs text-green-600 font-bold uppercase tracking-wider mb-1">Total Outwards</div>
-              <div className="text-3xl font-bold text-slate-800">{outwardTotal}</div>
+              <div className="text-xs font-bold text-slate-800">{outwardTotal}</div>
             </div>
             <div className="p-3 bg-green-50 text-green-600 rounded-full"><FiArrowUp size={24} /></div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div>
               <div className="text-xs text-purple-600 font-bold uppercase tracking-wider mb-1">Total Transfers</div>
-              <div className="text-3xl font-bold text-slate-800">{transferTotal}</div>
+              <div className="text-xs font-bold text-slate-800">{transferTotal}</div>
             </div>
             <div className="p-3 bg-purple-50 text-purple-600 rounded-full"><FiRefreshCw size={24} /></div>
           </div>

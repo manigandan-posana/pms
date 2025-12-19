@@ -26,6 +26,7 @@ const VehicleDashboardPage = lazy(() => import("../pages/workspace/VehicleDashbo
 const VehicleDetailsPage = lazy(() => import("../pages/workspace/VehicleDetailsPage"));
 
 // Lazy‑loaded admin pages
+const AdminInventoryPage = lazy(() => import("../pages/admin/AdminInventoryPage"));
 const MaterialDirectoryPage = lazy(() => import("../pages/admin/MaterialDirectoryPage"));
 const MaterialAllocationsPage = lazy(() => import("../pages/admin/MaterialAllocationsPage"));
 const AllocatedMaterialsPage = lazy(() => import("../pages/admin/AllocatedMaterialsPage"));
@@ -36,6 +37,7 @@ const UnifiedProjectDetailsPage = lazy(() => import("../pages/admin/UnifiedProje
 const AdminInwardDetailPage = lazy(() => import("../pages/admin/AdminInwardDetailPage"));
 const AdminOutwardDetailPage = lazy(() => import("../pages/admin/AdminOutwardDetailPage"));
 const AdminTransferDetailPage = lazy(() => import("../pages/admin/AdminTransferDetailPage"));
+const AdminVehicleDashboardPage = lazy(() => import("../pages/admin/AdminVehicleDashboardPage"));
 
 // ----- Route types -----
 
@@ -112,10 +114,12 @@ export const adminRoutes: IRouteConfig[] = [
   { path: "inward/:id", component: AdminInwardDetailPage },
   { path: "outward/:id", component: AdminOutwardDetailPage },
   { path: "transfer/:id", component: AdminTransferDetailPage },
-  { path: "materials", component: MaterialDirectoryPage },
-  { path: "allocations", component: MaterialAllocationsPage },
-  { path: "allocated", component: AllocatedMaterialsPage },
+  { path: "inventory", component: AdminInventoryPage },
+  { path: "inventory/materials", component: AdminInventoryPage },
+  { path: "inventory/allocations", component: AdminInventoryPage },
+  { path: "inventory/allocated", component: AdminInventoryPage },
   { path: "allocated-materials", component: AllocatedMaterialsManagementPage },
   { path: "projects", component: ProjectManagementPage },
   { path: "users", component: UserManagementPage },
+  { path: "vehicles/dashboard", component: AdminVehicleDashboardPage },
 ];

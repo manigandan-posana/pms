@@ -182,7 +182,7 @@ export const AdminFormModal: React.FC<AdminFormModalProps> = ({
       }
     >
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm border border-red-200">
+        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-xs border border-red-200">
           {error}
         </div>
       )}

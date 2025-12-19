@@ -98,7 +98,7 @@ const ProjectActivityPage: React.FC = () => {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 text-slate-900">
           <FiActivity className="text-[var(--primary)]" />
-          <h1 className="text-xl font-bold">Project Movement Overview</h1>
+          <h1 className="text-xs font-bold">Project Movement Overview</h1>
         </div>
         <p className="text-[12px] text-slate-600 max-w-4xl">
           Get a project-wise view of every inward, outward, transfer, and procurement request with concise summaries and the latest activity snapshots.
@@ -106,7 +106,7 @@ const ProjectActivityPage: React.FC = () => {
       </div>
 
       {loading && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm text-sm text-slate-600">Loading project activity…</div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm text-xs text-slate-600">Loading project activity…</div>
       )}
 
       {!loading && (
@@ -116,7 +116,7 @@ const ProjectActivityPage: React.FC = () => {
               <div key={label} className={`rounded-lg border border-slate-200 ${bg} p-4 shadow-sm flex items-center justify-between`}>
                 <div>
                   <div className="text-[11px] font-medium text-slate-600 uppercase">{label}</div>
-                  <div className="text-2xl font-bold text-slate-900">{value}</div>
+                  <div className="text-xs font-bold text-slate-900">{value}</div>
                 </div>
                 <div className={`rounded-full p-3 ${bg} ${color}`}>
                   <Icon size={22} />
@@ -130,7 +130,7 @@ const ProjectActivityPage: React.FC = () => {
               <div key={project.projectId} className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-sm">
                 <div className="flex flex-col gap-1 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <div className="text-xs font-semibold text-slate-900 flex items-center gap-2">
                       <FiPackage className="text-[var(--primary)]" />
                       {project.projectCode ? `${project.projectCode} - ${project.projectName}` : project.projectName}
                     </div>
@@ -173,7 +173,7 @@ const ProjectActivityPage: React.FC = () => {
             ))}
 
             {activity.length === 0 && !loading && (
-              <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">
+              <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-xs text-slate-600">
                 No project movements have been recorded yet.
               </div>
             )}

@@ -173,10 +173,10 @@ const AdminOutwardDetailPage: React.FC = () => {
               <FiArrowLeft size={20} />
             </CustomButton>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                 Outward Details
                 <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-lg text-red-600">{record.code}</span>
+                <span className="font-mono text-xs text-red-600">{record.code}</span>
               </h1>
             </div>
           </div>
@@ -193,7 +193,7 @@ const AdminOutwardDetailPage: React.FC = () => {
 
           {/* Info Card */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 text-xs">
               <div>
                 <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Project</span>
                 <span className="font-semibold text-slate-800">{record.projectName || '—'}</span>

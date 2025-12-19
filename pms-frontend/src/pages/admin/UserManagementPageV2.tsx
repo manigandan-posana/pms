@@ -282,7 +282,7 @@ export const UserManagementPage: React.FC = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow">
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm border border-red-200">
+        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-xs border border-red-200">
           {error}
         </div>
       )}

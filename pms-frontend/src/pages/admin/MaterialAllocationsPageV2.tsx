@@ -8,7 +8,7 @@ export const MaterialAllocationsPageV2: React.FC = () => {
   return (
     <div className="h-full flex flex-col p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Material Allocations</h1>
+        <h1 className="text-xs font-bold text-gray-800">Material Allocations</h1>
         <Button
           label="Manage Allocations"
           icon="pi pi-cog"
@@ -25,18 +25,18 @@ export const MaterialAllocationsPageV2: React.FC = () => {
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Material Allocation Management</h3>
-            <p className="text-sm text-gray-600 mb-3">
+            <h3 className="text-xs font-semibold text-gray-900 mb-2">Material Allocation Management</h3>
+            <p className="text-xs text-gray-600 mb-3">
               Allocate materials to projects by defining required quantities for each material in your Bill of Materials (BOM).
             </p>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 • Click <span className="font-semibold">"Manage Allocations"</span> above to view and manage all material allocations
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 • Use <span className="font-semibold">Project Management</span> page to allocate materials to specific projects
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 • Use <span className="font-semibold">Material Directory</span> page to view material details and availability
               </p>
             </div>
