@@ -101,6 +101,7 @@ const CustomTable = <T extends Record<string, any>>({
                                         fontWeight: 600,
                                         backgroundColor: '#f8fafc',
                                         color: '#475569',
+                                        fontSize: '0.75rem',
                                         ...col.style
                                     }}
                                     width={col.width}

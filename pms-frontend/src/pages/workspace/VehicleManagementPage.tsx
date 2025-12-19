@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiPlus, FiTrash2, FiCheck, FiSlash, FiLock, FiUnlock, FiTruck, FiMapPin, FiZap } from "react-icons/fi";
 import { TbCurrencyRupee } from "react-icons/tb";
-import { BarChart } from "@mui/x-charts/BarChart";
-import { PieChart } from "@mui/x-charts/PieChart";
+import { BarChart, PieChart } from "@mui/x-charts";
 import {
   loadVehicleData,
   createVehicle,
@@ -1235,7 +1234,7 @@ const VehicleManagementPage: React.FC = () => {
           </div>
         }
       >
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 pt-2 flex flex-col gap-2">
           <CustomTextField label="Opening KM" disabled value={selectedFuelEntry?.openingKm} />
           <CustomTextField label="Closing KM" required type="number" value={closingKm} onChange={(e) => setClosingKm(e.target.value)} />
         </div>
