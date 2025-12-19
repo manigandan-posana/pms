@@ -162,11 +162,11 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
   const handleSubmit = async () => {
     if (!token) return;
     const payload = {
-      code: modalState.fields.code?.trim() || "",
+      code: modalState.fields.code?.trim() || undefined,
       name: modalState.fields.name?.trim() || "",
     };
-    if (!payload.code || !payload.name) {
-      toast.error("Code and project name are required");
+    if (!payload.name) {
+      toast.error("Project name is required");
       return;
     }
     setModalState((prev) => ({ ...prev, saving: true }));
@@ -384,10 +384,10 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
         >
           <div className="grid gap-4 py-2">
             <CustomTextField
-              label="Code *"
+              label="Code (auto-generated if empty)"
               value={modalState.fields.code}
               onChange={(e) => handleFieldChange('code', e.target.value)}
-              placeholder="PRJ-001"
+              placeholder="Leave empty for auto-generation"
             />
             <CustomTextField
               label="Project Name *"

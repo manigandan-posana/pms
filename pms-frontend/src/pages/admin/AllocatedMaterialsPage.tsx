@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,6 +12,7 @@ import {
 } from "../../store/slices/adminAllocationsSlice";
 import type { RootState, AppDispatch } from "../../store/store";
 import CustomButton from "../../widgets/CustomButton";
+import CustomLoader from "../../widgets/CustomLoader";
 
 interface AllocatedMaterialsPageProps {
   onRequestReload?: () => void;
@@ -56,7 +58,8 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
           <div className="flex items-center bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
             {/* Assuming these routes exist for navigation context */}
             <CustomButton
-              variant="secondary" // Active
+              color="secondary"
+              variant="contained"
               size="small"
               startIcon={<FiList />}
             >
@@ -73,8 +76,9 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
             </CustomButton>
           </div>
           <CustomButton
-            variant="primary"
-            icon={<FiPlus />}
+            color="primary"
+            variant="contained"
+            startIcon={<FiPlus />}
             onClick={() => navigate("/admin/inventory/allocations")} // Assuming this leads to the bulk allocator
           >
             Bulk Allocate
@@ -83,9 +87,7 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
       </div>
 
       {status === "loading" ? (
-        <div className="flex items-center justify-center p-20 bg-white rounded-xl border border-slate-200">
-          <span className="text-slate-500">Loading allocations...</span>
-        </div>
+        <CustomLoader message="Loading allocations..." />
       ) : (
         <ProjectAllocationManager
           token={token}

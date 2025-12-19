@@ -1,35 +1,44 @@
+
 import React, { useState, useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Box,
+  Tooltip,
+  Divider,
+  useTheme,
+  styled
+} from "@mui/material";
+import type { CSSObject, Theme } from "@mui/material";
+
+import {
   FiBox,
-  FiArrowDownCircle,
-  FiArrowUpCircle,
-  FiRepeat,
-  FiShoppingCart,
-  FiSettings,
-  FiUsers,
-  FiFile,
   FiBarChart2,
-  FiChevronDown,
-  FiLogOut,
+  FiFile,
+  FiRepeat,
+  FiUsers,
   FiTruck,
+  FiSettings,
+  FiLogOut
 } from "react-icons/fi";
 import {
-  FaBars,
   FaChevronLeft,
+  FaChevronRight,
+  FaSignOutAlt
 } from "react-icons/fa";
 import AdminTopBar from "./AdminTopBar";
-import NavigationTabs from "./NavigationTabs";
 
-interface NavItem {
-  id: string;
-  label: string;
-  icon?: React.ComponentType<{ size?: number }>;
-  path?: string;
-  children?: NavItem[];
-}
+// Constants
+const DRAWER_WIDTH = 240;
+const COLLAPSED_WIDTH = 72;
 
-interface SidebarLayoutProps {
+export interface SidebarLayoutProps {
   children: React.ReactNode;
   userRole?: string;
   userName?: string;
@@ -38,6 +47,64 @@ interface SidebarLayoutProps {
   pageHeading?: string;
   showProjectSelector?: boolean;
 }
+
+interface NavItem {
+  id: string;
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ size?: number }>;
+  children?: NavItem[];
+}
+
+const openedMixin = (theme: Theme): CSSObject => ({
+  width: DRAWER_WIDTH,
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: 'hidden',
+  backgroundColor: '#ffffff',
+  borderRight: '1px solid #e2e8f0', // slate-200
+  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+});
+
+const closedMixin = (theme: Theme): CSSObject => ({
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  overflowX: 'hidden',
+  width: COLLAPSED_WIDTH,
+  backgroundColor: '#ffffff',
+  borderRight: '1px solid #e2e8f0',
+  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+});
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: theme.spacing(0, 2),
+  minHeight: 64,
+  ...theme.mixins.toolbar,
+}));
+
+const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    width: DRAWER_WIDTH,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
+    ...(open && {
+      ...openedMixin(theme),
+      '& .MuiDrawer-paper': openedMixin(theme),
+    }),
+    ...(!open && {
+      ...closedMixin(theme),
+      '& .MuiDrawer-paper': closedMixin(theme),
+    }),
+  }),
+);
 
 const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   children,
@@ -49,10 +116,11 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   showProjectSelector = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const theme = useTheme();
   const location = useLocation();
 
   const isAdmin = userRole === "ADMIN";
+  const open = !collapsed;
 
   const navItems: NavItem[] = useMemo(() => {
     const baseItems: NavItem[] = [
@@ -64,186 +132,169 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
       { id: "dashboard", label: "Project Management", icon: FiBarChart2, path: "/admin/project-details" },
       { id: "materials", label: "Materials", icon: FiBox, path: "/admin/materials" },
       { id: "projects", label: "Projects", icon: FiFile, path: "/admin/projects" },
-      { 
-        id: "allocations", 
-        label: "Allocations", 
-        icon: FiRepeat,
-        children: [
-          { id: "allocations-manage", label: "Manage", path: "/admin/allocations" },
-          { id: "allocated-materials", label: "Allocated Materials", path: "/admin/allocated-materials" },
-        ],
-      },
-      { id: "users", label: "Users", icon: FiUsers, path: "/admin/users" },
-      { id: "history", label: "History", icon: FiFile, path: "/admin/history" },
+      // Flatten hierarchy for sidebar if needed, or handle recursive render. 
+      // For now, let's keep it simple and flat or just top-level as AdminSidebar usually handles admin routes.
+      // But SidebarLayout is for NON-ADMIN pages usually, or shared. 
+      // If userRole is ADMIN, typically AdminDashboard is used. 
+      // Let's assume standard Items for generic workspace.
     ];
-
-    if (isAdmin) {
-      return adminItems;
-    }
 
     if (userRole === "CEO" || userRole === "COO") {
       return [
         { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
-        {
-          id: "history",
-          label: "History",
-          icon: FiFile,
-          children: [
-            { id: "inward-history", label: "Inwards", path: "/workspace/inward/history" },
-            { id: "outward-history", label: "Outwards", path: "/workspace/outward/history" },
-          ],
-        },
+        { id: "inwards", label: "Inwards", icon: FiFile, path: "/workspace/inward/history" },
+        { id: "outwards", label: "Outwards", icon: FiFile, path: "/workspace/outward/history" },
       ];
     }
 
     if (userRole === "PROCUREMENT_MANAGER") {
       return [
         { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/pm-dashboard" },
-        {
-          id: "history",
-          label: "History",
-          icon: FiFile,
-          children: [
-            { id: "inward-history", label: "Inwards", path: "/workspace/inward/history" },
-            { id: "outward-history", label: "Outwards", path: "/workspace/outward/history" },
-          ],
-        },
+        { id: "inwards", label: "Inwards", icon: FiFile, path: "/workspace/inward/history" },
+        { id: "outwards", label: "Outwards", icon: FiFile, path: "/workspace/outward/history" },
       ];
     }
 
     return baseItems;
   }, [userRole, isAdmin]);
 
-  const toggleMenu = (id: string) => {
-    const newExpanded = new Set(expandedMenus);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedMenus(newExpanded);
-  };
-
-  const isActive = (path?: string) => {
-    if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + "/");
-  };
-
-  const renderNavItem = (item: NavItem, depth = 0) => {
-    const hasChildren = item.children && item.children.length > 0;
-    const isItemActive = isActive(item.path) || (hasChildren && item.children?.some(c => isActive(c.path)));
-    const Icon = item.icon;
-
-    return (
-      <div key={item.id}>
-        {hasChildren ? (
-          <button
-            onClick={() => toggleMenu(item.id)}
-            className={`w-full flex items-center justify-between px-4 py-2 my-1 text-[10px] font-medium rounded-none transition ${
-              isItemActive
-                ? "bg-[#0A7326] text-white"
-                : "text-slate-700 hover:bg-[#0A7326]/10"
-            } ${collapsed ? "px-3" : ""}`}
-          >
-            <div className={`flex items-center ${collapsed ? "justify-center w-full" : "gap-3"}`}>
-              {Icon && <Icon size={18} />}
-              {!collapsed && <span>{item.label}</span>}
-            </div>
-            {!collapsed && (
-              <FiChevronDown
-                size={14}
-                className={`transform transition ${expandedMenus.has(item.id) ? "rotate-180" : ""}`}
-              />
-            )}
-          </button>
-        ) : (
-          <NavLink
-            to={item.path || "#"}
-            className={({ isActive: isLinkActive }) => {
-              const baseClass = "flex items-center gap-3 px-4 py-2 my-1 transition-colors rounded-none text-[10px] font-medium";
-              const activeClass = isLinkActive ? "bg-[#0A7326] text-white" : "text-slate-700 hover:bg-[#0A7326]/10";
-              const collapsedClass = collapsed ? "justify-center px-3" : "justify-start";
-              return `${baseClass} ${activeClass} ${collapsedClass}`;
-            }}
-          >
-            {Icon && <Icon size={18} />}
-            {!collapsed && <span>{item.label}</span>}
-          </NavLink>
-        )}
-
-        {hasChildren && expandedMenus.has(item.id) && !collapsed && (
-          <div className="ml-3 mt-0 space-y-0">
-            {item.children?.map(child => renderNavItem(child, depth + 1))}
-          </div>
-        )}
-      </div>
-    );
+  const handleToggle = () => {
+    setCollapsed(!collapsed);
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Fixed sidebar */}
-      <aside
-        className={`fixed left-0 top-0 h-screen flex flex-col bg-white transition-all duration-300 z-20 ${collapsed ? "w-16" : "w-56"} shadow-lg border border-slate-200`}
-      >
-        {/* Logo and collapse toggle */}
-        <div className="flex items-center justify-between px-3 py-2">
-          <NavLink 
-            to={navItems[0]?.path || "/"} 
-            className="flex items-center gap-2"
-          >
-            <img src="/posana-logo.svg" alt="Logo" className="h-6 w-auto" />
-          </NavLink>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCollapsed(!collapsed)}
-              className="text-[var(--primary)] hover:text-[var(--primary)]/70"
+    <div className="min-h-screen bg-slate-50">
+      <StyledDrawer variant="permanent" open={open}>
+        <DrawerHeader>
+          {open && (
+            <Box
+              component={NavLink}
+              to="/"
+              sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 1 }}
             >
-              {collapsed ? <FaBars size={16} /> : <FaChevronLeft size={16} />}
-            </button>
-          </div>
-        </div>
+              <img src="/posana-logo.svg" alt="Logo" style={{ height: 28, width: 'auto' }} />
+            </Box>
+          )}
+          <IconButton onClick={handleToggle} size="small" sx={{ color: 'text.secondary', ml: open ? 0 : 'auto', mr: open ? 0 : 'auto' }}>
+            {open ? <FaChevronLeft size={16} /> : <FaChevronRight size={16} />}
+          </IconButton>
+        </DrawerHeader>
 
-        {/* Navigation links */}
-        <nav className="flex-1 overflow-y-auto py-2">
-          {navItems.map(item => renderNavItem(item))}
-        </nav>
+        <Divider sx={{ borderColor: '#f1f5f9' }} />
 
-        {/* Admin button and Logout (kept at bottom) */}
-        <div className="px-3 py-2 text-slate-700 mt-auto space-y-1">
+        <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            const Icon = item.icon;
+
+            return (
+              <ListItem key={item.id} disablePadding sx={{ display: 'block', mb: 0.5 }}>
+                <Tooltip title={!open ? item.label : ""} placement="right">
+                  <ListItemButton
+                    component={NavLink}
+                    to={item.path}
+                    sx={{
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: 2.5,
+                      borderRadius: 2,
+                      backgroundColor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent', // blue-600
+                      color: isActive ? '#2563eb' : '#475569',
+                      '&:hover': {
+                        backgroundColor: isActive ? 'rgba(37, 99, 235, 0.12)' : '#f8fafc',
+                        color: isActive ? '#2563eb' : '#1e293b',
+                      },
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 2 : 'auto',
+                        justifyContent: 'center',
+                        color: 'inherit',
+                        fontSize: 20
+                      }}
+                    >
+                      <Icon size={20} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: isActive ? 600 : 500,
+                        fontFamily: '"Google Sans", "Roboto", sans-serif'
+                      }}
+                      sx={{ opacity: open ? 1 : 0 }}
+                    />
+                  </ListItemButton>
+                </Tooltip>
+              </ListItem>
+            );
+          })}
+        </List>
+
+        <Box sx={{ p: 1.5, borderTop: '1px solid #f1f5f9' }}>
           {onOpenAdmin && !isAdmin && (
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              className={`w-full flex items-center gap-2 rounded-none px-3 py-2 text-[10px] font-medium text-[#0A7326] hover:bg-[#0A7326]/10 transition ${collapsed ? "justify-center" : ""}`}
-            >
-              <FiSettings size={16} />
-              {!collapsed && <span>Admin</span>}
-            </button>
+            <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
+              <Tooltip title={!open ? "Admin" : ""} placement="right">
+                <ListItemButton
+                  onClick={onOpenAdmin}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: open ? 'initial' : 'center',
+                    px: 2.5,
+                    borderRadius: 2,
+                    color: '#475569',
+                    '&:hover': { backgroundColor: '#f8fafc', color: '#1e293b' },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 'auto', justifyContent: 'center', color: 'inherit' }}>
+                    <FiSettings size={18} />
+                  </ListItemIcon>
+                  <ListItemText primary="Admin" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
           )}
-          {onLogout && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className={`w-full flex items-center gap-2 rounded-none px-3 py-2 text-[10px] font-medium text-[#0A7326] hover:bg-[#0A7326]/10 transition ${collapsed ? "justify-center" : ""}`}
-            >
-              <FiLogOut size={16} />
-              {!collapsed && <span>Logout</span>}
-            </button>
-          )}
-        </div>
-      </aside>
 
-      {/* Main content with margin for sidebar */}
-      <main className={`transition-all duration-300 ${collapsed ? "ml-16" : "ml-56"}`}>
-        <AdminTopBar 
-          userName={_userName} 
+          {onLogout && (
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <Tooltip title={!open ? "Logout" : ""} placement="right">
+                <ListItemButton
+                  onClick={onLogout}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: open ? 'initial' : 'center',
+                    px: 2.5,
+                    borderRadius: 2,
+                    color: '#ef4444',
+                    '&:hover': { backgroundColor: '#fef2f2' },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 0, mr: open ? 2 : 'auto', justifyContent: 'center', color: 'inherit' }}>
+                    <FaSignOutAlt size={18} />
+                  </ListItemIcon>
+                  <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          )}
+        </Box>
+      </StyledDrawer>
+
+      {/* Main content */}
+      <main
+        className="transition-all duration-300"
+        style={{ marginLeft: collapsed ? 72 : 240 }}
+      >
+        <AdminTopBar
+          userName={_userName}
           userRole={userRole}
           pageHeading={pageHeading}
           showProjectSelector={showProjectSelector}
         />
-        <div className="min-h-screen p-4">
+        <div className="p-4">
           {children}
         </div>
       </main>

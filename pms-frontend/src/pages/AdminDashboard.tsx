@@ -40,15 +40,18 @@ const AdminDashboard: React.FC = () => {
   }, [instance, navigate, store]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <AdminSidebar 
+    <div className="min-h-screen bg-slate-50">
+      <AdminSidebar
         onLogout={handleLogout}
         userName={name || email}
         userRole={role}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
       />
-      <main className={`transition-all duration-300 ${collapsed ? "ml-16" : "ml-56"}`}>
+      <main
+        className="transition-all duration-300"
+        style={{ marginLeft: collapsed ? 72 : 240 }}
+      >
         <AdminTopBar
           userName={name || email}
           userRole={role}

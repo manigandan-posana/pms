@@ -295,7 +295,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
   };
 
   const columns: ColumnDef<Material>[] = [
-    { field: 'code', header: 'Code', width: '100px', body: (r) => <span className="font-mono font-bold text-slate-700">{r.code || '—'}</span> },
+    { field: 'code', header: 'Code', width: '100px', body: (r) => <span className="font-mono font-bold text-slate-700 whitespace-nowrap">{r.code || '—'}</span> },
     { field: 'name', header: 'Material', body: (r) => <span className="font-medium text-slate-800">{r.name || '—'}</span> },
     { field: 'partNo', header: 'Part No', width: '120px', body: (r) => <span className="text-slate-600 text-xs">{r.partNo || '—'}</span> },
     { field: 'lineType', header: 'Line Type', width: '100px', body: (r) => <span className="text-slate-600">{r.lineType || '—'}</span> },

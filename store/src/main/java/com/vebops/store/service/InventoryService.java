@@ -82,11 +82,10 @@ public class InventoryService {
     }
 
     public InventoryCodesResponse generateCodes() {
-        LocalDate today = LocalDate.now();
         return new InventoryCodesResponse(
-            buildDailyCode("INW", today, inwardRecordRepository.countByEntryDate(today) + 1),
-            buildDailyCode("OUT", today, outwardRecordRepository.countByEntryDate(today) + 1),
-            buildDailyCode("TRF", today, transferRecordRepository.countByTransferDate(today) + 1)
+            buildShortCode("I", inwardRecordRepository.count() + 1),
+            buildShortCode("O", outwardRecordRepository.count() + 1),
+            buildShortCode("T", transferRecordRepository.count() + 1)
         );
     }
 
@@ -708,6 +707,11 @@ public class InventoryService {
             return requested.trim();
         }
         return generator.get();
+    }
+
+    private String buildShortCode(String prefix, long sequence) {
+        long safeSequence = Math.max(1, sequence);
+        return String.format("%s%04d", prefix, safeSequence);
     }
 
     private String buildDailyCode(String prefix, LocalDate date, long sequence) {

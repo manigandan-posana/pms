@@ -1,24 +1,33 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Box,
+  Tooltip,
+  Divider,
+  useTheme,
+  styled
+} from "@mui/material";
+import type { Theme, CSSObject } from "@mui/material";
 import {
   FaLayerGroup,
-  FaClipboardList,
-  FaCheckCircle,
   FaProjectDiagram,
   FaUsers,
   FaSignOutAlt,
-  FaBars,  
   FaChevronLeft,
+  FaChevronRight,
   FaCar,
 } from "react-icons/fa";
 
-/*
- * AdminSidebar renders navigation for the admin console. It provides
- * links to the various administrative modules and a logout action.
- * The sidebar is collapsible. When collapsed, only icons are shown.
- * The onLogout function is supplied by the parent component to handle
- * logging out of the application.
- */
+// Constants
+const DRAWER_WIDTH = 240;
+const COLLAPSED_WIDTH = 72; // Slightly wider for better icon centering
 
 export interface AdminSidebarProps {
   onLogout: () => void;
@@ -41,74 +50,183 @@ const ADMIN_MENU: MenuItem[] = [
   { label: "Vehicle Dashboard", to: "/admin/vehicles/dashboard", icon: FaCar },
 ];
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout, collapsed: collapsedProp, onToggleCollapse }) => {
+const openedMixin = (theme: Theme): CSSObject => ({
+  width: DRAWER_WIDTH,
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: 'hidden',
+  backgroundColor: '#ffffff',
+  borderRight: '1px solid #e2e8f0', // slate-200
+  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+});
+
+const closedMixin = (theme: Theme): CSSObject => ({
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  overflowX: 'hidden',
+  width: COLLAPSED_WIDTH,
+  backgroundColor: '#ffffff',
+  borderRight: '1px solid #e2e8f0',
+  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+});
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: theme.spacing(0, 2),
+  minHeight: 64, // Standard toolbar height
+  ...theme.mixins.toolbar,
+}));
+
+const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    width: DRAWER_WIDTH,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
+    ...(open && {
+      ...openedMixin(theme),
+      '& .MuiDrawer-paper': openedMixin(theme),
+    }),
+    ...(!open && {
+      ...closedMixin(theme),
+      '& .MuiDrawer-paper': closedMixin(theme),
+    }),
+  }),
+);
+
+const AdminSidebar: React.FC<AdminSidebarProps> = ({
+  onLogout,
+  collapsed: collapsedProp,
+  onToggleCollapse
+}) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const isControlled = typeof collapsedProp === "boolean";
   const collapsed = isControlled ? (collapsedProp as boolean) : internalCollapsed;
+  const open = !collapsed;
+
+  const theme = useTheme();
+  const location = useLocation();
+
+  const handleToggle = () => {
+    if (isControlled) {
+      onToggleCollapse && onToggleCollapse();
+    } else {
+      setInternalCollapsed((prev) => !prev);
+    }
+  };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen flex flex-col bg-white transition-all duration-300 z-20 ${collapsed ? "w-16" : "w-56"} shadow-lg border border-slate-200`}
-    >
-      {/* Logo and collapse toggle */}
-      <div className="flex items-center justify-between px-3 py-2">
-          <NavLink to="/admin/inventory" className="flex items-center gap-2">
-          <img src="/posana-logo.svg" alt="Logo" className="h-6 w-auto" />
-        </NavLink>
-        <div className="flex items-center gap-2">
-          {/* no user name or role displayed in sidebar header per preference */}
-          <button
-            type="button"
-            onClick={() => {
-              if (isControlled) {
-                onToggleCollapse && onToggleCollapse();
-              } else {
-                setInternalCollapsed((s) => !s);
-              }
-            }}
-            className="text-[var(--primary)] hover:text-[var(--primary)]/70"
+    <StyledDrawer variant="permanent" open={open}>
+      <DrawerHeader>
+        {open && (
+          <Box
+            component={NavLink}
+            to="/admin/inventory"
+            sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 1 }}
           >
-            {collapsed ? <FaBars size={16} /> : <FaChevronLeft size={16} />}
-          </button>
-        </div>
-      </div>
+            <img src="/posana-logo.svg" alt="Logo" style={{ height: 28, width: 'auto' }} />
+          </Box>
+        )}
+        <IconButton onClick={handleToggle} size="small" sx={{ color: 'text.secondary', ml: open ? 0 : 'auto', mr: open ? 0 : 'auto' }}>
+          {open ? <FaChevronLeft size={16} /> : <FaChevronRight size={16} />}
+        </IconButton>
+      </DrawerHeader>
 
-      {/* Navigation links */}
-      <nav className="flex-1 overflow-y-auto py-2">
-        {ADMIN_MENU.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              [
-                "flex items-center gap-3 px-4 py-2 my-1 transition-colors rounded-none",
-                collapsed ? "justify-center" : "justify-start",
-                isActive
-                  ? "bg-[#0A7326] text-white"
-                  : "text-slate-700 hover:bg-[#0A7326]/10",
-              ].join(" ")
-            }
-          >
-            <Icon size={18} />
-            {!collapsed && (
-              <span className="text-[10px] font-medium">{label}</span>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+      <Divider sx={{ borderColor: '#f1f5f9' }} />
 
-      {/* Logout (kept at bottom) */}
-      <div className="px-3 py-2 text-slate-700 mt-auto">
-        <button
-          type="button"
-          onClick={onLogout}
-          className="flex items-center gap-2 rounded-none px-3 py-2 text-[10px] font-medium text-[#0A7326] hover:bg-[#0A7326]/10"
-        >
-          <FaSignOutAlt size={16} />
-          {!collapsed && <span>Logout</span>}
-        </button>
-      </div>
-    </aside>
+      <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
+        {ADMIN_MENU.map(({ label, to, icon: Icon }) => {
+          const isActive = location.pathname.startsWith(to);
+
+          return (
+            <ListItem key={to} disablePadding sx={{ display: 'block', mb: 0.5 }}>
+              <Tooltip title={!open ? label : ""} placement="right">
+                <ListItemButton
+                  component={NavLink}
+                  to={to}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: open ? 'initial' : 'center',
+                    px: 2.5,
+                    borderRadius: 2,
+                    backgroundColor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                    color: isActive ? '#2563eb' : '#475569', // blue-600 or slate-600
+                    '&:hover': {
+                      backgroundColor: isActive ? 'rgba(37, 99, 235, 0.12)' : '#f8fafc',
+                      color: isActive ? '#2563eb' : '#1e293b',
+                    },
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: open ? 2 : 'auto',
+                      justifyContent: 'center',
+                      color: 'inherit',
+                      fontSize: 20
+                    }}
+                  >
+                    <Icon size={20} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={label}
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: isActive ? 600 : 500,
+                      fontFamily: '"Google Sans", "Roboto", sans-serif'
+                    }}
+                    sx={{ opacity: open ? 1 : 0 }}
+                  />
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          );
+        })}
+      </List>
+
+      <Box sx={{ p: 1.5, borderTop: '1px solid #f1f5f9' }}>
+        <ListItem disablePadding sx={{ display: 'block' }}>
+          <Tooltip title={!open ? "Logout" : ""} placement="right">
+            <ListItemButton
+              onClick={onLogout}
+              sx={{
+                minHeight: 48,
+                justifyContent: open ? 'initial' : 'center',
+                px: 2.5,
+                borderRadius: 2,
+                color: '#ef4444', // red-500
+                '&:hover': {
+                  backgroundColor: '#fef2f2', // red-50
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 0,
+                  mr: open ? 2 : 'auto',
+                  justifyContent: 'center',
+                  color: 'inherit',
+                }}
+              >
+                <FaSignOutAlt size={18} />
+              </ListItemIcon>
+              <ListItemText
+                primary="Logout"
+                primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                sx={{ opacity: open ? 1 : 0 }}
+              />
+            </ListItemButton>
+          </Tooltip>
+        </ListItem>
+      </Box>
+    </StyledDrawer>
   );
 };
 

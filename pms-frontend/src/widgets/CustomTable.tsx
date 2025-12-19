@@ -10,6 +10,7 @@ import {
     Paper,
     TablePagination,
     Typography,
+    Skeleton
 } from "@mui/material";
 
 export interface ColumnDef<T = any> {
@@ -49,15 +50,13 @@ const CustomTable = <T extends Record<string, any>>({
     totalRecords,
     onRowClick,
     title,
+    loading = false
 }: CustomTableProps<T>) => {
     const [internalPage, setInternalPage] = useState(0);
     const [internalRowsPerPage, setInternalRowsPerPage] = useState(rows);
 
     const page = controlledPage !== undefined ? controlledPage : internalPage;
-    const rowsPerPage = internalRowsPerPage; // If we want to control rows per page too, we'd need a prop for it. 
-    // But typically rowsPerPage is internal or passed as initial 'rows'. 
-    // Let's assume rowsPerPage is managed here unless we add a prop. 
-    // Re-initializing state from props is tricky, but let's stick to internal state for rows if not strictly controlled.
+    const rowsPerPage = internalRowsPerPage;
 
     const handleChangePage = (_: unknown, newPage: number) => {
         if (controlledPage === undefined) {
@@ -79,10 +78,6 @@ const CustomTable = <T extends Record<string, any>>({
         }
     };
 
-    // If onPageChange is provided, we assume controlled or server-side, 
-    // but here we will implement client-side slicing by default if standard pagination usage.
-    // PrimeReact's DataTable often handles internal slicing if 'value' is all data.
-    // Use slicedData for display.
     const slicedData = pagination && !onPageChange
         ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
         : data;
@@ -116,7 +111,17 @@ const CustomTable = <T extends Record<string, any>>({
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {slicedData.length > 0 ? (
+                        {loading ? (
+                            Array.from({ length: Math.min(rowsPerPage || 5, 5) }).map((_, index) => (
+                                <TableRow key={`skeleton-${index}`}>
+                                    {columns.map((col, colIndex) => (
+                                        <TableCell key={`skeleton-cell-${colIndex}`} style={{ padding: '16px' }}>
+                                            <Skeleton animation="wave" height={20} width="80%" />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : slicedData.length > 0 ? (
                             slicedData.map((row, rowIndex) => (
                                 <TableRow
                                     hover
@@ -127,7 +132,7 @@ const CustomTable = <T extends Record<string, any>>({
                                     style={{ cursor: onRowClick ? 'pointer' : 'default' }}
                                 >
                                     {columns.map((col) => (
-                                        <TableCell key={`${rowIndex} -${col.field} `} align={col.align || 'left'}>
+                                        <TableCell key={`${rowIndex}-${col.field}`} align={col.align || 'left'}>
                                             {col.body ? col.body(row) : row[col.field]}
                                         </TableCell>
                                     ))}

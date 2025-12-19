@@ -148,18 +148,37 @@ public class AdminService {
     }
 
     public ProjectDto createProject(CreateProjectRequest request) {
-        if (request == null || !StringUtils.hasText(request.code()) || !StringUtils.hasText(request.name())) {
-            throw new BadRequestException("Project code and name are required");
+        if (request == null || !StringUtils.hasText(request.name())) {
+            throw new BadRequestException("Project name is required");
         }
-        projectRepository
-            .findByCodeIgnoreCase(request.code())
-            .ifPresent(existing -> {
-                throw new BadRequestException("Project code already exists");
-            });
+        
+        String code;
+        if (StringUtils.hasText(request.code())) {
+            code = request.code().trim();
+            projectRepository
+                .findByCodeIgnoreCase(code)
+                .ifPresent(existing -> {
+                    throw new BadRequestException("Project code already exists");
+                });
+        } else {
+            // Auto-generate short unique code
+            code = generateProjectCode();
+        }
+        
         Project project = new Project();
-        project.setCode(request.code().trim());
+        project.setCode(code);
         project.setName(request.name().trim());
         return toProjectDto(projectRepository.save(project));
+    }
+    
+    private String generateProjectCode() {
+        long count = projectRepository.count();
+        String code;
+        do {
+            count++;
+            code = String.format("P%04d", count);
+        } while (projectRepository.findByCodeIgnoreCase(code).isPresent());
+        return code;
     }
 
     public ProjectDto updateProject(Long id, UpdateProjectRequest request) {
