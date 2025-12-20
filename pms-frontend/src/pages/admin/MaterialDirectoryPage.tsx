@@ -122,7 +122,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
 
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<FiltersState>({
@@ -140,7 +140,6 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     if (!token) return;
     await dispatch(
       fetchMaterials({
-        token,
         query: {
           page: page + 1,
           size: pageSize,
@@ -211,7 +210,6 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
       if (modalState.mode === "edit" && modalState.materialId != null) {
         await dispatch(
           updateMaterial({
-            token,
             materialId: String(modalState.materialId),
             payload,
           })
@@ -236,7 +234,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     const confirmDelete = window.confirm("Delete this material?");
     if (!confirmDelete) return;
     try {
-      await dispatch(deleteMaterial({ token, materialId: String(materialId) })).unwrap();
+      await dispatch(deleteMaterial(String(materialId))).unwrap();
       toast.success("Material removed");
       refreshMaterials(); // No await on purpose to feel faster
       onRequestReload?.();
@@ -327,8 +325,26 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
               <p className="text-slate-500">Manage all materials and master data</p>
             </div>
             <div className="flex items-center gap-2">
-              <CustomButton variant="outlined" onClick={handleExportClick} startIcon={<FiDownload />} loading={exporting}>Export</CustomButton>
-              <CustomButton variant="outlined" onClick={handleImportClick} startIcon={<FiUpload />} loading={importing}>Import</CustomButton>
+              <button
+                onClick={handleExportClick}
+                disabled={exporting}
+                title="Export data"
+                className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
+                style={{ color: '#000000', padding: '8px' }}
+                type="button"
+              >
+                {exporting ? <i className="pi pi-spin pi-spinner" /> : <FiDownload size={16} />}
+              </button>
+              <button
+                onClick={handleImportClick}
+                disabled={importing}
+                title="Import data"
+                className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
+                style={{ color: '#000000', padding: '8px' }}
+                type="button"
+              >
+                {importing ? <i className="pi pi-spin pi-spinner" /> : <FiUpload size={16} />}
+              </button>
               <CustomButton onClick={openCreateMaterial} startIcon={<FiPlus />}>Add Material</CustomButton>
             </div>
           </div>
@@ -343,14 +359,15 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
                 InputProps={{ startAdornment: <FiSearch className="text-slate-400 mr-2" /> }}
               />
             </div>
-            <CustomButton
-              variant={filtersOpen ? "secondary" : "text"}
+            <button
               onClick={() => setFiltersOpen(!filtersOpen)}
-              size="small"
-              startIcon={filtersOpen ? <FiX /> : <FiFilter />}
+              title={filtersOpen ? "Close Filters" : "Filters"}
+              className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
+              style={{ color: '#666666', padding: '8px' }}
+              type="button"
             >
-              {filtersOpen ? "Close Filters" : "Filters"}
-            </CustomButton>
+              {filtersOpen ? <FiX size={16} /> : <FiFilter size={16} />}
+            </button>
           </div>
 
           {filtersOpen && (
@@ -377,7 +394,14 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
                 onChange={(val: any) => { setFilters(prev => ({ ...prev, units: val })); setPage(0); }}
               />
               <div className="md:col-span-3 flex justify-end">
-                <CustomButton variant="text" size="small" onClick={() => { setFilters({ categories: [], units: [], lineTypes: [] }); setPage(0); }}>Reset Filters</CustomButton>
+                <CustomButton
+                  variant="text"
+                  size="small"
+                  onClick={() => { setFilters({ categories: [], units: [], lineTypes: [] }); setPage(0); }}
+                  sx={{ color: '#666666' }}
+                >
+                  Reset Filters
+                </CustomButton>
               </div>
             </div>
           )}

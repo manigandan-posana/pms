@@ -57,40 +57,38 @@ export const CompactDeleteButton: React.FC<CompactButtonProps> = ({
 );
 
 export const CompactExportButton: React.FC<CompactButtonProps> = ({
-  label = "Export",
   tooltip = "Export data",
   onClick,
   disabled,
   loading,
 }) => (
   <button
-    className="p-button p-button-outlined p-button-sm p-component inline-flex items-center justify-center gap-2"
+    className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
     onClick={onClick}
     disabled={disabled || loading}
     title={tooltip}
     type="button"
+    style={{ color: '#000000', padding: '8px' }}
   >
-    {loading ? <i className="pi pi-spin pi-spinner" /> : <FiDownload size={14} />}
-    {label && <span>{label}</span>}
+    {loading ? <i className="pi pi-spin pi-spinner" /> : <FiDownload size={16} />}
   </button>
 );
 
 export const CompactImportButton: React.FC<CompactButtonProps> = ({
-  label = "Import",
   tooltip = "Import data",
   onClick,
   disabled,
   loading,
 }) => (
   <button
-    className="p-button p-button-outlined p-button-sm p-component inline-flex items-center justify-center gap-2"
+    className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
     onClick={onClick}
     disabled={disabled || loading}
     title={tooltip}
     type="button"
+    style={{ color: '#000000', padding: '8px' }}
   >
-    {loading ? <i className="pi pi-spin pi-spinner" /> : <FiUpload size={14} />}
-    {label && <span>{label}</span>}
+    {loading ? <i className="pi pi-spin pi-spinner" /> : <FiUpload size={16} />}
   </button>
 );
 

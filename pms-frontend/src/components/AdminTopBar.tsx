@@ -6,8 +6,7 @@ import {
   Box,
   IconButton,
   Avatar,
-  Stack,
-  useTheme
+  Stack
 } from "@mui/material";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import ProjectSelector from "./ProjectSelector";
@@ -25,7 +24,6 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
   pageHeading = "Inventory",
   showProjectSelector = false
 }) => {
-  const theme = useTheme();
 
   const initials = (userName || "")
     .split(" ")
@@ -54,7 +52,8 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
             variant="subtitle1"
             sx={{
               fontWeight: 600,
-              color: '#0f172a', // slate-900
+              fontSize: '14px',
+              color: '#333333',
               display: 'flex',
               alignItems: 'center',
               gap: 1
@@ -75,8 +74,8 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
           <IconButton
             size="small"
             sx={{
-              color: '#475569',
-              '&:hover': { backgroundColor: '#f1f5f9' }
+              color: '#666666',
+              '&:hover': { backgroundColor: '#f5f5f5' }
             }}
           >
             <FaBell size={18} />
@@ -84,10 +83,10 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
 
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Box sx={{ display: { xs: 'none', sm: 'flex' }, flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: '#0f172a', lineHeight: 1.2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '12px', color: '#333333', lineHeight: 1.2 }}>
                 {userName || "—"}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#64748b', lineHeight: 1 }}>
+              <Typography variant="caption" sx={{ fontSize: '10px', color: '#999999', lineHeight: 1 }}>
                 {userRole || "—"}
               </Typography>
             </Box>

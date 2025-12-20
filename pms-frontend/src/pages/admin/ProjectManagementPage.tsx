@@ -101,7 +101,7 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({
 
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
   const [filters, setFilters] = useState<ProjectFilters>({
     prefixes: [],

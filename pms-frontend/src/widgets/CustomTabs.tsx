@@ -42,8 +42,29 @@ const CustomTabs: React.FC<CustomTabsProps> = ({ tabs, defaultIndex = 0, activeI
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={activeIndex} onChange={handleChange} aria-label="custom tabs">
+            <Box sx={{ borderBottom: 1, borderColor: '#e0e0e0' }}>
+                <Tabs
+                    value={activeIndex}
+                    onChange={handleChange}
+                    aria-label="custom tabs"
+                    sx={{
+                        '& .MuiTab-root': {
+                            fontSize: '14px',
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            color: '#666666',
+                            minHeight: 48,
+                            '&.Mui-selected': {
+                                color: '#0a7326',
+                                fontWeight: 600
+                            }
+                        },
+                        '& .MuiTabs-indicator': {
+                            backgroundColor: '#0a7326',
+                            height: 3
+                        }
+                    }}
+                >
                     {tabs.map((tab, index) => (
                         <Tab key={index} label={tab.label} id={`simple-tab-${index}`} aria-controls={`simple-tabpanel-${index}`} />
                     ))}

@@ -42,8 +42,8 @@ const CustomTable = <T extends Record<string, any>>({
     data,
     columns,
     pagination = false,
-    rows = 10,
-    rowsPerPageOptions = [5, 10, 25],
+    rows = 20,
+    rowsPerPageOptions = [10, 20, 50],
     onPageChange,
     emptyMessage = "No records found",
     page: controlledPage,
@@ -99,9 +99,11 @@ const CustomTable = <T extends Record<string, any>>({
                                     align={col.align || 'left'}
                                     style={{
                                         fontWeight: 600,
-                                        backgroundColor: '#f8fafc',
-                                        color: '#475569',
-                                        fontSize: '0.75rem',
+                                        backgroundColor: '#f5f5f5',
+                                        color: '#666666',
+                                        fontSize: '14px',
+                                        padding: '12px 16px',
+                                        borderBottom: '1px solid #e0e0e0',
                                         ...col.style
                                     }}
                                     width={col.width}
@@ -116,7 +118,7 @@ const CustomTable = <T extends Record<string, any>>({
                             Array.from({ length: Math.min(rowsPerPage || 5, 5) }).map((_, index) => (
                                 <TableRow key={`skeleton-${index}`}>
                                     {columns.map((col, colIndex) => (
-                                        <TableCell key={`skeleton-cell-${colIndex}`} style={{ padding: '16px' }}>
+                                        <TableCell key={`skeleton-cell-${colIndex}`} style={{ padding: '16px', fontSize: '12px' }}>
                                             <Skeleton animation="wave" height={20} width="80%" />
                                         </TableCell>
                                     ))}
@@ -133,7 +135,16 @@ const CustomTable = <T extends Record<string, any>>({
                                     style={{ cursor: onRowClick ? 'pointer' : 'default' }}
                                 >
                                     {columns.map((col) => (
-                                        <TableCell key={`${rowIndex}-${col.field}`} align={col.align || 'left'}>
+                                        <TableCell
+                                            key={`${rowIndex}-${col.field}`}
+                                            align={col.align || 'left'}
+                                            style={{
+                                                fontSize: '12px',
+                                                padding: '12px 16px',
+                                                borderBottom: '1px solid #e0e0e0',
+                                                color: '#333333'
+                                            }}
+                                        >
                                             {col.body ? col.body(row) : row[col.field]}
                                         </TableCell>
                                     ))}
@@ -141,8 +152,16 @@ const CustomTable = <T extends Record<string, any>>({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} align="center" style={{ padding: '2rem' }}>
-                                    <Typography variant="body2" color="textSecondary">
+                                <TableCell
+                                    colSpan={columns.length}
+                                    align="center"
+                                    style={{
+                                        padding: '2rem',
+                                        fontSize: '12px',
+                                        color: '#999999'
+                                    }}
+                                >
+                                    <Typography variant="body2" color="textSecondary" style={{ fontSize: '12px' }}>
                                         {emptyMessage}
                                     </Typography>
                                 </TableCell>
@@ -160,6 +179,17 @@ const CustomTable = <T extends Record<string, any>>({
                     page={page}
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
+                    sx={{
+                        borderTop: '1px solid #e0e0e0',
+                        fontSize: '12px',
+                        '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                            fontSize: '12px',
+                            color: '#666666'
+                        },
+                        '& .MuiTablePagination-select': {
+                            fontSize: '12px'
+                        }
+                    }}
                 />
             )}
         </Paper>
@@ -167,3 +197,4 @@ const CustomTable = <T extends Record<string, any>>({
 };
 
 export default CustomTable;
+

@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FiGrid, FiList } from "react-icons/fi";
 
 import ProjectAllocationManager from "../../components/ProjectAllocationManager";
 import {
@@ -10,7 +8,6 @@ import {
   loadAllocationData,
 } from "../../store/slices/adminAllocationsSlice";
 import type { RootState, AppDispatch } from "../../store/store";
-import CustomButton from "../../widgets/CustomButton";
 
 interface MaterialAllocationsPageProps {
   onRequestReload?: () => void;
@@ -20,8 +17,6 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
   onRequestReload,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const token = useSelector((state: RootState) => state.auth.token);
   const { projects, materials, status, error } = useSelector(
@@ -41,8 +36,6 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
     }
   }, [dispatch, error]);
 
-  const isActive = (path: string) => location.pathname === path;
-
   return (
     <div className="flex flex-col h-full bg-slate-50 p-6 max-w-7xl mx-auto w-full gap-6">
 
@@ -51,25 +44,6 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
         <div>
           <h1 className="text-xs font-bold text-slate-800">Allocation Manager</h1>
           <p className="text-slate-500">Assign materials to projects in bulk</p>
-        </div>
-        <div className="flex items-center bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-          <CustomButton
-            variant={isActive("/admin/inventory/allocated") ? "secondary" : "text"}
-            onClick={() => navigate("/admin/inventory/allocated")}
-            startIcon={<FiList />}
-            size="small"
-          >
-            Allocated View
-          </CustomButton>
-          <div className="w-px h-4 bg-slate-200 mx-1"></div>
-          <CustomButton
-            variant={isActive("/admin/inventory/materials") ? "secondary" : "text"}
-            onClick={() => navigate("/admin/inventory/materials")}
-            startIcon={<FiGrid />}
-            size="small"
-          >
-            Material Directory
-          </CustomButton>
         </div>
       </div>
 
@@ -83,7 +57,6 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
           projects={projects as any}
           materials={materials as any}
           onProjectBomUpdate={onRequestReload}
-          onCreateMaterial={() => navigate("/admin/inventory/materials")}
           showAllocationTable={false}
           showMultiAllocator={true}
         />

@@ -11,7 +11,6 @@ import {
   Box,
   Tooltip,
   Divider,
-  useTheme,
   styled
 } from "@mui/material";
 import type { Theme, CSSObject } from "@mui/material";
@@ -57,9 +56,9 @@ const openedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.enteringScreen,
   }),
   overflowX: 'hidden',
-  backgroundColor: '#ffffff',
-  borderRight: '1px solid #e2e8f0', // slate-200
-  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+  backgroundColor: '#ffffff', // White sidebar
+  borderRight: '1px solid #e0e0e0',
+  boxShadow: '2px 0 8px 0 rgba(0,0,0,0.05)',
 });
 
 const closedMixin = (theme: Theme): CSSObject => ({
@@ -69,9 +68,9 @@ const closedMixin = (theme: Theme): CSSObject => ({
   }),
   overflowX: 'hidden',
   width: COLLAPSED_WIDTH,
-  backgroundColor: '#ffffff',
-  borderRight: '1px solid #e2e8f0',
-  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+  backgroundColor: '#ffffff', // White sidebar
+  borderRight: '1px solid #e0e0e0',
+  boxShadow: '2px 0 8px 0 rgba(0,0,0,0.05)',
 });
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -110,7 +109,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const collapsed = isControlled ? (collapsedProp as boolean) : internalCollapsed;
   const open = !collapsed;
 
-  const theme = useTheme();
   const location = useLocation();
 
   const handleToggle = () => {
@@ -133,12 +131,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <img src="/posana-logo.svg" alt="Logo" style={{ height: 28, width: 'auto' }} />
           </Box>
         )}
-        <IconButton onClick={handleToggle} size="small" sx={{ color: 'text.secondary', ml: open ? 0 : 'auto', mr: open ? 0 : 'auto' }}>
+        <IconButton onClick={handleToggle} size="small" sx={{ color: '#666666', ml: open ? 0 : 'auto', mr: open ? 0 : 'auto' }}>
           {open ? <FaChevronLeft size={16} /> : <FaChevronRight size={16} />}
         </IconButton>
       </DrawerHeader>
 
-      <Divider sx={{ borderColor: '#f1f5f9' }} />
+      <Divider sx={{ borderColor: '#e0e0e0' }} />
 
       <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
         {ADMIN_MENU.map(({ label, to, icon: Icon }) => {
@@ -155,11 +153,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     justifyContent: open ? 'initial' : 'center',
                     px: 2.5,
                     borderRadius: 2,
-                    backgroundColor: isActive ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
-                    color: isActive ? '#2563eb' : '#475569', // blue-600 or slate-600
+                    backgroundColor: isActive ? '#e8f5e9' : 'transparent',
+                    color: isActive ? '#0a7326' : '#333333',
                     '&:hover': {
-                      backgroundColor: isActive ? 'rgba(37, 99, 235, 0.12)' : '#f8fafc',
-                      color: isActive ? '#2563eb' : '#1e293b',
+                      backgroundColor: isActive ? '#e8f5e9' : '#f5f5f5',
+                      color: isActive ? '#0a7326' : '#333333',
                     },
                     transition: 'all 0.2s',
                   }}
@@ -169,7 +167,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                       minWidth: 0,
                       mr: open ? 2 : 'auto',
                       justifyContent: 'center',
-                      color: 'inherit',
+                      color: isActive ? '#0a7326' : '#666666',
                       fontSize: 20
                     }}
                   >
@@ -178,9 +176,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <ListItemText
                     primary={label}
                     primaryTypographyProps={{
-                      fontSize: '0.875rem',
+                      fontSize: '14px',
                       fontWeight: isActive ? 600 : 500,
-                      fontFamily: '"Google Sans", "Roboto", sans-serif'
+                      fontFamily: '"Google Sans", "Roboto", sans-serif',
+                      color: isActive ? '#0a7326' : '#333333'
                     }}
                     sx={{ opacity: open ? 1 : 0 }}
                   />
@@ -191,7 +190,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         })}
       </List>
 
-      <Box sx={{ p: 1.5, borderTop: '1px solid #f1f5f9' }}>
+      <Box sx={{ p: 1.5, borderTop: '1px solid #e0e0e0' }}>
         <ListItem disablePadding sx={{ display: 'block' }}>
           <Tooltip title={!open ? "Logout" : ""} placement="right">
             <ListItemButton
@@ -201,9 +200,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 justifyContent: open ? 'initial' : 'center',
                 px: 2.5,
                 borderRadius: 2,
-                color: '#ef4444', // red-500
+                color: '#d32f2f',
                 '&:hover': {
-                  backgroundColor: '#fef2f2', // red-50
+                  backgroundColor: '#ffebee',
                 },
               }}
             >
@@ -212,14 +211,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   minWidth: 0,
                   mr: open ? 2 : 'auto',
                   justifyContent: 'center',
-                  color: 'inherit',
+                  color: '#d32f2f',
                 }}
               >
                 <FaSignOutAlt size={18} />
               </ListItemIcon>
               <ListItemText
                 primary="Logout"
-                primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#d32f2f' }}
                 sx={{ opacity: open ? 1 : 0 }}
               />
             </ListItemButton>

@@ -180,7 +180,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
   const [filters, setFilters] = useState<UserFilters>({
     roles: [],
@@ -506,15 +506,15 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 }}
               />
             </div>
-            <CustomButton
-              variant={filtersOpen ? "secondary" : "text"}
+            <button
               onClick={() => setFiltersOpen(!filtersOpen)}
-              size="small"
-              startIcon={filtersOpen ? <FiX /> : <FiFilter />}
-              className="text-slate-600"
+              title={filtersOpen ? "Close Filters" : "Filters"}
+              className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
+              style={{ color: '#666666', padding: '8px' }}
+              type="button"
             >
-              {filtersOpen ? "Close Filters" : "Filters"}
-            </CustomButton>
+              {filtersOpen ? <FiX size={16} /> : <FiFilter size={16} />}
+            </button>
           </div>
 
           {filtersOpen && (
@@ -554,7 +554,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                   variant="text"
                   size="small"
                   onClick={() => { setFilters({ roles: [], accessTypes: [], projectIds: [] }); setSearch(''); setPage(0); }}
-                  className="text-xs text-slate-500"
+                  sx={{ color: '#666666' }}
                 >
                   Reset All Filters
                 </CustomButton>
