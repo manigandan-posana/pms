@@ -214,7 +214,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 
   useEffect(() => {
     if (token) {
-      dispatch(loadUserProjects(token));
+      dispatch(loadUserProjects());
     }
   }, [dispatch, token]);
 
@@ -330,7 +330,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       if (modalState.mode === "edit" && modalState.userId != null) {
         await dispatch(
           updateUser({
-            token,
             userId: String(modalState.userId),
             payload,
           })
@@ -363,7 +362,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         : window.confirm("Delete this user?");
     if (!confirmDelete) return;
     try {
-      await dispatch(deleteUser({ token, userId: String(userId) })).unwrap();
+      await dispatch(deleteUser(String(userId))).unwrap();
       toast.success("User removed");
       await loadUsers();
       onRequestReload?.();

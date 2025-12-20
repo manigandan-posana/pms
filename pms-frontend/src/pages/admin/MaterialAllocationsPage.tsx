@@ -25,7 +25,7 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
 
   useEffect(() => {
     if (token) {
-      dispatch(loadAllocationData(token));
+      dispatch(loadAllocationData());
     }
   }, [dispatch, token]);
 
