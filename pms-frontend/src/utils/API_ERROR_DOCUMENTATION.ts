@@ -94,10 +94,6 @@
  * After authentication, user is routed based on role:
  * 
  * ADMIN                     → /admin/materials
- * PROCUREMENT_MANAGER       → /procurement-manager
- * CEO / COO                 → /ceo-dashboard
- * PROJECT_HEAD              → /project-head
- * PROJECT_MANAGER           → /project-manager
  * USER                      → /workspace/bom (default workspace)
  * 
  * ====== VALIDATION FIELD ERRORS ======

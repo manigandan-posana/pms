@@ -8,7 +8,6 @@ import com.vebops.store.dto.MaterialDto;
 import com.vebops.store.dto.MaterialMovementDto;
 import com.vebops.store.dto.OutwardLineDto;
 import com.vebops.store.dto.OutwardRegisterDto;
-import com.vebops.store.dto.ProcurementRequestDto;
 import com.vebops.store.dto.ProjectDto;
 import com.vebops.store.dto.TransferLineDto;
 import com.vebops.store.dto.TransferRecordDto;
@@ -55,7 +54,6 @@ public class AppDataService {
     private final TransferRecordRepository transferRecordRepository;
     private final UserRepository userRepository;
     private final AuthService authService;
-    private final ProcurementService procurementService;
     private final InventoryService inventoryService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
@@ -71,7 +69,6 @@ public class AppDataService {
         TransferRecordRepository transferRecordRepository,
         UserRepository userRepository,
         AuthService authService,
-        ProcurementService procurementService,
         InventoryService inventoryService
     ) {
         this.projectRepository = projectRepository;
@@ -84,7 +81,6 @@ public class AppDataService {
         this.transferRecordRepository = transferRecordRepository;
         this.userRepository = userRepository;
         this.authService = authService;
-        this.procurementService = procurementService;
         this.inventoryService = inventoryService;
     }
 
@@ -142,8 +138,6 @@ public class AppDataService {
 
         UserDto userDto = authService.toUserDto(user);
 
-        List<ProcurementRequestDto> procurementRequests = procurementService.listRequests(user);
-
         return new AppBootstrapResponse(
             userDto,
             allProjectDtos,
@@ -153,7 +147,6 @@ public class AppDataService {
             inward,
             outward,
             transfers,
-            procurementRequests,
             inventoryService.generateCodes()
         );
     }

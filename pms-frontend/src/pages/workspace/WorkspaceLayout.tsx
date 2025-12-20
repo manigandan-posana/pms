@@ -40,7 +40,6 @@ const getPageHeading = (pathname: string): string => {
   if (pathname.includes("/workspace/transfer/create")) return "Create Transfer";
   if (pathname.includes("/workspace/transfer/detail")) return "Transfer Details";
   if (pathname.includes("/workspace/transfer")) return "Transfer Register";
-  if (pathname.includes("/workspace/procurement")) return "Procurement";
   if (pathname.includes("/workspace/vehicles")) return "Vehicle Management";
   return "Workspace";
 };

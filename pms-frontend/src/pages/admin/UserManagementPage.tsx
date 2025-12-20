@@ -24,11 +24,6 @@ import CustomSelect from "../../widgets/CustomSelect";
 
 export type UserRole =
   | "ADMIN"
-  | "CEO"
-  | "COO"
-  | "PROCUREMENT_MANAGER"
-  | "PROJECT_HEAD"
-  | "PROJECT_MANAGER"
   | "USER";
 
 export type AccessType = "ALL" | "PROJECTS";
@@ -115,11 +110,6 @@ interface ProjectFilterOption {
 
 const roleOptions: RoleOption[] = [
   { value: "ADMIN", label: "Admin" },
-  { value: "CEO", label: "CEO" },
-  { value: "COO", label: "COO" },
-  { value: "PROCUREMENT_MANAGER", label: "Procurement Manager" },
-  { value: "PROJECT_HEAD", label: "Project Head" },
-  { value: "PROJECT_MANAGER", label: "Project Manager" },
   { value: "USER", label: "User" },
 ];
 

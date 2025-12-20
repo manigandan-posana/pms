@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Aggregated activity snapshot for a single project spanning inwards,
- * outwards, transfers, and procurement requests.
+ * outwards, and transfers.
  */
 public record ProjectActivityDto(
     Long projectId,
@@ -13,9 +13,7 @@ public record ProjectActivityDto(
     int inwardCount,
     int outwardCount,
     int transferCount,
-    int procurementCount,
     List<ProjectActivityEntryDto> recentInwards,
     List<ProjectActivityEntryDto> recentOutwards,
-    List<ProjectActivityEntryDto> recentTransfers,
-    List<ProjectActivityEntryDto> recentProcurements
+    List<ProjectActivityEntryDto> recentTransfers
 ) { }

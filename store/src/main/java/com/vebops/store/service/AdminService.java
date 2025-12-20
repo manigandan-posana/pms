@@ -20,7 +20,6 @@ import com.vebops.store.repository.BomLineRepository;
 import com.vebops.store.repository.InwardRecordRepository;
 import com.vebops.store.repository.MaterialRepository;
 import com.vebops.store.repository.OutwardRecordRepository;
-import com.vebops.store.repository.ProcurementRequestRepository;
 import com.vebops.store.repository.ProjectRepository;
 import com.vebops.store.repository.TransferRecordRepository;
 import com.vebops.store.repository.UserRepository;
@@ -54,7 +53,6 @@ public class AdminService {
     private final InwardRecordRepository inwardRecordRepository;
     private final OutwardRecordRepository outwardRecordRepository;
     private final TransferRecordRepository transferRecordRepository;
-    private final ProcurementRequestRepository procurementRequestRepository;
     private final PasswordEncoder passwordEncoder;
 
     private static final int MAX_RECENT_ITEMS = 5;
@@ -68,7 +66,6 @@ public class AdminService {
         InwardRecordRepository inwardRecordRepository,
         OutwardRecordRepository outwardRecordRepository,
         TransferRecordRepository transferRecordRepository,
-        ProcurementRequestRepository procurementRequestRepository,
         PasswordEncoder passwordEncoder
     ) {
         this.projectRepository = projectRepository;
@@ -78,7 +75,6 @@ public class AdminService {
         this.inwardRecordRepository = inwardRecordRepository;
         this.outwardRecordRepository = outwardRecordRepository;
         this.transferRecordRepository = transferRecordRepository;
-        this.procurementRequestRepository = procurementRequestRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -313,7 +309,7 @@ public class AdminService {
         
         // Validate that project-scoped roles have at least one project assigned
         Role role = Role.valueOf(request.role());
-        boolean requiresProjects = (role == Role.PROJECT_MANAGER || role == Role.USER);
+        boolean requiresProjects = (role == Role.USER);
         if (requiresProjects && (request.projectIds() == null || request.projectIds().isEmpty())) {
             throw new BadRequestException("At least one project must be assigned for this role");
         }
@@ -450,28 +446,6 @@ public class AdminService {
             }
         });
 
-        procurementRequestRepository.findAllByOrderByCreatedAtDesc().forEach(request -> {
-            Project project = request.getProject();
-            if (project == null) {
-                return;
-            }
-            ProjectActivityAccumulator acc = byId.get(project.getId());
-            if (acc != null) {
-                String date = request.getCreatedAt() != null ? request.getCreatedAt().toLocalDate().format(DATE_FMT) : null;
-                String materialName = request.getMaterial() != null ? request.getMaterial().getName() : "Material not set";
-                String status = request.getStatus() != null ? request.getStatus().name() : "PENDING";
-                acc.addProcurement(new ProjectActivityEntryDto(
-                    request.getId() != null ? String.valueOf(request.getId()) : null,
-                    null,
-                    date,
-                    materialName,
-                    status,
-                    null,
-                    "PROCUREMENT"
-                ));
-            }
-        });
-
         return byId.values().stream().map(ProjectActivityAccumulator::toDto).toList();
     }
 
@@ -480,11 +454,9 @@ public class AdminService {
         private int inwardCount = 0;
         private int outwardCount = 0;
         private int transferCount = 0;
-        private int procurementCount = 0;
         private final List<ProjectActivityEntryDto> recentInwards = new ArrayList<>();
         private final List<ProjectActivityEntryDto> recentOutwards = new ArrayList<>();
         private final List<ProjectActivityEntryDto> recentTransfers = new ArrayList<>();
-        private final List<ProjectActivityEntryDto> recentProcurements = new ArrayList<>();
 
         ProjectActivityAccumulator(Project project) {
             this.project = project;
@@ -505,11 +477,6 @@ public class AdminService {
             addIfRoom(recentTransfers, dto);
         }
 
-        void addProcurement(ProjectActivityEntryDto dto) {
-            procurementCount++;
-            addIfRoom(recentProcurements, dto);
-        }
-
         ProjectActivityDto toDto() {
             return new ProjectActivityDto(
                 project.getId(),
@@ -518,11 +485,9 @@ public class AdminService {
                 inwardCount,
                 outwardCount,
                 transferCount,
-                procurementCount,
                 recentInwards,
                 recentOutwards,
-                recentTransfers,
-                recentProcurements
+                recentTransfers
             );
         }
 
@@ -542,8 +507,8 @@ public class AdminService {
 
     private AccessType resolveAccessType(Role role, String requestedAccessType) {
         return switch (role) {
-            case ADMIN, CEO, COO, PROCUREMENT_MANAGER, PROJECT_HEAD -> AccessType.ALL;
-            case PROJECT_MANAGER, USER ->
+            case ADMIN -> AccessType.ALL;
+            case USER ->
                 StringUtils.hasText(requestedAccessType) ? AccessType.valueOf(requestedAccessType) : AccessType.PROJECTS;
         };
     }

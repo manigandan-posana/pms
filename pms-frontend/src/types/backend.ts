@@ -124,9 +124,7 @@ export interface ProjectActivityDto {
   inwardCount: number;
   outwardCount: number;
   transferCount: number;
-  procurementCount: number;
   recentInwards: ProjectActivityEntryDto[];
   recentOutwards: ProjectActivityEntryDto[];
   recentTransfers: ProjectActivityEntryDto[];
-  recentProcurements: ProjectActivityEntryDto[];
 }

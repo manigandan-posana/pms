@@ -12,6 +12,5 @@ public record AppBootstrapResponse(
     List<InwardHistoryDto> inwardHistory,
     List<OutwardRegisterDto> outwardHistory,
     List<TransferRecordDto> transferHistory,
-    List<ProcurementRequestDto> procurementRequests,
     InventoryCodesResponse inventoryCodes
 ) {}

@@ -15,11 +15,6 @@ import AdminFormModal from "../../components/AdminFormModal";
 // Types
 export type UserRole =
   | "ADMIN"
-  | "CEO"
-  | "COO"
-  | "PROCUREMENT_MANAGER"
-  | "PROJECT_HEAD"
-  | "PROJECT_MANAGER"
   | "USER";
 
 export type AccessType = "ALL" | "PROJECTS";
@@ -37,11 +32,6 @@ interface User {
 // Constants
 const roleOptions = [
   { label: "Admin", value: "ADMIN" },
-  { label: "CEO", value: "CEO" },
-  { label: "COO", value: "COO" },
-  { label: "Procurement Manager", value: "PROCUREMENT_MANAGER" },
-  { label: "Project Head", value: "PROJECT_HEAD" },
-  { label: "Project Manager", value: "PROJECT_MANAGER" },
   { label: "User", value: "USER" },
 ];
 

@@ -11,7 +11,6 @@ import workspaceUi from "../store/slices/workspaceUiSlice";
 import inventory from "../store/slices/inventorySlice";
 import bom from "../store/slices/bomSlice";
 import history from "../store/slices/historySlice";
-import procurement from "../store/slices/procurementSlice";
 import app from "../store/slices/appSlice";
 import vehicles from "../store/slices/vehicleSlice";
 
@@ -26,7 +25,6 @@ const rootReducer = combineReducers({
   inventory,
   bom,
   history,
-  procurement,
   app,
   vehicles,
 });

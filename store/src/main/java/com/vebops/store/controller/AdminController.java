@@ -81,7 +81,7 @@ public class AdminController {
         @RequestParam(name = "startsWith", required = false) List<String> prefixes,
         @RequestParam(name = "allocation", required = false) String allocation
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.searchProjects(search, prefixes, allocation, page, size);
     }
 
@@ -98,7 +98,7 @@ public class AdminController {
 
     @PostMapping("/projects")
     public ProjectDto createProject(@Valid @RequestBody CreateProjectRequest request) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.createProject(request);
     }
 
@@ -107,13 +107,13 @@ public class AdminController {
         @PathVariable Long id,
         @Valid @RequestBody UpdateProjectRequest request
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.updateProject(id, request);
     }
 
     @DeleteMapping("/projects/{id}")
     public void deleteProject(@PathVariable Long id) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         adminService.deleteProject(id);
     }
 
@@ -126,7 +126,7 @@ public class AdminController {
         @RequestParam(name = "accessType", required = false) List<String> accessTypes,
         @RequestParam(name = "projectId", required = false) List<String> projectIds
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.searchUsers(authService, search, roles, accessTypes, projectIds, page, size);
     }
 
@@ -144,7 +144,7 @@ public class AdminController {
 
     @PostMapping("/users")
     public UserDto createUser(@Valid @RequestBody CreateUserRequest request) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.createUser(request, authService);
     }
 
@@ -153,25 +153,25 @@ public class AdminController {
         @PathVariable Long id,
         @Valid @RequestBody UpdateUserRequest request
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.updateUser(id, request, authService);
     }
 
     @DeleteMapping("/users/{id}")
     public void deleteUser(@PathVariable Long id) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         adminService.deleteUser(id);
     }
 
     @GetMapping("/analytics")
     public AnalyticsDto analytics() {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.analytics();
     }
 
     @GetMapping("/project-activity")
     public List<ProjectActivityDto> projectActivity() {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO);
+        AuthUtils.requireAdmin();
         return adminService.projectActivityOverview();
     }
 }

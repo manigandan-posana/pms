@@ -49,7 +49,7 @@ public class BomController {
         @RequestParam(name = "page", defaultValue = "1") int page,
         @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         return bomService.listLines(projectId, page, size);
     }
 
@@ -105,7 +105,7 @@ public class BomController {
         @PathVariable String projectId,
         @RequestBody BomAllocationRequest request
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         double quantity = request != null ? request.quantity() : 0d;
         String resolvedProjectId = (request != null && StringUtils.hasText(request.projectId())) ? request.projectId() : projectId;
         String resolvedMaterialId = request != null ? request.materialId() : null;
@@ -121,7 +121,7 @@ public class BomController {
         @PathVariable String materialId,
         @RequestBody BomAllocationRequest request
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         double quantity = request != null ? request.quantity() : 0d;
         String resolvedProjectId = (request != null && StringUtils.hasText(request.projectId())) ? request.projectId() : projectId;
         String resolvedMaterialId = (request != null && StringUtils.hasText(request.materialId())) ? request.materialId() : materialId;
@@ -133,7 +133,7 @@ public class BomController {
         @PathVariable String projectId,
         @PathVariable String materialId
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         bomService.deleteLine(projectId, materialId);
     }
 }

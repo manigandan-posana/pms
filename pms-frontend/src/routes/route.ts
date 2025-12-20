@@ -16,11 +16,6 @@ const OutwardDetailPage = lazy(() => import("../pages/workspace/OutwardDetailPag
 const TransferPage = lazy(() => import("../pages/workspace/TransferPage"));
 const TransferCreatePage = lazy(() => import("../pages/workspace/TransferCreatePage"));
 const TransferDetailPage = lazy(() => import("../pages/workspace/TransferDetailPage"));
-const ProcurementPage = lazy(() => import("../pages/workspace/ProcurementPage"));
-const ProcurementManagerDashboard = lazy(() => import("../pages/workspace/ProcurementManagerDashboard"));
-const CEODashboard = lazy(() => import("../pages/workspace/CEODashboard"));
-const ProjectHeadDashboard = lazy(() => import("../pages/workspace/ProjectHeadDashboard"));
-const ProjectManagerDashboard = lazy(() => import("../pages/workspace/ProjectManagerDashboard"));
 const VehicleManagementPage = lazy(() => import("../pages/workspace/VehicleManagementPage"));
 const VehicleDashboardPage = lazy(() => import("../pages/workspace/VehicleDashboardPage"));
 const VehicleDetailsPage = lazy(() => import("../pages/workspace/VehicleDetailsPage"));
@@ -55,10 +50,6 @@ export const adminBasePath = "/admin";
 export const adminDashboardPath = "/admin/project-details";
 export const adminMaterialsPath = "/admin/materials";
 export const adminAllocatedMaterialsPath = "/admin/allocated-materials";
-export const procurementManagerDashboardPath = "/procurement-manager";
-export const ceoDashboardPath = "/ceo-dashboard";
-export const projectHeadDashboardPath = "/project-head";
-export const projectManagerDashboardPath = "/project-manager";
 
 // ----- Workspace nested routes (/workspace/...) -----
 
@@ -79,33 +70,10 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "transfer", component: TransferPage },
   { path: "transfer/create", component: TransferCreatePage },
   { path: "transfer/detail/:id", component: TransferDetailPage },
-  { path: "procurement", component: ProcurementPage },
   { path: "vehicles", component: VehicleManagementPage },
   { path: "vehicles/dashboard", component: VehicleDashboardPage },
   { path: "vehicles/:vehicleId", component: VehicleDetailsPage },
 ];
-
-// ----- Role-specific dashboard routes -----
-
-export const procurementManagerDashboardRoute: IRouteConfig = {
-  path: procurementManagerDashboardPath,
-  component: ProcurementManagerDashboard,
-};
-
-export const ceoDashboardRoute: IRouteConfig = {
-  path: ceoDashboardPath,
-  component: CEODashboard,
-};
-
-export const projectHeadDashboardRoute: IRouteConfig = {
-  path: projectHeadDashboardPath,
-  component: ProjectHeadDashboard,
-};
-
-export const projectManagerDashboardRoute: IRouteConfig = {
-  path: projectManagerDashboardPath,
-  component: ProjectManagerDashboard,
-};
 
 // ----- Admin nested routes (/admin/...) -----
 

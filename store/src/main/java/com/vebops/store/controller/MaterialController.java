@@ -66,7 +66,7 @@ public class MaterialController {
 
     @PostMapping
     public MaterialDto create(@Valid @RequestBody MaterialRequest request) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         return materialService.create(request);
     }
 
@@ -75,19 +75,19 @@ public class MaterialController {
         @PathVariable Long id,
         @Valid @RequestBody MaterialRequest request
     ) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         return materialService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         materialService.delete(id);
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<MaterialDto> importMaterials(@RequestParam("file") MultipartFile file) {
-        AuthUtils.requireAnyRole(Role.ADMIN, Role.CEO, Role.COO, Role.PROJECT_HEAD);
+        AuthUtils.requireAdmin();
         return materialService.importMaterials(file);
     }
 

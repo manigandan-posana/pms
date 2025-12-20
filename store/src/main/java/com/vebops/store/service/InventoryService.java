@@ -190,7 +190,7 @@ public class InventoryService {
                 throw new BadRequestException(
                     "Receiving "
                         + material.getCode()
-                        + " exceeds the allocated requirement. Please submit a procurement request."
+                        + " exceeds the allocated requirement."
                 );
             }
 

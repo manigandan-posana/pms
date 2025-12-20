@@ -17,15 +17,7 @@ import {
   adminBasePath,
   adminDashboardPath,
   adminMaterialsPath,
-  ceoDashboardPath,
-  ceoDashboardRoute,
-  projectHeadDashboardPath,
-  projectHeadDashboardRoute,
-  projectManagerDashboardPath,
-  projectManagerDashboardRoute,
   loginPath,
-  procurementManagerDashboardPath,
-  procurementManagerDashboardRoute,
   workspacePath,
   workspaceRoutes,
   adminRoutes,
@@ -132,22 +124,10 @@ export default function App() {
     }
   }, [isAuthenticated, role, navigate]);
   const canAccessAdmin = role === "ADMIN";
-  const isProcurementManager = role === "PROCUREMENT_MANAGER";
-  const isCEOOrCOO = role === "CEO" || role === "COO";
-  const isProjectHead = role === "PROJECT_HEAD";
-  const isProjectManager = role === "PROJECT_MANAGER";
 
   // Compute default route without hooks to avoid hook-order issues with early returns
   const defaultProtectedRoute = canAccessAdmin
     ? adminDashboardPath
-    : isProcurementManager
-    ? procurementManagerDashboardPath
-    : isCEOOrCOO
-    ? ceoDashboardPath
-    : isProjectHead
-    ? projectHeadDashboardPath
-    : isProjectManager
-    ? projectManagerDashboardPath
     : workspacePath;
 
   // Centralized logout handler that clears backend session, MSAL cache, Redux, and storage
@@ -245,45 +225,6 @@ export default function App() {
                 />
               ))}
             </Route>
-          </Route>
-
-          {/* Role-specific dashboards - only for non-admin users */}
-          <Route element={<RequireNonAdmin canAccessAdmin={canAccessAdmin} />}>
-            {/* Procurement manager dashboard (single component) */}
-            <Route
-              path={procurementManagerDashboardPath}
-              element={
-                <RouteComponent
-                  component={procurementManagerDashboardRoute.component}
-                />
-              }
-            />
-
-            {/* CEO / COO dashboard (single component) */}
-            <Route
-              path={ceoDashboardPath}
-              element={<RouteComponent component={ceoDashboardRoute.component} />}
-            />
-
-            {/* Project Head dashboard (single component) */}
-            <Route
-              path={projectHeadDashboardPath}
-              element={
-                <RouteComponent
-                  component={projectHeadDashboardRoute.component}
-                />
-              }
-            />
-
-            {/* Project Manager dashboard (single component) */}
-            <Route
-              path={projectManagerDashboardPath}
-              element={
-                <RouteComponent
-                  component={projectManagerDashboardRoute.component}
-                />
-              }
-            />
           </Route>
 
           {/* Catch‑all redirect for unknown paths inside the protected area */}

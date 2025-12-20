@@ -99,16 +99,6 @@ public class AzureAdUserService {
                     case "ADMIN":
                     case "ADMINISTRATOR":
                         return Role.ADMIN;
-                    case "PROCUREMENT_MANAGER":
-                        return Role.PROCUREMENT_MANAGER;
-                    case "CEO":
-                        return Role.CEO;
-                    case "COO":
-                        return Role.COO;
-                    case "PROJECT_HEAD":
-                        return Role.PROJECT_HEAD;
-                    case "PROJECT_MANAGER":
-                        return Role.PROJECT_MANAGER;
                     case "USER":
                         return Role.USER;
                 }
