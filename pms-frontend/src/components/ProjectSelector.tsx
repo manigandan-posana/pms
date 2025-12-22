@@ -45,8 +45,9 @@ const ProjectSelector: React.FC = () => {
             backgroundColor: '#f8fafc',
             '& fieldset': { borderColor: '#e2e8f0' },
             '&:hover fieldset': { borderColor: '#cbd5e1' },
-            '&.Mui-focused fieldset': { borderColor: '#2563eb' },
+            '&.Mui-focused fieldset': { borderColor: '#0a7326' },
           },
+          '& .MuiInputLabel-root.Mui-focused': { color: '#0a7326' },
           '& .MuiSelect-select': {
             py: 1,
             fontWeight: 500,

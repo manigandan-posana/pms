@@ -344,11 +344,11 @@ const VehicleManagementPage: React.FC = () => {
     }
 
     const openingKm = Number(fuelForm.openingKm);
-    
+
     // Get the vehicle's daily logs to check if there are any open logs
     const vehicleDailyLogs = dailyLogs.filter((log) => log.vehicleId === Number(fuelForm.vehicleId));
     const openDailyLog = vehicleDailyLogs.find((log) => log.status === "OPEN");
-    
+
     if (openDailyLog) {
       toast.error("Please close the open daily log before creating a new fuel entry");
       return;
@@ -358,7 +358,7 @@ const VehicleManagementPage: React.FC = () => {
     const closedDailyLogs = vehicleDailyLogs
       .filter((log) => log.status === "CLOSED" && log.closingKm != null)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+
     const lastDailyLogClosingKm = closedDailyLogs.length > 0 ? closedDailyLogs[0].closingKm! : null;
 
     // Get the last closed fuel entry's closing KM
@@ -366,7 +366,7 @@ const VehicleManagementPage: React.FC = () => {
     const closedFuelEntries = vehicleFuelEntries
       .filter((entry) => entry.status === "CLOSED" && entry.closingKm != null)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+
     const lastFuelEntryClosingKm = closedFuelEntries.length > 0 ? closedFuelEntries[0].closingKm! : null;
 
     // Enforce: opening km must be >= last closing km of previous daily log
@@ -757,17 +757,48 @@ const VehicleManagementPage: React.FC = () => {
       }
     },
     {
-      field: "status", header: "Status", sortable: true, body: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === 'OPEN' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-          {row.status === 'OPEN' ? 'Open' : 'Closed'}
-        </span>
+      field: "status", header: "Status", align: "center", sortable: true, body: (row) => (
+        <div className="flex justify-center">
+          {row.status === 'OPEN' ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Open
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-600 border border-green-100 uppercase tracking-wider">
+              <FiCheck className="text-[12px]" />
+              Closed
+            </span>
+          )}
+        </div>
       )
     },
     {
-      field: "actions", header: "Actions", align: "center", body: (row) => (
-        row.status === "OPEN" ? (
-          <CustomButton size="small" onClick={() => { setSelectedDailyLog(row); setShowCloseDailyLogDialog(true); }}>Close Log</CustomButton>
-        ) : null
+      field: "actions", header: "Actions", align: "right", body: (row) => (
+        <div className="flex justify-end pr-2">
+          {row.status === "OPEN" ? (
+            <CustomButton
+              size="small"
+              variant="outlined"
+              color="warning"
+              onClick={() => { setSelectedDailyLog(row); setShowCloseDailyLogDialog(true); }}
+              style={{
+                fontSize: '11px',
+                padding: '4px 12px',
+                borderRadius: '6px',
+                height: '28px',
+                borderColor: '#f59e0b',
+                color: '#f59e0b',
+                fontWeight: 700
+              }}
+              startIcon={<FiLock size={12} />}
+            >
+              Close Log
+            </CustomButton>
+          ) : (
+            <span className="text-[10px] text-slate-400 font-medium px-3 italic">Completed</span>
+          )}
+        </div>
       )
     }
   ];
@@ -1088,9 +1119,9 @@ const VehicleManagementPage: React.FC = () => {
                     <h3 className="text-xs font-semibold text-slate-800 mb-4">
                       {dashboardTimeFilter === 'week' ? 'Week-wise' :
                         dashboardTimeFilter === '3months' ? '3-Month' :
-                        dashboardTimeFilter === '6months' ? '6-Month' :
-                        dashboardTimeFilter === 'month' ? 'Month' :
-                        '12-Month'} Fuel Consumption
+                          dashboardTimeFilter === '6months' ? '6-Month' :
+                            dashboardTimeFilter === 'month' ? 'Month' :
+                              '12-Month'} Fuel Consumption
                     </h3>
                     <div className="h-72 w-full">
                       <BarChart
@@ -1138,7 +1169,7 @@ const VehicleManagementPage: React.FC = () => {
                       {['current', 'history'].map(mode => (
                         <button
                           key={mode}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${fuelViewMode === mode ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${fuelViewMode === mode ? 'bg-white shadow text-green-600' : 'text-slate-500 hover:text-slate-700'}`}
                           onClick={() => { setFuelViewMode(mode as any); setFuelVehicleFilter(null); setActiveFuelType('DIESEL'); }}
                         >
                           {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -1150,7 +1181,7 @@ const VehicleManagementPage: React.FC = () => {
                       {['DIESEL', 'PETROL', 'ELECTRIC'].map(type => (
                         <button
                           key={type}
-                          className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeFuelType === type ? 'border-orange-500 text-slate-800' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                          className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeFuelType === type ? 'border-green-600 text-green-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                           onClick={() => { setActiveFuelType(type as any); setFuelVehicleFilter(null); }}
                         >
                           {type.charAt(0) + type.slice(1).toLowerCase()}
@@ -1236,7 +1267,7 @@ const VehicleManagementPage: React.FC = () => {
       <CustomModal open={showVehicleDialog} onClose={() => setShowVehicleDialog(false)} title="Add Vehicle"
         footer={
           <div className="flex justify-end gap-2">
-            <CustomButton variant="outlined" onClick={() => setShowVehicleDialog(false)}>Cancel</CustomButton>
+            <CustomButton variant="outlined" color="inherit" onClick={() => setShowVehicleDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddVehicle}>Save</CustomButton>
           </div>
         }
@@ -1261,7 +1292,7 @@ const VehicleManagementPage: React.FC = () => {
       <CustomModal open={showSupplierDialog} onClose={() => setShowSupplierDialog(false)} title="Add Supplier"
         footer={
           <div className="flex justify-end gap-2">
-            <CustomButton variant="outlined" onClick={() => setShowSupplierDialog(false)}>Cancel</CustomButton>
+            <CustomButton variant="outlined" color="inherit" onClick={() => setShowSupplierDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddSupplier}>Save</CustomButton>
           </div>
         }
@@ -1282,7 +1313,7 @@ const VehicleManagementPage: React.FC = () => {
       <CustomModal open={showFuelDialog} onClose={() => setShowFuelDialog(false)} title="Add Fuel Entry"
         footer={
           <div className="flex justify-end gap-2">
-            <CustomButton variant="outlined" onClick={() => setShowFuelDialog(false)}>Cancel</CustomButton>
+            <CustomButton variant="outlined" color="inherit" onClick={() => setShowFuelDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddFuelEntry}>Save</CustomButton>
           </div>
         }
@@ -1303,7 +1334,7 @@ const VehicleManagementPage: React.FC = () => {
       <CustomModal open={showCloseFuelDialog} onClose={() => setShowCloseFuelDialog(false)} title="Close Fuel Entry"
         footer={
           <div className="flex justify-end gap-2">
-            <CustomButton variant="outlined" onClick={() => setShowCloseFuelDialog(false)}>Cancel</CustomButton>
+            <CustomButton variant="outlined" color="inherit" onClick={() => setShowCloseFuelDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleCloseFuelEntry}>Close Entry</CustomButton>
           </div>
         }
@@ -1318,7 +1349,7 @@ const VehicleManagementPage: React.FC = () => {
       <CustomModal open={showDailyLogDialog} onClose={() => setShowDailyLogDialog(false)} title="Create Daily Log"
         footer={
           <div className="flex justify-end gap-2">
-            <CustomButton variant="outlined" onClick={() => setShowDailyLogDialog(false)}>Cancel</CustomButton>
+            <CustomButton variant="outlined" color="inherit" onClick={() => setShowDailyLogDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddDailyLog} disabled={!isCreateFormValid}>Create</CustomButton>
           </div>
         }
@@ -1359,7 +1390,7 @@ const VehicleManagementPage: React.FC = () => {
       <CustomModal open={showCloseDailyLogDialog} onClose={() => setShowCloseDailyLogDialog(false)} title="Close Daily Log"
         footer={
           <div className="flex justify-end gap-2">
-            <CustomButton variant="outlined" onClick={() => setShowCloseDailyLogDialog(false)}>Cancel</CustomButton>
+            <CustomButton variant="outlined" color="inherit" onClick={() => setShowCloseDailyLogDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleCloseDailyLog} disabled={!isCloseFormValid}>Close Log</CustomButton>
           </div>
         }

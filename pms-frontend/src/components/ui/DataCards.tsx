@@ -8,12 +8,12 @@ interface StatCardProps {
   variant?: 'green' | 'blue' | 'orange' | 'indigo';
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ 
-  title, 
-  value, 
-  subtitle, 
+export const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  subtitle,
   icon = 'pi-chart-bar',
-  variant = 'green' 
+  variant = 'green'
 }) => {
   const variantClasses = {
     green: 'text-[var(--color-stat-card-green)]',
@@ -84,7 +84,7 @@ export const DataRow: React.FC<DataRowProps> = ({ label, value, highlight, toolt
   return (
     <div className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
       <span className="text-slate-600 text-xs">{label}</span>
-      <span 
+      <span
         className={`text-xs font-semibold ${highlight ? 'data-highlight' : 'text-slate-900'}`}
         {...(tooltip && { 'data-tooltip': tooltip })}
       >

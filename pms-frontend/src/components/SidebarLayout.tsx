@@ -112,13 +112,13 @@ const StyledListItemButton = styled(ListItemButton, {
   paddingLeft: theme.spacing(2.5),
   paddingRight: theme.spacing(2.5),
   borderRadius: theme.spacing(1),
-  backgroundColor: active ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
-  color: active ? '#2563eb' : '#475569',
+  backgroundColor: active ? 'rgba(10, 115, 38, 0.08)' : 'transparent',
+  color: active ? '#0a7326' : '#475569',
   transition: 'all 0.2s',
   marginBottom: 4,
   '&:hover': {
-    backgroundColor: active ? 'rgba(37, 99, 235, 0.12)' : '#f8fafc',
-    color: active ? '#2563eb' : '#1e293b',
+    backgroundColor: active ? 'rgba(10, 115, 38, 0.12)' : '#f8fafc',
+    color: active ? '#0a7326' : '#1e293b',
   },
 }));
 
