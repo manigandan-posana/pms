@@ -776,13 +776,13 @@ const VehicleManagementPage: React.FC = () => {
     { field: "date", header: "Date", sortable: true, body: (row) => new Date(row.date).toLocaleDateString() },
     { field: "vehicleName", header: "Vehicle", sortable: true, body: (row) => <span className="font-semibold">{row.vehicleName}</span> },
     { field: "supplierName", header: "Supplier", sortable: true, body: (row) => <span className="text-slate-500">{row.supplierName}</span> },
-    { field: "pricePerLitre", header: "Unit Price", sortable: true, body: (row) => row.pricePerLitre ? `₹${row.pricePerLitre.toFixed(2)}` : "—" },
-    { field: "litres", header: "Quantity", sortable: true, body: (row) => `${row.litres.toFixed(2)} L` },
-    { field: "totalCost", header: "Fuel Cost", sortable: true, body: (row) => (row.pricePerLitre && row.litres) ? `₹${(row.pricePerLitre * row.litres).toFixed(2)}` : "—" },
-    { field: "openingKm", header: "Op. Km", sortable: true, body: (row) => row.openingKm.toFixed(1) },
-    { field: "closingKm", header: "Cl. Km", sortable: true, body: (row) => (row.status === "CLOSED" && row.closingKm) ? row.closingKm.toFixed(1) : "—" },
-    { field: "distance", header: "Dist.", sortable: true, body: (row) => (row.status === "CLOSED" && row.distance) ? `${row.distance.toFixed(1)} km` : "—" },
-    { field: "mileage", header: "Mileage", sortable: true, body: (row) => (row.status === "CLOSED" && row.mileage) ? row.mileage.toFixed(2) : "—" },
+    { field: "pricePerLitre", header: "Unit Price", sortable: true, body: (row) => row.pricePerLitre != null ? `₹${row.pricePerLitre.toFixed(2)}` : "—" },
+    { field: "litres", header: "Quantity", sortable: true, body: (row) => row.litres != null ? `${row.litres.toFixed(2)} L` : "—" },
+    { field: "totalCost", header: "Fuel Cost", sortable: true, body: (row) => (row.pricePerLitre != null && row.litres != null) ? `₹${(row.pricePerLitre * row.litres).toFixed(2)}` : "—" },
+    { field: "openingKm", header: "Op. Km", sortable: true, body: (row) => row.openingKm != null ? row.openingKm.toFixed(1) : "—" },
+    { field: "closingKm", header: "Cl. Km", sortable: true, body: (row) => (row.status === "CLOSED" && row.closingKm != null) ? row.closingKm.toFixed(1) : "—" },
+    { field: "distance", header: "Dist.", sortable: true, body: (row) => (row.status === "CLOSED" && row.distance != null) ? `${row.distance.toFixed(1)} km` : "—" },
+    { field: "mileage", header: "Mileage", sortable: true, body: (row) => (row.status === "CLOSED" && row.mileage != null) ? row.mileage.toFixed(2) : "—" },
     {
       field: "status", header: "Status", align: "center", body: (row) => (
         <div className="flex justify-center">

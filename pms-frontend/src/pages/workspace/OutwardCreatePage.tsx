@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { FiArrowLeft, FiSearch, FiCheckCircle, FiCircle, FiSave, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
 import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 import CustomButton from "../../widgets/CustomButton";
@@ -82,9 +82,6 @@ export interface OutwardUiState {
   modalValues: OutwardModalValues;
 }
 
-interface AuthStateSlice {
-  token: string | null;
-}
 
 // -------- Issue Quantity Modal -------- //
 
@@ -147,9 +144,6 @@ const OutwardCreatePage: React.FC = () => {
     WorkspaceStateSlice
   >((state) => state.workspace as unknown as WorkspaceStateSlice);
 
-  const { token } = useSelector<RootState, AuthStateSlice>(
-    (state) => state.auth as AuthStateSlice
-  );
 
   const outwardUi = useSelector<RootState, OutwardUiState>(
     (state) => state.workspaceUi.outward as unknown as OutwardUiState
@@ -158,9 +152,7 @@ const OutwardCreatePage: React.FC = () => {
   const {
     projectId,
     issueTo,
-    status,
     date,
-    closeDate,
     selectedLines,
     saving,
     modalLine,
@@ -318,7 +310,7 @@ const OutwardCreatePage: React.FC = () => {
 
       toast.success("Outward created successfully");
 
-      dispatch(refreshInventoryCodes(token || ""));
+      dispatch(refreshInventoryCodes());
       dispatch(setOutwardField({ field: "issueTo", value: "" }));
       dispatch(clearOutwardSelections());
       navigate('/workspace/outward');
@@ -373,7 +365,7 @@ const OutwardCreatePage: React.FC = () => {
       <div className="px-6 pt-6">
         <InventoryNavigationTabs />
       </div>
-      
+
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -418,11 +410,11 @@ const OutwardCreatePage: React.FC = () => {
                 label: `${p.code} \u2014 ${p.name}`,
                 value: String(p.id),
               }))}
-              onChange={(e) =>
+              onChange={(value) =>
                 dispatch(
                   setOutwardField({
                     field: "projectId",
-                    value: String(e.target.value),
+                    value: String(value),
                   })
                 )
               }

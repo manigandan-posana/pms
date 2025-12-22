@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Get } from "../../utils/apiService";
 import toast from "react-hot-toast";
-import { FiArrowLeft, FiSearch, FiCheckCircle, FiCircle, FiSave, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
 import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 import CustomButton from "../../widgets/CustomButton";
@@ -72,6 +72,8 @@ export interface InwardUiState {
   vehicleNo: string;
   supplierName: string;
   remarks: string;
+  type: string;
+  outwardId: string;
   saving: boolean;
   selectedLines: Record<string, InwardSelectedLineValues>;
   modalLine: AllocatedMaterial | null;
@@ -84,9 +86,6 @@ interface WorkspaceStateSlice {
   bomByProject: Record<string, ProjectBomLine[] | undefined>;
 }
 
-interface AuthStateSlice {
-  token: string | null;
-}
 
 // -------- Quantity Modal -------- //
 
@@ -151,7 +150,6 @@ const InwardCreatePage: React.FC = () => {
     (state) => state.workspace as unknown as WorkspaceStateSlice
   );
 
-  const { token } = useSelector<RootState, AuthStateSlice>((state) => state.auth as AuthStateSlice);
 
   const inwardUi = useSelector<RootState, InwardUiState>(
     (state) => state.workspaceUi.inward as unknown as InwardUiState
@@ -178,7 +176,7 @@ const InwardCreatePage: React.FC = () => {
 
   // Load outward records when entering RETURN mode
   useEffect(() => {
-    if (type === "RETURN" && projectId && token) {
+    if (type === "RETURN" && projectId) {
       Get(`/outwards/project/${projectId}`)
         .then((data: any) => {
           setOutwardRecords(Array.isArray(data) ? data : []);
@@ -190,7 +188,7 @@ const InwardCreatePage: React.FC = () => {
     } else {
       setOutwardRecords([]);
     }
-  }, [projectId, type, token]);
+  }, [projectId, type]);
 
   // Update outward items when an outward record is selected
   useEffect(() => {
@@ -362,7 +360,6 @@ const InwardCreatePage: React.FC = () => {
   ];
 
   const handleSubmit = async () => {
-    if (!token) return;
     const selectedLinesArray = Object.entries(selectedLines)
       .map(([lineMaterialId, values]: [string, InwardSelectedLineValues]) => ({
         materialId: String(lineMaterialId),
@@ -395,7 +392,7 @@ const InwardCreatePage: React.FC = () => {
       ).unwrap();
 
       toast.success("Inward saved successfully");
-      dispatch(refreshInventoryCodes(token));
+      dispatch(refreshInventoryCodes());
       dispatch(setInwardField({ field: "invoiceNo", value: "" }));
       dispatch(setInwardField({ field: "invoiceDate", value: "" }));
       dispatch(setInwardField({ field: "deliveryDate", value: "" }));
@@ -462,7 +459,7 @@ const InwardCreatePage: React.FC = () => {
               label="Project *"
               value={projectId}
               options={assignedProjects.map((p) => ({ label: `${p.code} — ${p.name}`, value: String(p.id) }))}
-              onChange={(e) => dispatch(setInwardField({ field: 'projectId', value: String(e.target.value) }))}
+              onChange={(value) => dispatch(setInwardField({ field: 'projectId', value: String(value) }))}
             />
 
             <CustomSelect
@@ -472,56 +469,73 @@ const InwardCreatePage: React.FC = () => {
                 { label: "Supply", value: "SUPPLY" },
                 { label: "Return", value: "RETURN" },
               ]}
-              onChange={(e) => {
-                dispatch(setInwardField({ field: 'type', value: String(e.target.value) }));
+              onChange={(value) => {
+                dispatch(setInwardField({ field: 'type', value: String(value) }));
                 // Reset outwardId when type changes
-                if (e.target.value !== 'RETURN') {
+                if (value !== 'RETURN') {
                   dispatch(setInwardField({ field: 'outwardId', value: "" }));
                 }
               }}
             />
 
-            {type === "RETURN" && (
-              <CustomSelect
-                label="Outward Record *"
-                value={outwardId || ""}
-                options={outwardRecords.map((r) => ({
-                  label: `${r.code} — ${r.date} — ${r.issueTo || 'Unknown'}`,
-                  value: String(r.id)
-                }))}
-                onChange={(e) => dispatch(setInwardField({ field: 'outwardId', value: String(e.target.value) }))}
-              />
+            {type === "RETURN" ? (
+              <>
+                <CustomSelect
+                  label="Outward Record *"
+                  value={outwardId || ""}
+                  options={outwardRecords.map((r) => ({
+                    label: `${r.code} — ${r.date} — ${r.issueTo || 'Unknown'}`,
+                    value: String(r.id)
+                  }))}
+                  onChange={(value) => dispatch(setInwardField({ field: 'outwardId', value: String(value) }))}
+                />
+                <CustomTextField
+                  label="Return Date *"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <CustomTextField
+                  label="Return By *"
+                  value={supplierName}
+                  onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
+                />
+              </>
+            ) : (
+              <>
+                <CustomTextField
+                  label="Invoice No."
+                  value={invoiceNo}
+                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
+                />
+                <CustomTextField
+                  label="Invoice Date"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <CustomTextField
+                  label="Delivery Date"
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => dispatch(setInwardField({ field: 'deliveryDate', value: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <CustomTextField
+                  label="Vehicle No."
+                  value={vehicleNo}
+                  onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
+                />
+                <CustomTextField
+                  label="Supplier Name"
+                  value={supplierName}
+                  onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
+                />
+              </>
             )}
 
-            <CustomTextField
-              label="Invoice No."
-              value={invoiceNo}
-              onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
-            />
-            <CustomTextField
-              label="Invoice Date"
-              type="date"
-              value={invoiceDate}
-              onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-            <CustomTextField
-              label="Delivery Date"
-              type="date"
-              value={deliveryDate}
-              onChange={(e) => dispatch(setInwardField({ field: 'deliveryDate', value: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-            <CustomTextField
-              label="Vehicle No."
-              value={vehicleNo}
-              onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
-            />
-            <CustomTextField
-              label="Supplier Name"
-              value={supplierName}
-              onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
-            />
             <div className="lg:col-span-3">
               <CustomTextField
                 label="Remarks"
