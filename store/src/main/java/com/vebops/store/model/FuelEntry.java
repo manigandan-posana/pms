@@ -28,10 +28,10 @@ public class FuelEntry {
     private FuelType fuelType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_id", nullable = false)
+    @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
-    @Column(nullable = false)
+    @Column
     private Double litres;
 
     @Column(nullable = false)

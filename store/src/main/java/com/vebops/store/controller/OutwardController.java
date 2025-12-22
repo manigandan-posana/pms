@@ -44,13 +44,43 @@ public class OutwardController {
     private final MaterialRepository materialRepository;
 
     public OutwardController(
-        AuthService authService,
-        OutwardRecordRepository outwardRecordRepository,
-        MaterialRepository materialRepository
-    ) {
+            AuthService authService,
+            OutwardRecordRepository outwardRecordRepository,
+            MaterialRepository materialRepository) {
         this.authService = authService;
         this.outwardRecordRepository = outwardRecordRepository;
         this.materialRepository = materialRepository;
+    }
+
+    /**
+     * Get a list of outward records for a specific project.
+     * Only accessible to users who have access to the project.
+     */
+    @GetMapping("/project/{projectId}")
+    public ResponseEntity<?> getOutwardsByProject(@PathVariable Long projectId) {
+        Long userId = AuthUtils.requireUserId();
+        UserAccount user = authService.getUserById(userId);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized"));
+        }
+
+        // Check access
+        if (user.getAccessType() == AccessType.PROJECTS) {
+            Set<Long> allowedProjectIds = user.getProjects().stream()
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
+            if (!allowedProjectIds.contains(projectId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Access denied to this project"));
+            }
+        }
+
+        List<OutwardRecord> records = outwardRecordRepository.findByProjectIdOrderByEntryDateDesc(projectId);
+        List<OutwardRegisterDto> dtos = records.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     /**
@@ -63,24 +93,24 @@ public class OutwardController {
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Unauthorized"));
+                    .body(Map.of("error", "Unauthorized"));
         }
 
         OutwardRecord record = outwardRecordRepository.findWithLinesById(id).orElse(null);
         if (record == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "Outward record not found"));
+                    .body(Map.of("error", "Outward record not found"));
         }
 
         // Check access
         if (user.getAccessType() == AccessType.PROJECTS) {
             Long projectId = record.getProject() != null ? record.getProject().getId() : null;
             Set<Long> allowedProjectIds = user.getProjects().stream()
-                .map(Project::getId)
-                .collect(Collectors.toSet());
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
             if (projectId == null || !allowedProjectIds.contains(projectId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Access denied to this project"));
+                        .body(Map.of("error", "Access denied to this project"));
             }
         }
 
@@ -95,48 +125,47 @@ public class OutwardController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateOutward(
-        @PathVariable Long id,
-        @RequestBody UpdateOutwardRequest request
-    ) {
+            @PathVariable Long id,
+            @RequestBody UpdateOutwardRequest request) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Unauthorized"));
+                    .body(Map.of("error", "Unauthorized"));
         }
 
         OutwardRecord record = outwardRecordRepository.findWithLinesById(id).orElse(null);
         if (record == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "Outward record not found"));
+                    .body(Map.of("error", "Outward record not found"));
         }
 
         // Check access
         if (user.getAccessType() == AccessType.PROJECTS) {
             Long projectId = record.getProject() != null ? record.getProject().getId() : null;
             Set<Long> allowedProjectIds = user.getProjects().stream()
-                .map(Project::getId)
-                .collect(Collectors.toSet());
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
             if (projectId == null || !allowedProjectIds.contains(projectId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Access denied to this project"));
+                        .body(Map.of("error", "Access denied to this project"));
             }
         }
 
         // Check if validated
         if (record.isValidated()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Cannot update validated record"));
+                    .body(Map.of("error", "Cannot update validated record"));
         }
 
         // Update lines
         if (request.getLines() != null) {
             for (UpdateLineRequest lineUpdate : request.getLines()) {
                 OutwardLine line = record.getLines().stream()
-                    .filter(l -> l.getId().equals(lineUpdate.getId()))
-                    .findFirst()
-                    .orElse(null);
-                
+                        .filter(l -> l.getId().equals(lineUpdate.getId()))
+                        .findFirst()
+                        .orElse(null);
+
                 if (line != null && lineUpdate.getIssueQty() != null) {
                     line.setIssueQty(lineUpdate.getIssueQty());
                 }
@@ -158,30 +187,30 @@ public class OutwardController {
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Unauthorized"));
+                    .body(Map.of("error", "Unauthorized"));
         }
 
         OutwardRecord record = outwardRecordRepository.findWithLinesById(id).orElse(null);
         if (record == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "Outward record not found"));
+                    .body(Map.of("error", "Outward record not found"));
         }
 
         // Check access
         if (user.getAccessType() == AccessType.PROJECTS) {
             Long projectId = record.getProject() != null ? record.getProject().getId() : null;
             Set<Long> allowedProjectIds = user.getProjects().stream()
-                .map(Project::getId)
-                .collect(Collectors.toSet());
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
             if (projectId == null || !allowedProjectIds.contains(projectId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Access denied to this project"));
+                        .body(Map.of("error", "Access denied to this project"));
             }
         }
 
         if (record.isValidated()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Record already validated"));
+                    .body(Map.of("error", "Record already validated"));
         }
 
         record.setValidated(true);
@@ -200,30 +229,30 @@ public class OutwardController {
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Unauthorized"));
+                    .body(Map.of("error", "Unauthorized"));
         }
 
         OutwardRecord record = outwardRecordRepository.findWithLinesById(id).orElse(null);
         if (record == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "Outward record not found"));
+                    .body(Map.of("error", "Outward record not found"));
         }
 
         // Check access
         if (user.getAccessType() == AccessType.PROJECTS) {
             Long projectId = record.getProject() != null ? record.getProject().getId() : null;
             Set<Long> allowedProjectIds = user.getProjects().stream()
-                .map(Project::getId)
-                .collect(Collectors.toSet());
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
             if (projectId == null || !allowedProjectIds.contains(projectId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Access denied to this project"));
+                        .body(Map.of("error", "Access denied to this project"));
             }
         }
 
         if (record.getStatus() == OutwardStatus.CLOSED) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Outward already closed"));
+                    .body(Map.of("error", "Outward already closed"));
         }
 
         record.setStatus(OutwardStatus.CLOSED);
@@ -238,29 +267,27 @@ public class OutwardController {
         for (OutwardLine line : record.getLines()) {
             Material material = line.getMaterial();
             lines.add(new OutwardLineDto(
-                line.getId() != null ? String.valueOf(line.getId()) : null,
-                material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
-                material != null ? material.getCode() : null,
-                material != null ? material.getName() : null,
-                material != null ? material.getUnit() : null,
-                line.getIssueQty()
-            ));
+                    line.getId() != null ? String.valueOf(line.getId()) : null,
+                    material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
+                    material != null ? material.getCode() : null,
+                    material != null ? material.getName() : null,
+                    material != null ? material.getUnit() : null,
+                    line.getIssueQty()));
         }
 
         Project project = record.getProject();
         return new OutwardRegisterDto(
-            record.getId() != null ? String.valueOf(record.getId()) : null,
-            project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
-            project != null ? project.getName() : null,
-            record.getCode(),
-            record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
-            record.getIssueTo(),
-            record.getStatus() != null ? record.getStatus().name() : null,
-            record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
-            record.isValidated(),
-            lines.size(),
-            lines
-        );
+                record.getId() != null ? String.valueOf(record.getId()) : null,
+                project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
+                project != null ? project.getName() : null,
+                record.getCode(),
+                record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
+                record.getIssueTo(),
+                record.getStatus() != null ? record.getStatus().name() : null,
+                record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
+                record.isValidated(),
+                lines.size(),
+                lines);
     }
 
     /**

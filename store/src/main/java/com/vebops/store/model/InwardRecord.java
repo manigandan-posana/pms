@@ -32,6 +32,10 @@ public class InwardRecord {
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "outward_record_id")
+    private OutwardRecord outwardRecord;
+
     @Enumerated(EnumType.STRING)
     private InwardType type = InwardType.SUPPLY;
 
@@ -148,5 +152,13 @@ public class InwardRecord {
 
     public void setLines(List<InwardLine> lines) {
         this.lines = lines;
+    }
+
+    public OutwardRecord getOutwardRecord() {
+        return outwardRecord;
+    }
+
+    public void setOutwardRecord(OutwardRecord outwardRecord) {
+        this.outwardRecord = outwardRecord;
     }
 }

@@ -11,14 +11,15 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OutwardRecordRepository extends JpaRepository<OutwardRecord, Long> {
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     List<OutwardRecord> findAllByOrderByEntryDateDesc();
 
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     List<OutwardRecord> findByLinesMaterialIdOrderByEntryDateDesc(Long materialId);
 
     /**
-     * Return a page of outward records ordered by entry date descending. This method
+     * Return a page of outward records ordered by entry date descending. This
+     * method
      * leverages Spring Data's {@link Pageable} abstraction to avoid returning an
      * unbounded list and includes an {@link EntityGraph} to fetch relationships
      * eagerly.
@@ -26,7 +27,7 @@ public interface OutwardRecordRepository extends JpaRepository<OutwardRecord, Lo
      * @param pageable the pagination information
      * @return a page of outward records
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     Page<OutwardRecord> findAllByOrderByEntryDateDesc(Pageable pageable);
 
     /**
@@ -37,52 +38,58 @@ public interface OutwardRecordRepository extends JpaRepository<OutwardRecord, Lo
      * @param pageable   the pagination information
      * @return a page of outward records for the specified material
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     Page<OutwardRecord> findByLinesMaterialIdOrderByEntryDateDesc(Long materialId, Pageable pageable);
 
     /**
-     * Return a page of outward records for a set of project ids ordered by entry date descending.
-     * This query restricts results to only records whose project id is contained in the provided
-     * {@code projectIds} set. If {@code projectIds} is empty, an empty page will be returned.
-     * An {@link EntityGraph} is used to eagerly fetch the project and lines to avoid N+1 issues.
+     * Return a page of outward records for a set of project ids ordered by entry
+     * date descending.
+     * This query restricts results to only records whose project id is contained in
+     * the provided
+     * {@code projectIds} set. If {@code projectIds} is empty, an empty page will be
+     * returned.
+     * An {@link EntityGraph} is used to eagerly fetch the project and lines to
+     * avoid N+1 issues.
      *
      * @param projectIds the set of allowed project ids to filter by
-     * @param pageable the pagination information
+     * @param pageable   the pagination information
      * @return a page of outward records matching the allowed projects
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     Page<OutwardRecord> findByProjectIdInOrderByEntryDateDesc(Set<Long> projectIds, Pageable pageable);
 
     /**
-     * Return a page of outward records filtered by status, ordered by entry date descending.
+     * Return a page of outward records filtered by status, ordered by entry date
+     * descending.
      *
-     * @param status the status to filter by (OPEN or CLOSED)
+     * @param status   the status to filter by (OPEN or CLOSED)
      * @param pageable the pagination information
      * @return a page of outward records with the specified status
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     Page<OutwardRecord> findByStatusOrderByEntryDateDesc(OutwardStatus status, Pageable pageable);
 
     /**
      * Return a page of outward records for a project filtered by status.
      *
      * @param projectId the project id to filter by
-     * @param status the status to filter by
-     * @param pageable the pagination information
+     * @param status    the status to filter by
+     * @param pageable  the pagination information
      * @return a page of outward records
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     Page<OutwardRecord> findByProjectIdAndStatusOrderByEntryDateDesc(
-        Long projectId, OutwardStatus status, Pageable pageable);
+            Long projectId, OutwardStatus status, Pageable pageable);
 
     /**
      * Find a single outward record by ID with all relationships eagerly loaded.
-     * This method uses EntityGraph to fetch project, lines, and materials in a single query.
+     * This method uses EntityGraph to fetch project, lines, and materials in a
+     * single query.
      *
      * @param id the id of the outward record
      * @return the outward record with all relationships loaded
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     java.util.Optional<OutwardRecord> findWithLinesById(Long id);
 
     /**
@@ -93,6 +100,9 @@ public interface OutwardRecordRepository extends JpaRepository<OutwardRecord, Lo
     /**
      * Find all open outward records for a project.
      */
-    @EntityGraph(attributePaths = {"project", "lines", "lines.material"})
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     List<OutwardRecord> findByProjectIdAndStatus(Long projectId, OutwardStatus status);
+
+    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
+    List<OutwardRecord> findByProjectIdOrderByEntryDateDesc(Long projectId);
 }

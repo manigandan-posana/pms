@@ -12,6 +12,7 @@ import {
   deleteVehicle,
   createFuelEntry,
   closeFuelEntry,
+  refillFuelEntry,
 
   createSupplier,
   deleteSupplier,
@@ -435,6 +436,73 @@ const VehicleManagementPage: React.FC = () => {
     }
   };
 
+  // Refill Dialog
+  const [showRefillDialog, setShowRefillDialog] = useState(false);
+  const [refillForm, setRefillForm] = useState({
+    date: new Date(),
+    vehicleId: "" as string | number,
+    openingKm: "" as string | number,
+  });
+
+  const handleRefillFuelEntry = async () => {
+    if (!selectedProjectId || !refillForm.vehicleId || !refillForm.openingKm) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const openingKm = Number(refillForm.openingKm);
+
+    // Attempt validation logic similar to Create if possible, but backend handles most.
+    // Client-side validation:
+    // Check if entered KM < last recorded KM (Daily Log or Fuel Entry).
+
+    // Get last closing daily log KM
+    const vehicleDailyLogs = dailyLogs
+      .filter((log) => log.vehicleId === Number(refillForm.vehicleId) && log.status === "CLOSED" && log.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastDailyLogKm = vehicleDailyLogs.length > 0 ? vehicleDailyLogs[0].closingKm! : null;
+
+    // Get last closed fuel entry KM
+    const vehicleFuelEntries = fuelEntries
+      .filter((entry) => entry.vehicleId === Number(refillForm.vehicleId) && entry.status === "CLOSED" && entry.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastFuelEntryKm = vehicleFuelEntries.length > 0 ? vehicleFuelEntries[0].closingKm! : null;
+
+    const maxClosedKm = Math.max(lastDailyLogKm || 0, lastFuelEntryKm || 0);
+
+    // Also check current OPEN fuel entry Opening KM (cannot be less than start of current trip)
+    const openEntry = fuelEntries.find(e => e.vehicleId === Number(refillForm.vehicleId) && e.status === "OPEN");
+    if (openEntry && openingKm < openEntry.openingKm) {
+      toast.error(`Refill KM cannot be less than current Open Entry KM (${openEntry.openingKm})`);
+      return;
+    }
+
+    if (openingKm < maxClosedKm) {
+      toast.error(`Refill KM cannot be less than last recorded KM (${maxClosedKm})`);
+      return;
+    }
+
+    try {
+      await dispatch(refillFuelEntry({
+        date: refillForm.date.toISOString().split('T')[0],
+        projectId: Number(selectedProjectId),
+        vehicleId: Number(refillForm.vehicleId),
+        openingKm: openingKm,
+      })).unwrap();
+
+      toast.success("Refill recorded successfully");
+      setShowRefillDialog(false);
+      setRefillForm({
+        date: new Date(),
+        vehicleId: "",
+        openingKm: "",
+      });
+    } catch (error) {
+      toast.error("Failed to record refill");
+      console.error(error);
+    }
+  };
+
   const handleAddDailyLog = async () => {
     if (!selectedProjectId || !createVehicleId || !createOpeningKm) {
       toast.error("Please fill in all required fields");
@@ -536,6 +604,14 @@ const VehicleManagementPage: React.FC = () => {
       litres: "",
       openingKm: "",
       pricePerLitre: "",
+    });
+  };
+
+  const resetRefillForm = () => {
+    setRefillForm({
+      date: new Date(),
+      vehicleId: "",
+      openingKm: "",
     });
   };
 
@@ -798,10 +874,11 @@ const VehicleManagementPage: React.FC = () => {
           ) : (
             <span className="text-[10px] text-slate-400 font-medium px-3 italic">Completed</span>
           )}
-        </div>
+        </div >
       )
     }
   ];
+
 
   // Dashboard states and logic
   const [dashboardTimeFilter, setDashboardTimeFilter] = useState<"day" | "week" | "month" | "3months" | "6months" | "year" | "all">("all");
@@ -1230,7 +1307,16 @@ const VehicleManagementPage: React.FC = () => {
 
                 {fuelViewMode === 'current' && (
                   <div className="mb-2">
-                    <CustomButton startIcon={<FiPlus />} onClick={() => setShowFuelDialog(true)}>Add Fuel Entry</CustomButton>
+                    <div className="flex gap-2">
+                      <CustomButton
+                        startIcon={<FiPlus />}
+                        onClick={() => { resetRefillForm(); setShowRefillDialog(true); }}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        Refill
+                      </CustomButton>
+                      <CustomButton startIcon={<FiPlus />} onClick={() => setShowFuelDialog(true)}>Add Fuel Entry</CustomButton>
+                    </div>
                   </div>
                 )}
 
@@ -1342,6 +1428,51 @@ const VehicleManagementPage: React.FC = () => {
         <div className="space-y-4 pt-2 flex flex-col gap-2">
           <CustomTextField label="Opening KM" disabled value={selectedFuelEntry?.openingKm} />
           <CustomTextField label="Closing KM" required type="number" value={closingKm} onChange={(e) => setClosingKm(e.target.value)} />
+        </div>
+      </CustomModal>
+
+      {/* Refill Dialog */}
+      <CustomModal
+        open={showRefillDialog}
+        onClose={() => setShowRefillDialog(false)}
+        title="Refill Vehicle"
+        maxWidth="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <CustomButton variant="outlined" onClick={() => setShowRefillDialog(false)}>
+              Cancel
+            </CustomButton>
+            <CustomButton
+              variant="contained"
+              color="primary"
+              onClick={handleRefillFuelEntry}
+              disabled={!refillForm.vehicleId || !refillForm.openingKm}
+            >
+              Confirm Refill
+            </CustomButton>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <CustomDateInput
+            label="Date"
+            value={refillForm.date}
+            onChange={(date) => setRefillForm({ ...refillForm, date: date.value || new Date() })}
+          />
+          <CustomSelect
+            label="Vehicle"
+            value={refillForm.vehicleId}
+            onChange={(e) => setRefillForm({ ...refillForm, vehicleId: e })}
+            options={vehicles
+              .filter(v => v.status === "ACTIVE")
+              .map((v) => ({ label: `${v.vehicleName} (${v.vehicleNumber})`, value: v.id }))}
+          />
+          <CustomTextField
+            label="Opening Km (Current Odometer)"
+            type="number"
+            value={refillForm.openingKm}
+            onChange={(e) => setRefillForm({ ...refillForm, openingKm: e.target.value })}
+          />
         </div>
       </CustomModal>
 

@@ -44,7 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-
 @Service
 public class InventoryService {
 
@@ -62,15 +61,14 @@ public class InventoryService {
     private static final DateTimeFormatter CODE_DATE = DateTimeFormatter.BASIC_ISO_DATE;
 
     public InventoryService(
-        ProjectRepository projectRepository,
-        MaterialRepository materialRepository,
-        InwardRecordRepository inwardRecordRepository,
-        OutwardRecordRepository outwardRecordRepository,
-        TransferRecordRepository transferRecordRepository,
-        BomLineRepository bomLineRepository,
-        InwardLineRepository inwardLineRepository,
-        OutwardLineRepository outwardLineRepository
-    ) {
+            ProjectRepository projectRepository,
+            MaterialRepository materialRepository,
+            InwardRecordRepository inwardRecordRepository,
+            OutwardRecordRepository outwardRecordRepository,
+            TransferRecordRepository transferRecordRepository,
+            BomLineRepository bomLineRepository,
+            InwardLineRepository inwardLineRepository,
+            OutwardLineRepository outwardLineRepository) {
         this.projectRepository = projectRepository;
         this.materialRepository = materialRepository;
         this.inwardRecordRepository = inwardRecordRepository;
@@ -83,17 +81,16 @@ public class InventoryService {
 
     public InventoryCodesResponse generateCodes() {
         return new InventoryCodesResponse(
-            buildShortCode("I", inwardRecordRepository.count() + 1),
-            buildShortCode("O", outwardRecordRepository.count() + 1),
-            buildShortCode("T", transferRecordRepository.count() + 1)
-        );
+                buildShortCode("I", inwardRecordRepository.count() + 1),
+                buildShortCode("O", outwardRecordRepository.count() + 1),
+                buildShortCode("T", transferRecordRepository.count() + 1));
     }
 
     @Transactional
     public void registerInward(InwardRequest request) {
-        log.info("registerInward: Processing inward request for projectId={}, lines={}", 
-            request.projectId(), request.lines() != null ? request.lines().size() : 0);
-        
+        log.info("registerInward: Processing inward request for projectId={}, lines={}",
+                request.projectId(), request.lines() != null ? request.lines().size() : 0);
+
         Project project = requireProject(request.projectId());
         if (request.lines() == null || request.lines().isEmpty()) {
             log.warn("registerInward: No inward lines provided");
@@ -104,10 +101,9 @@ public class InventoryService {
         record.setCode(resolveOrGenerateCode(request.code(), () -> generateCodes().inwardCode()));
         record.setProject(project);
         record.setType(
-            StringUtils.hasText(request.type())
-                ? InwardType.valueOf(request.type())
-                : InwardType.SUPPLY
-        );
+                StringUtils.hasText(request.type())
+                        ? InwardType.valueOf(request.type())
+                        : InwardType.SUPPLY);
         record.setInvoiceNo(request.invoiceNo());
         record.setInvoiceDate(parseDate(request.invoiceDate()));
         record.setDeliveryDate(parseDate(request.deliveryDate()));
@@ -115,8 +111,17 @@ public class InventoryService {
         record.setRemarks(request.remarks());
         record.setSupplierName(request.supplierName());
         record.setEntryDate(
-            record.getDeliveryDate() != null ? record.getDeliveryDate() : LocalDate.now()
-        );
+                record.getDeliveryDate() != null ? record.getDeliveryDate() : LocalDate.now());
+
+        if (record.getType() == InwardType.RETURN && StringUtils.hasText(request.outwardId())) {
+            OutwardRecord outward = outwardRecordRepository.findById(parseLong(request.outwardId()))
+                    .orElseThrow(
+                            () -> new NotFoundException("Outward record not found with id: " + request.outwardId()));
+            if (!outward.getProject().getId().equals(project.getId())) {
+                throw new BadRequestException("Outward record does not belong to the selected project");
+            }
+            record.setOutwardRecord(outward);
+        }
 
         List<InwardLine> lines = new ArrayList<>();
 
@@ -125,12 +130,29 @@ public class InventoryService {
         Map<Long, Double> pendingOrderedByMaterial = new HashMap<>();
 
         request.lines().forEach(lineReq -> {
-            log.debug("registerInward: Processing line - materialId={}, orderedQty={}, receivedQty={}", 
-                lineReq.materialId(), lineReq.orderedQty(), lineReq.receivedQty());
-            
+            log.debug("registerInward: Processing line - materialId={}, orderedQty={}, receivedQty={}",
+                    lineReq.materialId(), lineReq.orderedQty(), lineReq.receivedQty());
+
             // Sanitize quantities (no negative qty)
             double orderedQty = Math.max(0d, lineReq.orderedQty());
             double receivedQty = Math.max(0d, lineReq.receivedQty());
+
+            // For Returns, deduct from Outward Record
+            if (record.getType() == InwardType.RETURN) {
+                if (record.getOutwardRecord() != null) {
+                    OutwardLine outLine = record.getOutwardRecord().getLines().stream()
+                            .filter(l -> l.getMaterial().getId().equals(lineReq.materialId()))
+                            .findFirst()
+                            .orElseThrow(
+                                    () -> new BadRequestException("Material not found in selected Outward Record"));
+
+                    if (receivedQty > outLine.getIssueQty()) {
+                        throw new BadRequestException(
+                                "Cannot return more than issued quantity for material: " + lineReq.materialId());
+                    }
+                    outLine.setIssueQty(outLine.getIssueQty() - receivedQty);
+                }
+            }
 
             // Ignore completely empty lines
             if (orderedQty <= 0d && receivedQty <= 0d) {
@@ -140,58 +162,50 @@ public class InventoryService {
 
             Material material = requireMaterial(lineReq.materialId());
 
-            // Total BOM allocation for this material in this project
-            double allocation = requireBomAllocation(project, material);
-            log.debug("registerInward: Material={}, allocation={}", material.getCode(), allocation);
+            if (record.getType() != InwardType.RETURN) {
+                // SUPPLY Logic: Check Allocations
+                double allocation = requireBomAllocation(project, material);
+                log.debug("registerInward: Material={}, allocation={}", material.getCode(), allocation);
 
-            /*
-            * 1) Check ORDERED quantity against allocation
-            *    totalOrdered = alreadyOrderedInDB + pendingOrderedInThisRequest + newOrderedQty
-            *    must be <= allocation
-            */
-            double alreadyOrdered = safeDouble(
-                inwardLineRepository.sumOrderedQtyByProjectAndMaterial(
-                    project.getId(),
-                    material.getId()
-                )
-            );
-            double pendingOrdered = pendingOrderedByMaterial.getOrDefault(material.getId(), 0d);
-            double nextOrderedTotal = alreadyOrdered + pendingOrdered + orderedQty;
+                // Check ORDERED quantity against allocation
+                double alreadyOrdered = safeDouble(
+                        inwardLineRepository.sumOrderedQtyByProjectAndMaterial(
+                                project.getId(),
+                                material.getId()));
+                double pendingOrdered = pendingOrderedByMaterial.getOrDefault(material.getId(), 0d);
+                double nextOrderedTotal = alreadyOrdered + pendingOrdered + orderedQty;
 
-            if (nextOrderedTotal > allocation) {
-                log.warn("registerInward: Ordered qty {} exceeds allocation {} for material={}", 
-                    nextOrderedTotal, allocation, material.getCode());
-                throw new BadRequestException(
-                    "Ordering "
-                        + material.getCode()
-                        + " exceeds the allocated requirement ("
-                        + allocation
-                        + "). Please reduce the ordered quantity or update the project allocation."
-                );
-            }
+                if (nextOrderedTotal > allocation) {
+                    log.warn("registerInward: Ordered qty {} exceeds allocation {} for material={}",
+                            nextOrderedTotal, allocation, material.getCode());
+                    throw new BadRequestException(
+                            "Ordering "
+                                    + material.getCode()
+                                    + " exceeds the allocated requirement ("
+                                    + allocation
+                                    + "). Please reduce the ordered quantity or update the project allocation.");
+                }
 
-            /*
-            * 2) Check RECEIVED quantity against allocation
-            *    totalReceived = alreadyReceivedInDB + pendingReceivedInThisRequest + newReceivedQty
-            *    must be <= allocation
-            */
-            double alreadyReceived = safeDouble(
-                inwardLineRepository.sumReceivedQtyByProjectAndMaterial(
-                    project.getId(),
-                    material.getId()
-                )
-            );
-            double pendingReceived = pendingReceivedByMaterial.getOrDefault(material.getId(), 0d);
-            double nextReceivedTotal = alreadyReceived + pendingReceived + receivedQty;
+                // Check RECEIVED quantity against allocation
+                double alreadyReceived = safeDouble(
+                        inwardLineRepository.sumReceivedQtyByProjectAndMaterial(
+                                project.getId(),
+                                material.getId()));
+                double pendingReceived = pendingReceivedByMaterial.getOrDefault(material.getId(), 0d);
+                double nextReceivedTotal = alreadyReceived + pendingReceived + receivedQty;
 
-            if (nextReceivedTotal > allocation) {
-                log.warn("registerInward: Received qty {} exceeds allocation {} for material={}", 
-                    nextReceivedTotal, allocation, material.getCode());
-                throw new BadRequestException(
-                    "Receiving "
-                        + material.getCode()
-                        + " exceeds the allocated requirement."
-                );
+                if (nextReceivedTotal > allocation) {
+                    log.warn("registerInward: Received qty {} exceeds allocation {} for material={}",
+                            nextReceivedTotal, allocation, material.getCode());
+                    throw new BadRequestException(
+                            "Receiving "
+                                    + material.getCode()
+                                    + " exceeds the allocated requirement.");
+                }
+
+                // Keep track for this request
+                pendingOrderedByMaterial.put(material.getId(), pendingOrdered + orderedQty);
+                pendingReceivedByMaterial.put(material.getId(), pendingReceived + receivedQty);
             }
 
             // Create inward line
@@ -203,17 +217,24 @@ public class InventoryService {
             lines.add(line);
 
             // Update material aggregates
-            if (orderedQty > 0d) {
-                material.setOrderedQty(material.getOrderedQty() + orderedQty);
-            }
-            if (receivedQty > 0d) {
-                material.setReceivedQty(material.getReceivedQty() + receivedQty);
+            if (record.getType() == InwardType.RETURN) {
+                // Return: Decrease utilized (issued), which increases balance automatically via
+                // syncBalance logic
+                // if syncBalance uses utilizedQty.
+                // material.syncBalance() implementation: balance = received + opening -
+                // utilized.
+                // So decreasing utilized INCREASES balance. Correct.
+                material.setUtilizedQty(Math.max(0d, material.getUtilizedQty() - receivedQty));
+            } else {
+                // Supply: Increase Ordered/Received
+                if (orderedQty > 0d) {
+                    material.setOrderedQty(material.getOrderedQty() + orderedQty);
+                }
+                if (receivedQty > 0d) {
+                    material.setReceivedQty(material.getReceivedQty() + receivedQty);
+                }
             }
             material.syncBalance();
-
-            // Keep track for this request
-            pendingOrderedByMaterial.put(material.getId(), pendingOrdered + orderedQty);
-            pendingReceivedByMaterial.put(material.getId(), pendingReceived + receivedQty);
         });
 
         if (lines.isEmpty()) {
@@ -223,10 +244,9 @@ public class InventoryService {
 
         record.setLines(lines);
         inwardRecordRepository.save(record);
-        log.info("registerInward: Successfully saved inward record with code={}, lines={}", 
-            record.getCode(), lines.size());
+        log.info("registerInward: Successfully saved inward record with code={}, lines={}",
+                record.getCode(), lines.size());
     }
-
 
     @Transactional
     public void registerOutward(OutwardRequest request) {
@@ -261,7 +281,8 @@ public class InventoryService {
         // Skip closed check if explicitly bypassed (e.g., for transfers)
         boolean bypassClosedCheck = request.bypassClosedCheck() != null && request.bypassClosedCheck();
         if (!bypassClosedCheck && record.getStatus() == OutwardStatus.CLOSED) {
-            throw new BadRequestException("Cannot create outward with CLOSED status. Please create as OPEN and close it later after verification.");
+            throw new BadRequestException(
+                    "Cannot create outward with CLOSED status. Please create as OPEN and close it later after verification.");
         }
 
         List<OutwardLine> lines = new ArrayList<>();
@@ -278,82 +299,70 @@ public class InventoryService {
             }
 
             Material material = requireMaterial(lineReq.materialId());
-            
 
             // 1) Compute project-wise received & already issued (from DB)
-        double totalReceivedForProject = receivedCache.computeIfAbsent(
-            material.getId(),
-            id -> safeDouble(
-                inwardLineRepository.sumReceivedQtyByProjectAndMaterial(
-                    project.getId(),
-                    id
-                )
-            )
-        );
+            double totalReceivedForProject = receivedCache.computeIfAbsent(
+                    material.getId(),
+                    id -> safeDouble(
+                            inwardLineRepository.sumReceivedQtyByProjectAndMaterial(
+                                    project.getId(),
+                                    id)));
 
-        double alreadyIssued = issuedCache.computeIfAbsent(
-            material.getId(),
-            id -> safeDouble(
-                outwardLineRepository.sumIssuedQtyByProjectAndMaterial(
-                    project.getId(),
-                    id
-                )
-            )
-        );
+            double alreadyIssued = issuedCache.computeIfAbsent(
+                    material.getId(),
+                    id -> safeDouble(
+                            outwardLineRepository.sumIssuedQtyByProjectAndMaterial(
+                                    project.getId(),
+                                    id)));
 
-        // What this request has already decided to issue for this material
-        double pending = pendingIssuesByMaterial.getOrDefault(material.getId(), 0d);
+            // What this request has already decided to issue for this material
+            double pending = pendingIssuesByMaterial.getOrDefault(material.getId(), 0d);
 
-        // Project-wise balance BEFORE this line is processed
-        double projectBalance = totalReceivedForProject - alreadyIssued - pending;
-        if (projectBalance <= 0d) {
-            throw new BadRequestException(
-                "No balance available for material "
-                    + material.getCode()
-                    + " in project "
-                    + project.getCode()
-            );
-        }
+            // Project-wise balance BEFORE this line is processed
+            double projectBalance = totalReceivedForProject - alreadyIssued - pending;
+            if (projectBalance <= 0d) {
+                throw new BadRequestException(
+                        "No balance available for material "
+                                + material.getCode()
+                                + " in project "
+                                + project.getCode());
+            }
 
-        // Also ensure we don't exceed global stock
-        double globalAvailable = material.getBalanceQty();
-        double effectiveAvailable = Math.min(projectBalance, globalAvailable);
+            // Also ensure we don't exceed global stock
+            double globalAvailable = material.getBalanceQty();
+            double effectiveAvailable = Math.min(projectBalance, globalAvailable);
 
-        // Provide a more user‑friendly error when there is no stock available
-        if (effectiveAvailable <= 0d) {
-            throw new BadRequestException(
-                "Stock quantity is zero for material " + material.getCode() + " in project " + project.getCode()
-            );
-        }
+            // Provide a more user‑friendly error when there is no stock available
+            if (effectiveAvailable <= 0d) {
+                throw new BadRequestException(
+                        "Stock quantity is zero for material " + material.getCode() + " in project "
+                                + project.getCode());
+            }
 
-        if (requestedIssueQty > effectiveAvailable) {
-            throw new BadRequestException(
-                "Cannot issue " + requestedIssueQty + " " + material.getUnit()
-                    + " of " + material.getCode()
-                    + " for project " + project.getCode()
-                    + ". Available quantity for this project is "
-                    + effectiveAvailable + "."
-            );
-        }
+            if (requestedIssueQty > effectiveAvailable) {
+                throw new BadRequestException(
+                        "Cannot issue " + requestedIssueQty + " " + material.getUnit()
+                                + " of " + material.getCode()
+                                + " for project " + project.getCode()
+                                + ". Available quantity for this project is "
+                                + effectiveAvailable + ".");
+            }
 
-        // If we reach here, project-wise and global-wise stock is OK
-        double issueQty = requestedIssueQty;
+            // If we reach here, project-wise and global-wise stock is OK
+            double issueQty = requestedIssueQty;
 
+            // 2) BOM allocation check (FINAL issueQty, not requestedIssueQty)
+            // 2) BOM allocation check (using final issueQty)
+            double allocation = requireBomAllocation(project, material);
+            double nextTotal = alreadyIssued + pending + issueQty;
 
-                    // 2) BOM allocation check (FINAL issueQty, not requestedIssueQty)
-                    // 2) BOM allocation check (using final issueQty)
-        double allocation = requireBomAllocation(project, material);
-        double nextTotal = alreadyIssued + pending + issueQty;
-
-        if (nextTotal > allocation) {
-            throw new BadRequestException(
-                "Issuing " + material.getCode()
-                    + " exceeds the allocated requirement ("
-                    + allocation
-                    + "). Please request an increase before issuing more."
-            );
-        }
-
+            if (nextTotal > allocation) {
+                throw new BadRequestException(
+                        "Issuing " + material.getCode()
+                                + " exceeds the allocated requirement ("
+                                + allocation
+                                + "). Please request an increase before issuing more.");
+            }
 
             // 3) Create outward line
             OutwardLine line = new OutwardLine();
@@ -376,11 +385,12 @@ public class InventoryService {
         record.setLines(lines);
         outwardRecordRepository.save(record);
     }
+
     @Transactional
     public void updateOutward(Long recordId, OutwardUpdateRequest request) {
         OutwardRecord record = outwardRecordRepository
-            .findById(recordId)
-            .orElseThrow(() -> new NotFoundException("Outward record not found"));
+                .findById(recordId)
+                .orElseThrow(() -> new NotFoundException("Outward record not found"));
 
         // Allow closed records to be reopened by changing status to OPEN. If the
         // incoming request does not explicitly specify OPEN then editing is
@@ -408,24 +418,24 @@ public class InventoryService {
             return;
         }
 
-        // 1) Index existing lines and capture current totals PER MATERIAL for this record
+        // 1) Index existing lines and capture current totals PER MATERIAL for this
+        // record
         Map<Long, OutwardLine> existingById = record
-            .getLines()
-            .stream()
-            .collect(Collectors.toMap(line -> line.getId(), line -> line));
+                .getLines()
+                .stream()
+                .collect(Collectors.toMap(line -> line.getId(), line -> line));
 
         Map<Long, Double> currentRecordTotals = record
-            .getLines()
-            .stream()
-            .filter(line -> line.getMaterial() != null && line.getMaterial().getId() != null)
-            .collect(
-                Collectors.groupingBy(
-                    line -> line.getMaterial().getId(),
-                    Collectors.summingDouble(OutwardLine::getIssueQty)
-                )
-            );
+                .getLines()
+                .stream()
+                .filter(line -> line.getMaterial() != null && line.getMaterial().getId() != null)
+                .collect(
+                        Collectors.groupingBy(
+                                line -> line.getMaterial().getId(),
+                                Collectors.summingDouble(OutwardLine::getIssueQty)));
 
-        // 2) Build next lines and aggregate requested totals per material for this record
+        // 2) Build next lines and aggregate requested totals per material for this
+        // record
         List<OutwardLine> nextLines = new ArrayList<>();
         Map<Long, Double> requestedTotals = new HashMap<>();
         Map<Long, Material> requestedMaterials = new HashMap<>();
@@ -471,26 +481,22 @@ public class InventoryService {
             double allocation = requireBomAllocation(record.getProject(), material);
 
             double totalIssuedFromDb = issuedCache.computeIfAbsent(
-                materialId,
-                id -> safeDouble(
-                    outwardLineRepository.sumIssuedQtyByProjectAndMaterial(
-                        record.getProject().getId(),
-                        id
-                    )
-                )
-            );
+                    materialId,
+                    id -> safeDouble(
+                            outwardLineRepository.sumIssuedQtyByProjectAndMaterial(
+                                    record.getProject().getId(),
+                                    id)));
 
             double currentContribution = currentRecordTotals.getOrDefault(materialId, 0d);
             double nextTotal = totalIssuedFromDb - currentContribution + entry.getValue();
 
             double totalReceivedForProject = safeDouble(
-                inwardLineRepository.sumReceivedQtyByProjectAndMaterial(
-                    record.getProject().getId(),
-                    materialId
-                )
-            );
+                    inwardLineRepository.sumReceivedQtyByProjectAndMaterial(
+                            record.getProject().getId(),
+                            materialId));
 
-            // If we apply this update, total issued (all records) must not exceed what was received
+            // If we apply this update, total issued (all records) must not exceed what was
+            // received
             if (nextTotal > totalReceivedForProject) {
                 double currentlyIssuedWithoutThisRecord = totalIssuedFromDb - currentContribution;
                 double projectBalance = totalReceivedForProject - currentlyIssuedWithoutThisRecord;
@@ -499,31 +505,26 @@ public class InventoryService {
                 }
 
                 throw new BadRequestException(
-                    "Cannot set issue quantity for material "
-                        + material.getCode()
-                        + " to "
-                        + entry.getValue()
-                        + " in project "
-                        + record.getProject().getCode()
-                        + " because project balance is only "
-                        + projectBalance
-                        + "."
-                );
+                        "Cannot set issue quantity for material "
+                                + material.getCode()
+                                + " to "
+                                + entry.getValue()
+                                + " in project "
+                                + record.getProject().getCode()
+                                + " because project balance is only "
+                                + projectBalance
+                                + ".");
             }
-
 
             if (nextTotal > allocation) {
                 throw new BadRequestException(
-                    "Issuing "
-                        + material.getCode()
-                        + " exceeds the allocated requirement ("
-                        + allocation
-                        + "). Please request an increase before issuing more."
-                );
+                        "Issuing "
+                                + material.getCode()
+                                + " exceeds the allocated requirement ("
+                                + allocation
+                                + "). Please request an increase before issuing more.");
             }
         }
-
-        
 
         // 4) Sync Material.utilizedQty and balance based on delta from THIS record
         Set<Long> affectedMaterialIds = new HashSet<>();
@@ -533,8 +534,7 @@ public class InventoryService {
         for (Long materialId : affectedMaterialIds) {
             Material material = requestedMaterials.get(materialId);
             if (material == null) {
-                material =
-                    record
+                material = record
                         .getLines()
                         .stream()
                         .filter(line -> line.getMaterial() != null && materialId.equals(line.getMaterial().getId()))
@@ -560,14 +560,13 @@ public class InventoryService {
                 double available = material.getBalanceQty();
                 if (diff > available) {
                     throw new BadRequestException(
-                        "Cannot increase issue quantity for "
-                            + material.getCode()
-                            + " by "
-                            + diff
-                            + " because only "
-                            + available
-                            + " is available in stock."
-                    );
+                            "Cannot increase issue quantity for "
+                                    + material.getCode()
+                                    + " by "
+                                    + diff
+                                    + " because only "
+                                    + available
+                                    + " is available in stock.");
                 }
             }
 
@@ -599,7 +598,6 @@ public class InventoryService {
         outwardRecordRepository.save(record);
     }
 
-
     @Transactional
     public void registerTransfer(TransferRequest request) {
         if (!StringUtils.hasText(request.toProjectId())) {
@@ -617,7 +615,8 @@ public class InventoryService {
 
         if (fromProject.getId().equals(toProject.getId())) {
             if (!StringUtils.hasText(fromSite) || !StringUtils.hasText(toSite)) {
-                throw new BadRequestException("Provide both source and destination sites when transferring within a project");
+                throw new BadRequestException(
+                        "Provide both source and destination sites when transferring within a project");
             }
             if (fromSite.equalsIgnoreCase(toSite)) {
                 throw new BadRequestException("Cannot transfer within the same project site");
@@ -638,30 +637,30 @@ public class InventoryService {
         List<InwardLineRequest> inwardLines = new ArrayList<>();
 
         request
-            .lines()
-            .forEach(lineReq -> {
-                if (lineReq.transferQty() <= 0) {
-                    return;
-                }
-                Material material = requireMaterial(lineReq.materialId());
-                TransferLine line = new TransferLine();
-                line.setRecord(record);
-                line.setMaterial(material);
-                line.setTransferQty(lineReq.transferQty());
-                lines.add(line);
+                .lines()
+                .forEach(lineReq -> {
+                    if (lineReq.transferQty() <= 0) {
+                        return;
+                    }
+                    Material material = requireMaterial(lineReq.materialId());
+                    TransferLine line = new TransferLine();
+                    line.setRecord(record);
+                    line.setMaterial(material);
+                    line.setTransferQty(lineReq.transferQty());
+                    lines.add(line);
 
-                //
-                // For site‑to‑site transfers we want the transferred quantity to be
-                // immediately reflected as received on the destination side.
-                // Therefore we record an outward issue from the source project and
-                // an inward receipt on the destination project with the
-                // `receivedQty` equal to the transfer quantity and no outstanding
-                // ordered quantity.  This contrasts with the previous logic of
-                // recording the quantity as an ordered amount (orderedQty) and
-                // deferring receipt.
-                outwardLines.add(new OutwardLineRequest(lineReq.materialId(), lineReq.transferQty()));
-                inwardLines.add(new InwardLineRequest(lineReq.materialId(), 0d, lineReq.transferQty()));
-            });
+                    //
+                    // For site‑to‑site transfers we want the transferred quantity to be
+                    // immediately reflected as received on the destination side.
+                    // Therefore we record an outward issue from the source project and
+                    // an inward receipt on the destination project with the
+                    // `receivedQty` equal to the transfer quantity and no outstanding
+                    // ordered quantity. This contrasts with the previous logic of
+                    // recording the quantity as an ordered amount (orderedQty) and
+                    // deferring receipt.
+                    outwardLines.add(new OutwardLineRequest(lineReq.materialId(), lineReq.transferQty()));
+                    inwardLines.add(new InwardLineRequest(lineReq.materialId(), 0d, lineReq.transferQty()));
+                });
 
         if (lines.isEmpty()) {
             throw new BadRequestException("Transfer quantity must be greater than zero");
@@ -671,35 +670,34 @@ public class InventoryService {
         record.setLines(lines);
         transferRecordRepository.save(record);
 
-        // Auto-create outward (source) and inward (destination) movements based on the transfer
+        // Auto-create outward (source) and inward (destination) movements based on the
+        // transfer
         // Bypass closed check to allow transfers even when outward register is closed
         registerOutward(
-            new OutwardRequest(
-                null,
-                request.fromProjectId(),
-                "Transfer to " + toProject.getCode(),
-                null,
-                null,
-                null,
-                outwardLines,
-                true  // bypass closed check for transfers
-            )
-        );
+                new OutwardRequest(
+                        null,
+                        request.fromProjectId(),
+                        "Transfer to " + toProject.getCode(),
+                        null,
+                        null,
+                        null,
+                        outwardLines,
+                        true // bypass closed check for transfers
+                ));
 
         registerInward(
-            new InwardRequest(
-                null,
-                request.toProjectId(),
-                InwardType.RETURN.name(),
-                null,
-                null,
-                null,
-                null,
-                "Transfer from " + fromProject.getCode(),
-                fromProject.getName(),
-                inwardLines
-            )
-        );
+                new InwardRequest(
+                        null,
+                        request.toProjectId(),
+                        InwardType.RETURN.name(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        "Transfer from " + fromProject.getCode(),
+                        fromProject.getName(),
+                        null, // outwardId is null for transfers
+                        inwardLines));
     }
 
     private String resolveOrGenerateCode(String requested, Supplier<String> generator) {
@@ -724,7 +722,8 @@ public class InventoryService {
     }
 
     private Material requireMaterial(String id) {
-        return materialRepository.findById(parseLong(id)).orElseThrow(() -> new NotFoundException("Material not found"));
+        return materialRepository.findById(parseLong(id))
+                .orElseThrow(() -> new NotFoundException("Material not found"));
     }
 
     private double requireBomAllocation(Project project, Material material) {
@@ -732,8 +731,9 @@ public class InventoryService {
             throw new BadRequestException("Project and material are required");
         }
         BomLine line = bomLineRepository
-            .findByProjectIdAndMaterialId(project.getId(), material.getId())
-            .orElseThrow(() -> new BadRequestException("Material " + material.getCode() + " is not allocated to this project"));
+                .findByProjectIdAndMaterialId(project.getId(), material.getId())
+                .orElseThrow(() -> new BadRequestException(
+                        "Material " + material.getCode() + " is not allocated to this project"));
         return line.getQuantity();
     }
 

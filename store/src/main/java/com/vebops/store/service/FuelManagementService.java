@@ -80,7 +80,7 @@ public class FuelManagementService {
         List<DailyLog> vehicleDailyLogs = dailyLogRepository.findByVehicleId(request.getVehicleId());
         boolean hasOpenDailyLog = vehicleDailyLogs.stream()
                 .anyMatch(log -> log.getStatus() == EntryStatus.OPEN);
-        
+
         if (hasOpenDailyLog) {
             throw new BadRequestException("Cannot create fuel entry. Please close the open daily log first.");
         }
@@ -91,7 +91,7 @@ public class FuelManagementService {
                 .max((a, b) -> a.getDate().compareTo(b.getDate()))
                 .map(DailyLog::getClosingKm)
                 .orElse(null);
-        
+
         // Get the last closed fuel entry's closing KM
         List<FuelEntry> vehicleFuelEntries = fuelEntryRepository.findByVehicleId(request.getVehicleId());
         Double lastFuelEntryClosingKm = vehicleFuelEntries.stream()
@@ -99,11 +99,11 @@ public class FuelManagementService {
                 .max((a, b) -> a.getDate().compareTo(b.getDate()))
                 .map(FuelEntry::getClosingKm)
                 .orElse(null);
-        
+
         // Determine the maximum closing KM from both sources
         Double maxClosingKm = null;
         String source = "";
-        
+
         if (lastDailyLogClosingKm != null && lastFuelEntryClosingKm != null) {
             if (lastDailyLogClosingKm >= lastFuelEntryClosingKm) {
                 maxClosingKm = lastDailyLogClosingKm;
@@ -119,12 +119,11 @@ public class FuelManagementService {
             maxClosingKm = lastFuelEntryClosingKm;
             source = "fuel entry";
         }
-        
+
         if (maxClosingKm != null && request.getOpeningKm() < maxClosingKm) {
             throw new BadRequestException(
-                String.format("Fuel opening KM (%.1f) must be greater than or equal to last %s closing KM (%.1f)",
-                    request.getOpeningKm(), source, maxClosingKm)
-            );
+                    String.format("Fuel opening KM (%.1f) must be greater than or equal to last %s closing KM (%.1f)",
+                            request.getOpeningKm(), source, maxClosingKm));
         }
 
         FuelEntry entry = new FuelEntry();
@@ -163,12 +162,12 @@ public class FuelManagementService {
                 .filter(log -> log.getStatus() == EntryStatus.CLOSED && log.getClosingKm() != null)
                 .max((a, b) -> a.getDate().compareTo(b.getDate()))
                 .orElse(null);
-        
+
         if (lastClosedLog != null && request.getClosingKm() < lastClosedLog.getClosingKm()) {
             throw new BadRequestException(
-                String.format("Fuel closing KM (%.1f) must be greater than or equal to last daily log closing KM (%.1f)",
-                    request.getClosingKm(), lastClosedLog.getClosingKm())
-            );
+                    String.format(
+                            "Fuel closing KM (%.1f) must be greater than or equal to last daily log closing KM (%.1f)",
+                            request.getClosingKm(), lastClosedLog.getClosingKm()));
         }
 
         entry.setClosingKm(request.getClosingKm());
@@ -253,10 +252,9 @@ public class FuelManagementService {
 
         // Check if there's already an open log for this vehicle today
         dailyLogRepository.findByVehicleIdAndDateAndStatus(
-                request.getVehicleId(), request.getDate(), EntryStatus.OPEN
-        ).ifPresent(log -> {
-            throw new BadRequestException("There is already an open daily log for this vehicle today");
-        });
+                request.getVehicleId(), request.getDate(), EntryStatus.OPEN).ifPresent(log -> {
+                    throw new BadRequestException("There is already an open daily log for this vehicle today");
+                });
 
         DailyLog log = new DailyLog();
         log.setDate(request.getDate());
@@ -290,5 +288,92 @@ public class FuelManagementService {
 
         DailyLog saved = dailyLogRepository.save(log);
         return DailyLogDto.fromEntity(saved);
+    }
+
+    @Transactional
+    public FuelEntryDto refill(RefillRequest request) {
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new NotFoundException("Project not found with id: " + request.getProjectId()));
+
+        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+                .orElseThrow(() -> new NotFoundException("Vehicle not found with id: " + request.getVehicleId()));
+
+        // Check for open Daily Log (Must exist and be OPEN? Or just not blocking?)
+        // Create validation says: "Cannot create fuel entry. Please close the open
+        // daily log first."
+        // We should probably enforce the same rules or relax them if Refill is special.
+        // Let's enforce it to be safe.
+        List<DailyLog> vehicleDailyLogs = dailyLogRepository.findByVehicleId(request.getVehicleId());
+        boolean hasOpenDailyLog = vehicleDailyLogs.stream()
+                .anyMatch(log -> log.getStatus() == EntryStatus.OPEN);
+
+        if (hasOpenDailyLog) {
+            throw new BadRequestException("Cannot refill. Please close the open daily log first.");
+        }
+
+        // 1. Handle Existing Open Fuel Entry
+        List<FuelEntry> vehicleFuelEntries = fuelEntryRepository.findByVehicleId(request.getVehicleId());
+        FuelEntry openEntry = vehicleFuelEntries.stream()
+                .filter(e -> e.getStatus() == EntryStatus.OPEN)
+                .findFirst()
+                .orElse(null);
+
+        if (openEntry != null) {
+            // Close the existing entry
+            if (request.getOpeningKm() < openEntry.getOpeningKm()) {
+                throw new BadRequestException("Refill KM (" + request.getOpeningKm()
+                        + ") cannot be less than previous Opening KM (" + openEntry.getOpeningKm() + ")");
+            }
+
+            openEntry.setClosingKm(request.getOpeningKm());
+            openEntry.setClosingKmPhoto(request.getOpeningKmPhoto()); // Use same photo for closing? Or null?
+            // Usually Closing Photo of old = Opening Photo of new.
+            openEntry.setDistance(request.getOpeningKm() - openEntry.getOpeningKm());
+            if (openEntry.getLitres() != null && openEntry.getLitres() > 0 && openEntry.getDistance() > 0) {
+                openEntry.setMileage(openEntry.getDistance() / openEntry.getLitres());
+            }
+            openEntry.setStatus(EntryStatus.CLOSED);
+            fuelEntryRepository.save(openEntry);
+        } else {
+            // Validate continuity with last closed logs if no open entry
+            Double lastDailyLogClosingKm = vehicleDailyLogs.stream()
+                    .filter(log -> log.getStatus() == EntryStatus.CLOSED && log.getClosingKm() != null)
+                    .max((a, b) -> a.getDate().compareTo(b.getDate()))
+                    .map(DailyLog::getClosingKm)
+                    .orElse(null);
+
+            Double lastFuelEntryClosingKm = vehicleFuelEntries.stream()
+                    .filter(entry -> entry.getStatus() == EntryStatus.CLOSED && entry.getClosingKm() != null)
+                    .max((a, b) -> a.getDate().compareTo(b.getDate()))
+                    .map(FuelEntry::getClosingKm)
+                    .orElse(null);
+
+            Double maxClosingKm = null;
+            if (lastDailyLogClosingKm != null && lastFuelEntryClosingKm != null) {
+                maxClosingKm = Math.max(lastDailyLogClosingKm, lastFuelEntryClosingKm);
+            } else if (lastDailyLogClosingKm != null) {
+                maxClosingKm = lastDailyLogClosingKm;
+            } else if (lastFuelEntryClosingKm != null) {
+                maxClosingKm = lastFuelEntryClosingKm;
+            }
+
+            if (maxClosingKm != null && request.getOpeningKm() < maxClosingKm) {
+                throw new BadRequestException(
+                        "Refill KM cannot be less than last recorded Closing KM (" + maxClosingKm + ")");
+            }
+        }
+
+        // 2. Create New Open Entry
+        FuelEntry newEntry = new FuelEntry();
+        newEntry.setDate(request.getDate());
+        newEntry.setProject(project);
+        newEntry.setVehicle(vehicle);
+        newEntry.setFuelType(vehicle.getFuelType());
+        // Supplier, Litres, Price, TotalCost are NULL
+        newEntry.setOpeningKm(request.getOpeningKm());
+        newEntry.setOpeningKmPhoto(request.getOpeningKmPhoto());
+        newEntry.setStatus(EntryStatus.OPEN);
+
+        return FuelEntryDto.fromEntity(fuelEntryRepository.save(newEntry));
     }
 }

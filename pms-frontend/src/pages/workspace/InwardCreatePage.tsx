@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { Get } from "../../utils/apiService";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiSearch, FiCheckCircle, FiCircle, FiSave, FiX } from "react-icons/fi";
 import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
@@ -164,20 +165,71 @@ const InwardCreatePage: React.FC = () => {
     vehicleNo,
     supplierName,
     remarks,
+    type,
+    outwardId,
     saving,
     selectedLines,
     modalLine,
     modalValues,
   } = inwardUi;
 
+  const [outwardRecords, setOutwardRecords] = useState<any[]>([]);
+  const [outwardItems, setOutwardItems] = useState<any[]>([]);
+
+  // Load outward records when entering RETURN mode
+  useEffect(() => {
+    if (type === "RETURN" && projectId && token) {
+      Get(`/outwards/project/${projectId}`)
+        .then((data: any) => {
+          setOutwardRecords(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          console.error("Failed to load outward records", err);
+          toast.error("Failed to load outward records");
+        });
+    } else {
+      setOutwardRecords([]);
+    }
+  }, [projectId, type, token]);
+
+  // Update outward items when an outward record is selected
+  useEffect(() => {
+    if (type === "RETURN" && outwardId && outwardRecords.length > 0) {
+      const selected = outwardRecords.find((r) => String(r.id) === String(outwardId));
+      if (selected) {
+        setOutwardItems(selected.lines || []);
+      } else {
+        setOutwardItems([]);
+      }
+    } else {
+      setOutwardItems([]);
+    }
+  }, [outwardId, outwardRecords, type]);
+
   const allocatedMaterials: AllocatedMaterial[] = useMemo(() => {
     if (!projectId) return [];
+
+    if (type === "RETURN") {
+      // Logic for Return mode: map outward items
+      return outwardItems.map((item) => ({
+        id: item.materialId, // Using materialId as unique key for table row
+        materialId: item.materialId,
+        code: item.materialCode,
+        name: item.materialName,
+        unit: item.unit,
+        allocatedQty: item.issueQty, // Show issue qty
+        qty: item.issueQty,
+        orderedQty: 0,
+        receivedQty: 0,
+      })) as AllocatedMaterial[];
+    }
+
     const bomLines = bomByProject?.[projectId] ?? [];
     return bomLines.map((line) => ({
       ...line,
       materialId: String(line.materialId ?? line.id ?? ""),
     })) as AllocatedMaterial[];
-  }, [bomByProject, projectId]);
+  }, [bomByProject, projectId, type, outwardItems]);
 
   // Pagination state for materials table
   const [page, setPage] = useState<number>(0);
@@ -330,7 +382,8 @@ const InwardCreatePage: React.FC = () => {
         submitInward({
           code: codes.inward,
           projectId: String(projectId),
-          type: "SUPPLY",
+          type: type || "SUPPLY",
+          outwardId: type === "RETURN" ? outwardId : null,
           invoiceNo: invoiceNo || null,
           invoiceDate: invoiceDate || null,
           deliveryDate: deliveryDate || null,
@@ -349,6 +402,9 @@ const InwardCreatePage: React.FC = () => {
       dispatch(setInwardField({ field: "vehicleNo", value: "" }));
       dispatch(setInwardField({ field: "supplierName", value: "" }));
       dispatch(setInwardField({ field: "remarks", value: "" }));
+      // outwardId, type usually persist or reset? Resetting outwardId is safe.
+      dispatch(setInwardField({ field: "outwardId", value: "" }));
+      dispatch(setInwardField({ field: "type", value: "SUPPLY" }));
       dispatch(clearInwardSelections());
       navigate('/workspace/inward');
     } catch (err) {
@@ -364,7 +420,7 @@ const InwardCreatePage: React.FC = () => {
       <div className="px-6 pt-6">
         <InventoryNavigationTabs />
       </div>
-      
+
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -407,8 +463,36 @@ const InwardCreatePage: React.FC = () => {
               value={projectId}
               options={assignedProjects.map((p) => ({ label: `${p.code} — ${p.name}`, value: String(p.id) }))}
               onChange={(e) => dispatch(setInwardField({ field: 'projectId', value: String(e.target.value) }))}
-              placeholder="Select project"
             />
+
+            <CustomSelect
+              label="Type *"
+              value={type || "SUPPLY"}
+              options={[
+                { label: "Supply", value: "SUPPLY" },
+                { label: "Return", value: "RETURN" },
+              ]}
+              onChange={(e) => {
+                dispatch(setInwardField({ field: 'type', value: String(e.target.value) }));
+                // Reset outwardId when type changes
+                if (e.target.value !== 'RETURN') {
+                  dispatch(setInwardField({ field: 'outwardId', value: "" }));
+                }
+              }}
+            />
+
+            {type === "RETURN" && (
+              <CustomSelect
+                label="Outward Record *"
+                value={outwardId || ""}
+                options={outwardRecords.map((r) => ({
+                  label: `${r.code} — ${r.date} — ${r.issueTo || 'Unknown'}`,
+                  value: String(r.id)
+                }))}
+                onChange={(e) => dispatch(setInwardField({ field: 'outwardId', value: String(e.target.value) }))}
+              />
+            )}
+
             <CustomTextField
               label="Invoice No."
               value={invoiceNo}

@@ -113,6 +113,11 @@ public class VehicleController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/fuel-entries/refill")
+    public ResponseEntity<FuelEntryDto> refillFuelEntry(@Valid @RequestBody RefillRequest request) {
+        return ResponseEntity.ok(fuelManagementService.refill(request));
+    }
+
     // Supplier endpoints
     @GetMapping("/suppliers")
     public ResponseEntity<List<SupplierDto>> getAllSuppliers() {

@@ -3,7 +3,7 @@ package com.vebops.store.dto;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-public class CreateFuelEntryRequest {
+public class RefillRequest {
     @NotNull(message = "Date is required")
     private LocalDate date;
 
@@ -13,16 +13,11 @@ public class CreateFuelEntryRequest {
     @NotNull(message = "Vehicle ID is required")
     private Long vehicleId;
 
-    private Long supplierId;
-
-    private Double litres;
-
     @NotNull(message = "Opening km is required")
     private Double openingKm;
 
+    // Optional photo
     private String openingKmPhoto;
-
-    private Double pricePerLitre;
 
     // Getters and Setters
     public LocalDate getDate() {
@@ -49,22 +44,6 @@ public class CreateFuelEntryRequest {
         this.vehicleId = vehicleId;
     }
 
-    public Long getSupplierId() {
-        return supplierId;
-    }
-
-    public void setSupplierId(Long supplierId) {
-        this.supplierId = supplierId;
-    }
-
-    public Double getLitres() {
-        return litres;
-    }
-
-    public void setLitres(Double litres) {
-        this.litres = litres;
-    }
-
     public Double getOpeningKm() {
         return openingKm;
     }
@@ -79,13 +58,5 @@ public class CreateFuelEntryRequest {
 
     public void setOpeningKmPhoto(String openingKmPhoto) {
         this.openingKmPhoto = openingKmPhoto;
-    }
-
-    public Double getPricePerLitre() {
-        return pricePerLitre;
-    }
-
-    public void setPricePerLitre(Double pricePerLitre) {
-        this.pricePerLitre = pricePerLitre;
     }
 }

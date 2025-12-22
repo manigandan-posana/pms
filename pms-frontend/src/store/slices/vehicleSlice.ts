@@ -14,6 +14,14 @@ import type {
   CloseDailyLogRequest,
 } from "../../types/vehicle";
 
+export interface RefillRequest {
+  date: string;
+  projectId: number;
+  vehicleId: number;
+  openingKm: number;
+  openingKmPhoto?: string;
+}
+
 // ---- Types ---- //
 
 export type VehicleStatus = "idle" | "loading" | "succeeded" | "failed";
@@ -164,6 +172,20 @@ export const deleteFuelEntry = createAsyncThunk<
     return id;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unable to delete fuel entry";
+    return rejectWithValue(message);
+  }
+});
+
+export const refillFuelEntry = createAsyncThunk<
+  FuelEntry,
+  RefillRequest,
+  { rejectValue: string }
+>("vehicles/refillFuelEntry", async (payload, { rejectWithValue }) => {
+  try {
+    const data = await Post<FuelEntry>("/vehicles/fuel-entries/refill", payload);
+    return data;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to refill fuel entry";
     return rejectWithValue(message);
   }
 });
