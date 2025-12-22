@@ -11,10 +11,6 @@ import { jwtDecode } from "../../utils/jwtDecode";
 import { setUser } from "../../store/slices/authSlice";
 import {
   adminDashboardPath,
-  ceoDashboardPath,
-  projectHeadDashboardPath,
-  projectManagerDashboardPath,
-  procurementManagerDashboardPath,
   workspacePath,
 } from "../../routes/route";
 
@@ -163,14 +159,6 @@ export default function Login() {
         let target = workspacePath;
         if (userSession.role === "ADMIN") {
           target = adminDashboardPath;
-        } else if (userSession.role === "PROCUREMENT_MANAGER") {
-          target = procurementManagerDashboardPath;
-        } else if (userSession.role === "CEO" || userSession.role === "COO") {
-          target = ceoDashboardPath;
-        } else if (userSession.role === "PROJECT_HEAD") {
-          target = projectHeadDashboardPath;
-        } else if (userSession.role === "PROJECT_MANAGER") {
-          target = projectManagerDashboardPath;
         } else if (userSession.role !== "USER") {
           throw new Error("User does not have a supported role");
         }

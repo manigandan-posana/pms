@@ -369,28 +369,14 @@ const VehicleManagementPage: React.FC = () => {
     
     const lastFuelEntryClosingKm = closedFuelEntries.length > 0 ? closedFuelEntries[0].closingKm! : null;
 
-    // Determine the maximum closing KM from both sources
-    let maxClosingKm: number | null = null;
-    let source = "";
-
-    if (lastDailyLogClosingKm !== null && lastFuelEntryClosingKm !== null) {
-      if (lastDailyLogClosingKm >= lastFuelEntryClosingKm) {
-        maxClosingKm = lastDailyLogClosingKm;
-        source = "daily log";
-      } else {
-        maxClosingKm = lastFuelEntryClosingKm;
-        source = "fuel entry";
-      }
-    } else if (lastDailyLogClosingKm !== null) {
-      maxClosingKm = lastDailyLogClosingKm;
-      source = "daily log";
-    } else if (lastFuelEntryClosingKm !== null) {
-      maxClosingKm = lastFuelEntryClosingKm;
-      source = "fuel entry";
+    // Enforce: opening km must be >= last closing km of previous daily log
+    if (lastDailyLogClosingKm !== null && openingKm < lastDailyLogClosingKm) {
+      toast.error(`Fuel entry opening km must be greater than or equal to the last daily log closing km (${lastDailyLogClosingKm.toFixed(1)} km)`);
+      return;
     }
-
-    if (maxClosingKm !== null && openingKm < maxClosingKm) {
-      toast.error(`Fuel opening KM (${openingKm.toFixed(1)}) must be ≥ last ${source} closing KM (${maxClosingKm.toFixed(1)} km)`);
+    // Enforce: opening km must be >= last closing km of previous fuel entry
+    if (lastFuelEntryClosingKm !== null && openingKm < lastFuelEntryClosingKm) {
+      toast.error(`Fuel entry opening km must be greater than or equal to the last fuel entry closing km (${lastFuelEntryClosingKm.toFixed(1)} km)`);
       return;
     }
 
@@ -466,13 +452,14 @@ const VehicleManagementPage: React.FC = () => {
     }
 
     const km = Number(createOpeningKm);
-    if (openFuelEntry && km < openFuelEntry.openingKm) {
-      toast.error(`Opening km must be greater than or equal to the open fuel entry opening km (${openFuelEntry.openingKm.toFixed(1)} km)`);
+    // Enforce: opening km must be >= last closing km of previous daily log
+    if (lastClosingKm != null && km < lastClosingKm) {
+      toast.error(`Opening km must be greater than or equal to the last daily log closing km (${lastClosingKm.toFixed(1)} km)`);
       return;
     }
-
-    if (lastClosingKm != null && km < lastClosingKm) {
-      toast.error(`Opening km must be greater than or equal to the last closing km (${lastClosingKm.toFixed(1)} km)`);
+    // Enforce: opening km must be >= last closing km of previous fuel entry
+    if (openFuelEntry && km < openFuelEntry.openingKm) {
+      toast.error(`Opening km must be greater than or equal to the last fuel entry closing km (${openFuelEntry.openingKm.toFixed(1)} km)`);
       return;
     }
 
@@ -611,11 +598,12 @@ const VehicleManagementPage: React.FC = () => {
       )
     },
     {
-      field: "totalKm", header: "Total Km",
+      field: "runningKm", header: "Running Km",
       body: (row) => {
-        const vehicleEntries = fuelEntries.filter(e => e.vehicleId === row.id && e.status === 'CLOSED');
-        const totalKm = vehicleEntries.reduce((sum, e) => sum + (e.distance || 0), 0);
-        return <span>{totalKm.toFixed(1)} km</span>;
+        // Sum of all daily log distances for this vehicle
+        const runningKm = dailyLogs.filter(log => log.vehicleId === row.id && log.status === 'CLOSED')
+          .reduce((sum, log) => sum + (log.distance || 0), 0);
+        return <span>{runningKm.toFixed(1)} km</span>;
       }
     },
     {
@@ -785,27 +773,39 @@ const VehicleManagementPage: React.FC = () => {
   ];
 
   // Dashboard states and logic
-  const [dashboardTimeFilter, setDashboardTimeFilter] = useState<"day" | "week" | "month" | "year" | "all">("all");
+  const [dashboardTimeFilter, setDashboardTimeFilter] = useState<"day" | "week" | "month" | "3months" | "6months" | "year" | "all">("all");
 
   const dashboardDateRange = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
     switch (dashboardTimeFilter) {
       case "day":
         return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) };
-      case "week":
+      case "week": {
         const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - 7);
+        weekStart.setDate(today.getDate() - 6);
         return { start: weekStart, end: now };
-      case "month":
+      }
+      case "month": {
         const monthStart = new Date(today);
         monthStart.setMonth(today.getMonth() - 1);
         return { start: monthStart, end: now };
-      case "year":
+      }
+      case "3months": {
+        const start = new Date(today);
+        start.setMonth(today.getMonth() - 3);
+        return { start, end: now };
+      }
+      case "6months": {
+        const start = new Date(today);
+        start.setMonth(today.getMonth() - 6);
+        return { start, end: now };
+      }
+      case "year": {
         const yearStart = new Date(today);
         yearStart.setFullYear(today.getFullYear() - 1);
         return { start: yearStart, end: now };
+      }
       case "all":
       default:
         return { start: new Date(0), end: now };
@@ -855,59 +855,98 @@ const VehicleManagementPage: React.FC = () => {
 
 
 
-  const monthlyTrendData = useMemo(() => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    const labels = [];
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      labels.push(date.toLocaleDateString("en-IN", { month: "short", year: "2-digit" }));
+  // Chart data for different periods
+  const trendData = useMemo(() => {
+    const now = new Date();
+    let labels: string[] = [];
+    let groupCount = 12;
+    let groupType: 'month' | 'week' = 'month';
+    let labelFormatter = (date: Date) => date.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+
+    switch (dashboardTimeFilter) {
+      case 'week':
+        groupCount = 7;
+        groupType = 'week';
+        labelFormatter = (date: Date) => date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
+        break;
+      case '3months':
+        groupCount = 3;
+        groupType = 'month';
+        break;
+      case '6months':
+        groupCount = 6;
+        groupType = 'month';
+        break;
+      case 'month':
+        groupCount = 1;
+        groupType = 'month';
+        break;
+      case 'year':
+      case 'all':
+      default:
+        groupCount = 12;
+        groupType = 'month';
+        break;
     }
 
-    const petrolData: Record<string, number> = {};
-    const dieselData: Record<string, number> = {};
-    const electricData: Record<string, number> = {};
+    const petrolData: number[] = Array(groupCount).fill(0);
+    const dieselData: number[] = Array(groupCount).fill(0);
+    const electricData: number[] = Array(groupCount).fill(0);
 
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      petrolData[monthKey] = 0;
-      dieselData[monthKey] = 0;
-      electricData[monthKey] = 0;
-    }
-
-    fuelEntries.filter(e => e.status === "CLOSED").forEach((entry) => {
-      const date = new Date(entry.date);
-      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      if (petrolData[monthKey] !== undefined) {
-        if (entry.fuelType === "PETROL") petrolData[monthKey] += entry.litres;
-        else if (entry.fuelType === "DIESEL") dieselData[monthKey] += entry.litres;
-        else if (entry.fuelType === "ELECTRIC") electricData[monthKey] += entry.litres;
+    if (groupType === 'week') {
+      // Last 7 days
+      for (let i = groupCount - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(now.getDate() - i);
+        labels.push(labelFormatter(date));
       }
-    });
-
-    const getPetrolArray = [];
-    const getDieselArray = [];
-    const getElectricArray = [];
-
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      getPetrolArray.push(petrolData[monthKey]);
-      getDieselArray.push(dieselData[monthKey]);
-      getElectricArray.push(electricData[monthKey]);
+      fuelEntries.filter(e => e.status === 'CLOSED').forEach(entry => {
+        const entryDate = new Date(entry.date);
+        for (let i = 0; i < groupCount; i++) {
+          const date = new Date(now);
+          date.setDate(now.getDate() - (groupCount - 1 - i));
+          if (
+            entryDate.getFullYear() === date.getFullYear() &&
+            entryDate.getMonth() === date.getMonth() &&
+            entryDate.getDate() === date.getDate()
+          ) {
+            if (entry.fuelType === 'PETROL') petrolData[i] += entry.litres;
+            else if (entry.fuelType === 'DIESEL') dieselData[i] += entry.litres;
+            else if (entry.fuelType === 'ELECTRIC') electricData[i] += entry.litres;
+          }
+        }
+      });
+    } else {
+      // Month-based grouping
+      for (let i = groupCount - 1; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(labelFormatter(date));
+      }
+      fuelEntries.filter(e => e.status === 'CLOSED').forEach(entry => {
+        const entryDate = new Date(entry.date);
+        for (let i = 0; i < groupCount; i++) {
+          const date = new Date(now.getFullYear(), now.getMonth() - (groupCount - 1 - i), 1);
+          if (
+            entryDate.getFullYear() === date.getFullYear() &&
+            entryDate.getMonth() === date.getMonth()
+          ) {
+            if (entry.fuelType === 'PETROL') petrolData[i] += entry.litres;
+            else if (entry.fuelType === 'DIESEL') dieselData[i] += entry.litres;
+            else if (entry.fuelType === 'ELECTRIC') electricData[i] += entry.litres;
+          }
+        }
+      });
     }
 
     return {
       labels,
       datasets: [
-        { label: "Petrol", data: getPetrolArray, backgroundColor: "#10b981" },
-        { label: "Diesel", data: getDieselArray, backgroundColor: "#f59e0b" },
-        { label: "Electric", data: getElectricArray, backgroundColor: "#3b82f6" },
+        { label: 'Petrol', data: petrolData, backgroundColor: '#10b981' },
+        { label: 'Diesel', data: dieselData, backgroundColor: '#f59e0b' },
+        { label: 'Electric', data: electricData, backgroundColor: '#3b82f6' },
       ],
     };
-  }, [fuelEntries]);
+  }, [fuelEntries, dashboardTimeFilter]);
 
   const vehiclePerformance = useMemo(() => {
     const vehicleStats = vehicles.map((vehicle) => {
@@ -984,6 +1023,8 @@ const VehicleManagementPage: React.FC = () => {
                         { label: "Today", value: "day" },
                         { label: "Last 7 Days", value: "week" },
                         { label: "Last 30 Days", value: "month" },
+                        { label: "Last 3 Months", value: "3months" },
+                        { label: "Last 6 Months", value: "6months" },
                         { label: "Last Year", value: "year" },
                         { label: "All Time", value: "all" },
                       ]}
@@ -1044,11 +1085,17 @@ const VehicleManagementPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-                    <h3 className="text-xs font-semibold text-slate-800 mb-4">12-Month Fuel Consumption</h3>
+                    <h3 className="text-xs font-semibold text-slate-800 mb-4">
+                      {dashboardTimeFilter === 'week' ? 'Week-wise' :
+                        dashboardTimeFilter === '3months' ? '3-Month' :
+                        dashboardTimeFilter === '6months' ? '6-Month' :
+                        dashboardTimeFilter === 'month' ? 'Month' :
+                        '12-Month'} Fuel Consumption
+                    </h3>
                     <div className="h-72 w-full">
                       <BarChart
-                        xAxis={[{ scaleType: 'band', data: monthlyTrendData.labels }]}
-                        series={monthlyTrendData.datasets.map(ds => ({
+                        xAxis={[{ scaleType: 'band', data: trendData.labels }]}
+                        series={trendData.datasets.map(ds => ({
                           data: ds.data,
                           label: ds.label,
                           color: ds.backgroundColor,

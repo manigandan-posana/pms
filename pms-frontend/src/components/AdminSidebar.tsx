@@ -21,7 +21,6 @@ import {
   FaSignOutAlt,
   FaChevronLeft,
   FaChevronRight,
-  FaCar,
 } from "react-icons/fa";
 
 // Constants
@@ -46,7 +45,6 @@ const ADMIN_MENU: MenuItem[] = [
   { label: "Project Management", to: "/admin/project-details", icon: FaProjectDiagram },
   { label: "Inventory", to: "/admin/inventory", icon: FaLayerGroup },
   { label: "User Management", to: "/admin/users", icon: FaUsers },
-  { label: "Vehicle Dashboard", to: "/admin/vehicles/dashboard", icon: FaCar },
 ];
 
 const openedMixin = (theme: Theme): CSSObject => ({

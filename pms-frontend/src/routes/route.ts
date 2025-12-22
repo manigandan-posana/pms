@@ -17,8 +17,8 @@ const TransferPage = lazy(() => import("../pages/workspace/TransferPage"));
 const TransferCreatePage = lazy(() => import("../pages/workspace/TransferCreatePage"));
 const TransferDetailPage = lazy(() => import("../pages/workspace/TransferDetailPage"));
 const VehicleManagementPage = lazy(() => import("../pages/workspace/VehicleManagementPage"));
-const VehicleDashboardPage = lazy(() => import("../pages/workspace/VehicleDashboardPage"));
 const VehicleDetailsPage = lazy(() => import("../pages/workspace/VehicleDetailsPage"));
+const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPage"));
 
 // Lazy‑loaded admin pages
 const AdminInventoryPage = lazy(() => import("../pages/admin/AdminInventoryPage"));
@@ -32,7 +32,6 @@ const UnifiedProjectDetailsPage = lazy(() => import("../pages/admin/UnifiedProje
 const AdminInwardDetailPage = lazy(() => import("../pages/admin/AdminInwardDetailPage"));
 const AdminOutwardDetailPage = lazy(() => import("../pages/admin/AdminOutwardDetailPage"));
 const AdminTransferDetailPage = lazy(() => import("../pages/admin/AdminTransferDetailPage"));
-const AdminVehicleDashboardPage = lazy(() => import("../pages/admin/AdminVehicleDashboardPage"));
 
 // ----- Route types -----
 
@@ -54,12 +53,12 @@ export const adminAllocatedMaterialsPath = "/admin/allocated-materials";
 // ----- Workspace nested routes (/workspace/...) -----
 
 export const workspaceRoutes: IRouteConfig[] = [
+  { path: "dashboard", component: UserDashboardPage },
   { path: "inventory", component: InventoryPage },
   { path: "inventory/bom", component: InventoryPage },
   { path: "inventory/inwards", component: InventoryPage },
   { path: "inventory/outwards", component: InventoryPage },
   { path: "inventory/transfers", component: InventoryPage },
-  { path: "inventory/procurement", component: InventoryPage },
   { path: "bom", component: BomPage },
   { path: "inward", component: InwardPage },
   { path: "inward/create", component: InwardCreatePage },
@@ -71,7 +70,6 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "transfer/create", component: TransferCreatePage },
   { path: "transfer/detail/:id", component: TransferDetailPage },
   { path: "vehicles", component: VehicleManagementPage },
-  { path: "vehicles/dashboard", component: VehicleDashboardPage },
   { path: "vehicles/:vehicleId", component: VehicleDetailsPage },
 ];
 
@@ -89,5 +87,4 @@ export const adminRoutes: IRouteConfig[] = [
   { path: "allocated-materials", component: AllocatedMaterialsManagementPage },
   { path: "projects", component: ProjectManagementPage },
   { path: "users", component: UserManagementPage },
-  { path: "vehicles/dashboard", component: AdminVehicleDashboardPage },
 ];

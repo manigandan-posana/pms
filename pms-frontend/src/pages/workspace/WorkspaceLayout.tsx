@@ -78,7 +78,7 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
   useEffect(() => {
     if (location.pathname === "/workspace" || location.pathname === "/workspace/") {
-      navigate("/workspace/inventory", { replace: true });
+      navigate("/workspace/dashboard", { replace: true });
     }
   }, [location.pathname, navigate]);
 

@@ -9,7 +9,6 @@ import {
 } from "react-icons/fi";
 import type { RootState, AppDispatch } from "../../store/store";
 import { searchInwardHistory, searchOutwardHistory, searchTransferHistory } from "../../store/slices/historySlice";
-import { listProcurementRequests } from "../../store/slices/procurementSlice";
 import { listProjects, setSelectedAdminProject } from "../../store/slices/adminProjectsSlice";
 
 import CustomTable from "../../widgets/CustomTable";
@@ -62,15 +61,6 @@ interface TransferRecord {
   items?: number;
 }
 
-interface ProcurementRequest {
-  id?: number | string;
-  materialCode?: string;
-  materialName?: string;
-  quantity?: number;
-  requesterName?: string;
-  status?: string;
-}
-
 interface PaginatedResponse<T> {
   items?: T[];
   content?: T[];
@@ -104,8 +94,6 @@ const UnifiedProjectDetailsPage: React.FC = () => {
   const [transferTotal, setTransferTotal] = useState(0);
   const [transferLoading, setTransferLoading] = useState(false);
 
-  const [procurementRequests, setProcurementRequests] = useState<ProcurementRequest[]>([]);
-
   // ========================
   // Effects
   // ========================
@@ -119,12 +107,10 @@ const UnifiedProjectDetailsPage: React.FC = () => {
       loadInwards();
       loadOutwards();
       loadTransfers();
-      loadProcurements();
     } else {
       setInwardRecords([]);
       setOutwardRecords([]);
       setTransferRecords([]);
-      setProcurementRequests([]);
     }
   }, [selectedAdminProjectId]);
 
@@ -193,17 +179,6 @@ const UnifiedProjectDetailsPage: React.FC = () => {
       setTransferRecords([]);
     } finally {
       setTransferLoading(false);
-    }
-  };
-
-  const loadProcurements = async () => {
-    if (!selectedAdminProjectId) return;
-    try {
-      const response = await dispatch(listProcurementRequests({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
-      const data = response?.items || response?.content || [];
-      setProcurementRequests(data);
-    } catch {
-      setProcurementRequests([]);
     }
   };
 
@@ -291,22 +266,6 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     }
   ];
 
-  const procurementColumns: ColumnDef<ProcurementRequest>[] = [
-    { field: 'materialCode', header: 'Item Code', width: '120px', body: (r) => <span className="font-mono text-slate-700 text-xs">{r.materialCode}</span> },
-    { field: 'materialName', header: 'Item Name', body: (r) => <span className="text-xs font-semibold text-slate-800">{r.materialName}</span> },
-    { field: 'requesterName', header: 'Requested By', body: (r) => <span className="text-xs text-slate-500">{r.requesterName}</span> },
-    { field: 'quantity', header: 'Qty', width: '80px', align: 'right', body: (r) => <span className="text-xs font-bold">{r.quantity}</span> },
-    {
-      field: 'status',
-      header: 'Status',
-      width: '100px',
-      body: (r) => {
-        const color = r.status === 'APPROVED' ? 'bg-green-100 text-green-700' : r.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
-        return <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${color}`}>{r.status}</span>;
-      }
-    }
-  ];
-
   const selectedProject = projects.find(p => String(p.id) === String(selectedAdminProjectId));
 
   return (
@@ -389,18 +348,6 @@ const UnifiedProjectDetailsPage: React.FC = () => {
                       pagination
                       rows={10}
                       emptyMessage="No updated transfer records"
-                    />
-                  )
-                },
-                {
-                  label: `Procurement (${procurementRequests.length})`,
-                  content: (
-                    <CustomTable
-                      data={procurementRequests}
-                      columns={procurementColumns}
-                      pagination
-                      rows={10}
-                      emptyMessage="No active procurement requests"
                     />
                   )
                 }

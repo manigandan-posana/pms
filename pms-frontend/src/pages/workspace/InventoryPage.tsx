@@ -5,7 +5,6 @@ import BomPage from "./BomPage";
 import InwardPage from "./InwardPage";
 import OutwardPage from "./OutwardPage";
 import TransferPage from "./TransferPage";
-import ProcurementPage from "./ProcurementPage";
 
 const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ const InventoryPage: React.FC = () => {
     "/workspace/inventory/inwards",
     "/workspace/inventory/outwards",
     "/workspace/inventory/transfers",
-    "/workspace/inventory/procurement",
   ];
 
   // Sync active tab with current route
@@ -47,8 +45,7 @@ const InventoryPage: React.FC = () => {
     { label: "BOM", content: <BomPage /> },
     { label: "Inwards", content: <InwardPage /> },
     { label: "Outwards", content: <OutwardPage /> },
-    { label: "Transfers", content: <TransferPage /> },
-    { label: "Procurement", content: <ProcurementPage /> }
+    { label: "Transfers", content: <TransferPage /> }
   ], []);
 
   return (

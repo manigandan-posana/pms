@@ -178,29 +178,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   const open = !collapsed;
 
   const navItems: NavItem[] = useMemo(() => {
-    const baseItems: NavItem[] = [
+    // Always show Dashboard for all users
+    return [
+      { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
     ];
-
-    if (userRole === "CEO" || userRole === "COO") {
-      return [
-        { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
-        { id: "inwards", label: "Inwards", icon: FiFile, path: "/workspace/inward/history" },
-        { id: "outwards", label: "Outwards", icon: FiFile, path: "/workspace/outward/history" },
-      ];
-    }
-
-    if (userRole === "PROCUREMENT_MANAGER") {
-      return [
-        { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/pm-dashboard" },
-        { id: "inwards", label: "Inwards", icon: FiFile, path: "/workspace/inward/history" },
-        { id: "outwards", label: "Outwards", icon: FiFile, path: "/workspace/outward/history" },
-      ];
-    }
-
-    return baseItems;
-  }, [userRole]);
+  }, []);
 
   const handleToggle = () => {
     setCollapsed(!collapsed);
