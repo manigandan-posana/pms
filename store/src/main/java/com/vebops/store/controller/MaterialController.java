@@ -46,10 +46,12 @@ public class MaterialController {
         @RequestParam(name = "search", required = false) String search,
         @RequestParam(name = "category", required = false) List<String> categories,
         @RequestParam(name = "unit", required = false) List<String> units,
-        @RequestParam(name = "lineType", required = false) List<String> lineTypes
+        @RequestParam(name = "lineType", required = false) List<String> lineTypes,
+        @RequestParam(name = "projectId", required = false) Long projectId,
+        @RequestParam(name = "allocation", required = false) String allocation
     ) {
         AuthUtils.requireUserId(); // Ensures user is authenticated
-        return materialService.search(search, categories, units, lineTypes, page, size);
+        return materialService.search(search, categories, units, lineTypes, projectId, allocation, page, size);
     }
 
     @GetMapping("/search")
@@ -59,9 +61,11 @@ public class MaterialController {
         @RequestParam(name = "search", required = false) String search,
         @RequestParam(name = "category", required = false) List<String> categories,
         @RequestParam(name = "unit", required = false) List<String> units,
-        @RequestParam(name = "lineType", required = false) List<String> lineTypes
+        @RequestParam(name = "lineType", required = false) List<String> lineTypes,
+        @RequestParam(name = "projectId", required = false) Long projectId,
+        @RequestParam(name = "allocation", required = false) String allocation
     ) {
-        return list(page, size, search, categories, units, lineTypes);
+        return list(page, size, search, categories, units, lineTypes, projectId, allocation);
     }
 
     @PostMapping

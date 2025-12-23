@@ -157,6 +157,12 @@ const ProjectDetailsPage: React.FC = () => {
     }
   }, [selectedProjectId]);
 
+  useEffect(() => {
+    if (selectedProjectId) {
+      loadBOM();
+    }
+  }, [bomSearch, selectedProjectId]);
+
   const loadProjects = async () => {
     if (!token) return;
     setLoading(true);
@@ -193,13 +199,20 @@ const ProjectDetailsPage: React.FC = () => {
 
     try {
       // Fetch BOM logic
-      const response = await fetch(`/api/bom/projects/${selectedProjectId}`, {
+      const query = new URLSearchParams();
+      if (bomSearch.trim()) {
+        query.set("search", bomSearch.trim());
+      }
+      const url = query.toString()
+        ? `/api/bom/projects/${selectedProjectId}?${query.toString()}`
+        : `/api/bom/projects/${selectedProjectId}`;
+      const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.ok) {
         const data = await response.json();
-        const lines = Array.isArray(data) ? data : data?.lines || [];
+        const lines = Array.isArray(data?.content) ? data.content : [];
         setBomLines(lines);
 
         // Calculate stats
@@ -276,14 +289,7 @@ const ProjectDetailsPage: React.FC = () => {
     return projects.find(p => String(p.id) === String(selectedProjectId));
   }, [projects, selectedProjectId]);
 
-  const filteredBomLines = useMemo(() => {
-    if (!bomSearch.trim()) return bomLines;
-    const query = bomSearch.toLowerCase();
-    return bomLines.filter(line =>
-      line.materialCode?.toLowerCase().includes(query) ||
-      line.materialName?.toLowerCase().includes(query)
-    );
-  }, [bomLines, bomSearch]);
+  const filteredBomLines = bomLines;
 
   // Chart data
   const chartData = useMemo(() => {

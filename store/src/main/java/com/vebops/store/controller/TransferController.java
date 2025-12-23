@@ -20,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
 
 /**
  * Controller for transfer record operations.
@@ -47,7 +49,10 @@ public class TransferController {
      * Only accessible to users who have access to either the from or to project.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTransferById(@PathVariable Long id) {
+    public ResponseEntity<?> getTransferById(
+        @PathVariable Long id,
+        @RequestParam(name = "search", required = false) String search
+    ) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
@@ -79,12 +84,12 @@ public class TransferController {
         }
 
         // Convert to DTO
-        TransferRecordDto dto = convertToDto(record);
+        TransferRecordDto dto = convertToDto(record, filterLines(record.getLines(), search));
         return ResponseEntity.ok(dto);
     }
 
-    private TransferRecordDto convertToDto(TransferRecord record) {
-        List<TransferLineDto> lineDtos = record.getLines().stream()
+    private TransferRecordDto convertToDto(TransferRecord record, List<TransferLine> lines) {
+        List<TransferLineDto> lineDtos = lines.stream()
             .map(this::convertLineToDto)
             .toList();
 
@@ -113,5 +118,18 @@ public class TransferController {
             line.getMaterial() != null ? line.getMaterial().getUnit() : null,
             line.getTransferQty()
         );
+    }
+
+    private List<TransferLine> filterLines(List<TransferLine> lines, String search) {
+        if (lines == null || !StringUtils.hasText(search)) {
+            return lines;
+        }
+        String term = search.trim().toLowerCase();
+        return lines.stream()
+            .filter(line -> line.getMaterial() != null && (
+                (line.getMaterial().getCode() != null && line.getMaterial().getCode().toLowerCase().contains(term)) ||
+                (line.getMaterial().getName() != null && line.getMaterial().getName().toLowerCase().contains(term))
+            ))
+            .toList();
     }
 }

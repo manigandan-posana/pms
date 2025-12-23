@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../store/hooks";
@@ -60,14 +60,14 @@ const OutwardDetailPage: React.FC = () => {
     if (id && token) {
       loadOutwardDetail();
     }
-  }, [id, token]);
+  }, [id, token, searchQuery]);
 
   const loadOutwardDetail = async () => {
     if (!id || !token) return;
 
     setLoading(true);
     try {
-      const data = await dispatch(getOutwardById(Number(id))).unwrap();
+      const data = await dispatch(getOutwardById({ id: Number(id), search: searchQuery.trim() || undefined })).unwrap();
 
       if (!data) {
         toast.error('No record data received');
@@ -97,17 +97,7 @@ const OutwardDetailPage: React.FC = () => {
     }
   };
 
-  // Filter lines based on search
-  const filteredLines = useMemo(() => {
-    if (!record?.lines) return [];
-    if (!searchQuery.trim()) return record.lines;
-
-    const lowerQuery = searchQuery.toLowerCase();
-    return record.lines.filter(line =>
-      line.code?.toLowerCase().includes(lowerQuery) ||
-      line.name?.toLowerCase().includes(lowerQuery)
-    );
-  }, [record?.lines, searchQuery]);
+  const filteredLines = record?.lines ?? [];
 
   // Save changes
   const handleSaveChanges = async () => {

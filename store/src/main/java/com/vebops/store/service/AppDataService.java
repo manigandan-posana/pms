@@ -39,7 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class AppDataService {
@@ -190,11 +192,44 @@ public class AppDataService {
         return new MaterialMovementDto(inwards, outwards);
     }
 
+    public List<BomLineDto> projectBom(UserAccount user, Long projectId, String search, boolean inStockOnly) {
+        if (projectId == null) {
+            return List.of();
+        }
+        if (!hasProjectAccess(user, projectId)) {
+            return List.of();
+        }
+        List<BomLineDto> lines = bomLineRepository
+                .findByProjectId(projectId)
+                .stream()
+                .map(this::toBomLineDto)
+                .toList();
+        Stream<BomLineDto> stream = lines.stream();
+        if (StringUtils.hasText(search)) {
+            String term = search.trim().toLowerCase();
+            stream = stream.filter(line ->
+                    (line.code() != null && line.code().toLowerCase().contains(term)) ||
+                            (line.name() != null && line.name().toLowerCase().contains(term)) ||
+                            (line.category() != null && line.category().toLowerCase().contains(term)));
+        }
+        if (inStockOnly) {
+            stream = stream.filter(line -> line.balanceQty() > 0);
+        }
+        return stream.toList();
+    }
+
     private List<Project> resolveAssignedProjects(UserAccount user, List<Project> allProjects) {
         if (user.getAccessType() == AccessType.ALL) {
             return allProjects;
         }
         return new ArrayList<>(user.getProjects());
+    }
+
+    private boolean hasProjectAccess(UserAccount user, Long projectId) {
+        if (user.getAccessType() == AccessType.ALL) {
+            return true;
+        }
+        return user.getProjects().stream().anyMatch(project -> project.getId().equals(projectId));
     }
 
     private ProjectDto toProjectDto(Project project) {

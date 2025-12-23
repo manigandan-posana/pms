@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import toast from "react-hot-toast";
 import { FiEdit2, FiTrash2, FiPlus, FiAlertTriangle } from "react-icons/fi";
-import { bomApi, adminProjectsApi, materialsApi } from "../../api";
+import { Delete, Get, Post, Put } from "../../utils/apiService";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import CustomModal from "../../widgets/CustomModal";
@@ -59,51 +59,25 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // Load projects
-      const projectsResponse = await adminProjectsApi.listProjects({ limit: 1000 });
-      const projectsData = projectsResponse?.data?.content || projectsResponse?.content || projectsResponse || [];
+      const projectsResponse = await Get<any>("/admin/projects", { page: 1, size: 1000 });
+      const projectsData = projectsResponse?.content || [];
       setProjects(projectsData);
 
-      // Load materials
-      const materialsResponse = await materialsApi.listMaterials({ limit: 1000 });
-      const materialsData = materialsResponse?.data?.content || materialsResponse?.content || materialsResponse || [];
+      const materialsResponse = await Get<any>("/materials/search", { page: 1, size: 1000 });
+      const materialsData = materialsResponse?.content || [];
       setMaterials(materialsData);
 
-      // Load allocations from all projects
-      const allAllocations: Allocation[] = [];
-
-      for (const project of projectsData) {
-        try {
-          const allocResponse = await bomApi.getProjectAllocations(project.id, { page: 1, size: 1000 });
-          const allocData = allocResponse?.data?.items || allocResponse?.items || allocResponse?.data?.content || allocResponse?.content || [];
-
-          allocData.forEach((alloc: any) => {
-            allAllocations.push({
-              id: alloc.id || alloc.materialId,
-              projectId: project.id,
-              projectName: project.name,
-              projectCode: project.code,
-              materialId: alloc.materialId,
-              materialName: alloc.materialName || alloc.name,
-              materialCategory: alloc.materialCategory || alloc.category,
-              requiredQuantity: alloc.requiredQty || alloc.allocatedQty || 0,
-              allocatedQuantity: alloc.allocatedQty || 0,
-              unit: alloc.unit,
-            });
-          });
-        } catch (err) {
-          console.error(`Failed to load allocations for project ${project.id}:`, err);
-        }
-      }
-
-      setAllocations(allAllocations);
+      const allocationsResponse = await Get<Allocation[]>("/bom/allocations", {
+        search: globalFilter.trim() || undefined,
+      });
+      setAllocations(Array.isArray(allocationsResponse) ? allocationsResponse : []);
     } catch (error: any) {
       console.error("Failed to load data:", error);
       toast.error(error?.response?.data?.message || "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [globalFilter, token]);
 
   useEffect(() => {
     loadData();
@@ -148,15 +122,14 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
     try {
       if (editMode) {
         // Update existing allocation
-        await bomApi.updateBomAllocation(
-          currentAllocation.projectId,
-          currentAllocation.materialId,
+        await Put(
+          `/bom/projects/${currentAllocation.projectId}/materials/${currentAllocation.materialId}`,
           { quantity: currentAllocation.requiredQuantity }
         );
         toast.success("Allocation updated successfully");
       } else {
         // Create new allocation
-        await bomApi.createProjectAllocation(currentAllocation.projectId, {
+        await Post(`/bom/projects/${currentAllocation.projectId}/materials`, {
           materialId: String(currentAllocation.materialId),
           quantity: currentAllocation.requiredQuantity,
         });
@@ -180,7 +153,7 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
     if (!allocationToDelete) return;
 
     try {
-      await bomApi.deleteProjectAllocation(allocationToDelete.projectId, allocationToDelete.materialId);
+      await Delete(`/bom/projects/${allocationToDelete.projectId}/materials/${allocationToDelete.materialId}`);
       toast.success("Allocation deleted successfully");
       loadData();
       setShowDeleteConfirm(false);
@@ -190,17 +163,6 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
       toast.error(error?.response?.data?.message || "Failed to delete allocation");
     }
   };
-
-  // Filtering logic
-  const filteredData = useMemo(() => {
-    if (!globalFilter) return allocations;
-    const lower = globalFilter.toLowerCase();
-    return allocations.filter(item =>
-      item.projectName.toLowerCase().includes(lower) ||
-      item.materialName.toLowerCase().includes(lower) ||
-      (item.projectCode && item.projectCode.toLowerCase().includes(lower))
-    );
-  }, [allocations, globalFilter]);
 
   const columns: ColumnDef<Allocation>[] = [
     {
@@ -297,7 +259,7 @@ const AllocatedMaterialsManagementPage: React.FC = () => {
 
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
         <CustomTable
-          data={filteredData}
+          data={allocations}
           columns={columns}
           loading={loading}
           pagination

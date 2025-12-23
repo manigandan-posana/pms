@@ -23,6 +23,7 @@ import CustomButton from "../widgets/CustomButton";
 import CustomModal from "../widgets/CustomModal";
 import CustomTextField from "../widgets/CustomTextField";
 import CustomSelect from "../widgets/CustomSelect";
+import { Get } from "../utils/apiService";
 
 /* ---------- Domain Types ---------- */
 
@@ -115,11 +116,6 @@ interface MultiFiltersState {
   lineType: string;
 }
 
-interface AllocationFilters {
-  categories: string[];
-  lineTypes: string[];
-  status: "all" | "allocated" | "unallocated";
-}
 
 const getLineQty = (line: any): number => {
   if (typeof line?.qty === "number") return Number(line.qty);
@@ -134,14 +130,12 @@ const getLineQty = (line: any): number => {
 interface MultiAllocationPanelProps {
   projectId: string;
   materials: Material[];
-  allocatedMaterialIds: Set<string>;
   onSaveLines?: (lines: AllocationInputLine[]) => Promise<void> | void;
 }
 
 function MultiAllocationPanel({
   projectId,
   materials,
-  allocatedMaterialIds,
   onSaveLines,
 }: MultiAllocationPanelProps) {
   const [search, setSearch] = useState<string>("");
@@ -149,6 +143,9 @@ function MultiAllocationPanel({
     category: "",
     lineType: "",
   });
+  const [remoteMaterials, setRemoteMaterials] = useState<Material[]>(materials);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableLineTypes, setAvailableLineTypes] = useState<string[]>([]);
 
   const [page, setPage] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -160,30 +157,44 @@ function MultiAllocationPanel({
   });
   const [saving, setSaving] = useState<boolean>(false);
 
-  const categoryOptions = useMemo(() =>
-    Array.from(new Set(materials.map((m) => m.category).filter((cat): cat is string => Boolean(cat)))).sort()
-    , [materials]);
+  useEffect(() => {
+    const loadMaterials = async () => {
+      if (!projectId) {
+        setRemoteMaterials([]);
+        return;
+      }
+      const response = await Get<any>("/materials/search", {
+        page: 1,
+        size: 1000,
+        search: search.trim() || undefined,
+        category: filters.category || undefined,
+        lineType: filters.lineType || undefined,
+        projectId,
+        allocation: "UNALLOCATED",
+      });
+      const content = (response?.content ?? []) as Material[];
+      setRemoteMaterials(content);
+      setAvailableCategories(response?.filters?.categories ?? []);
+      setAvailableLineTypes(response?.filters?.lineTypes ?? []);
+    };
+    loadMaterials();
+  }, [filters.category, filters.lineType, projectId, search]);
 
-  const lineTypeOptions = useMemo(() =>
-    Array.from(new Set(materials.map((m) => m.lineType).filter((lt): lt is string => Boolean(lt)))).sort()
-    , [materials]);
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(new Set(availableCategories.map((value) => (value ?? "").trim())))
+        .filter(Boolean)
+        .sort(),
+    [availableCategories]
+  );
 
-  const filteredMaterials = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return materials
-      .filter((m) => !allocatedMaterialIds.has(String(m.id)))
-      .filter((m) => {
-        if (filters.category && m.category !== filters.category) return false;
-        if (filters.lineType && m.lineType !== filters.lineType) return false;
-        if (!q) return true;
-        return (
-          (m.code || "").toLowerCase().includes(q) ||
-          (m.name || "").toLowerCase().includes(q) ||
-          (m.partNo || "").toLowerCase().includes(q)
-        );
-      })
-      .sort((a, b) => (a.code || "").localeCompare(b.code || ""));
-  }, [materials, allocatedMaterialIds, search, filters]);
+  const lineTypeOptions = useMemo(
+    () =>
+      Array.from(new Set(availableLineTypes.map((value) => (value ?? "").trim())))
+        .filter(Boolean)
+        .sort(),
+    [availableLineTypes]
+  );
 
   // Use CustomTable internal pagination via data prop
   // But we need to pass selected state for checkmarks.
@@ -192,7 +203,7 @@ function MultiAllocationPanel({
   // Yes, let's prepare the data.
 
   const tableData = useMemo(() => {
-    return filteredMaterials.map(m => {
+    return remoteMaterials.map(m => {
       const key = String(m.id);
       const existing = selectedLines[key];
       return {
@@ -201,7 +212,7 @@ function MultiAllocationPanel({
         _quantity: existing ? existing.quantity : 0
       };
     });
-  }, [filteredMaterials, selectedLines]);
+  }, [remoteMaterials, selectedLines]);
 
   const totalQty = useMemo(() =>
     Object.values(selectedLines).reduce((sum, s) => sum + Number(s.quantity || 0), 0)
@@ -417,8 +428,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>(() => normalizeId(defaultProjectId ?? projects[0]?.id));
   const [search, setSearch] = useState<string>("");
-  const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
-  const [allocationFilters, setAllocationFilters] = useState<AllocationFilters>({ categories: [], lineTypes: [], status: "all" });
+  const [filteredAllocations, setFilteredAllocations] = useState<AllocationWithMaterial[]>([]);
 
   const [formModal, setFormModal] = useState<AllocationFormState>(emptyFormState);
   const [viewModal, setViewModal] = useState<ViewModalState>(emptyViewState);
@@ -432,8 +442,6 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   }, [sortedProjects, selectedProjectId]);
 
   useEffect(() => { if (defaultProjectId) setSelectedProjectId(normalizeId(defaultProjectId)); }, [defaultProjectId]);
-
-  const allocations: AllocationLine[] = selectedProjectId ? (bomByProject[selectedProjectId] as unknown as AllocationLine[]) || [] : [];
 
   const materialsMap = useMemo(() => {
     const map = new Map<string, Material>();
@@ -449,24 +457,28 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
 
   useEffect(() => { if (selectedProjectId) void refreshBom(selectedProjectId); }, [refreshBom, selectedProjectId]);
 
-  const allocatedMaterialIds = useMemo(() => new Set(allocations.map(l => String(l.materialId))), [allocations]);
-
-  const filteredAllocations = useMemo(() => {
-    // Filter logic applied to allocations
-    // ... reuse existing logic simplified
-    let res = allocations.map(line => ({
-      ...line,
-      code: line.code ?? materialsMap.get(String(line.materialId))?.code ?? "",
-      name: line.name ?? materialsMap.get(String(line.materialId))?.name ?? "",
-      materialRef: materialsMap.get(String(line.materialId))
-    } as AllocationWithMaterial));
-
-    if (search) {
-      const q = search.toLowerCase();
-      res = res.filter(l => (l.code || "").toLowerCase().includes(q) || (l.name || "").toLowerCase().includes(q));
-    }
-    return res;
-  }, [allocations, search, materialsMap]);
+  useEffect(() => {
+    const loadAllocations = async () => {
+      if (!selectedProjectId) {
+        setFilteredAllocations([]);
+        return;
+      }
+      const response = await Get<any>(`/bom/projects/${selectedProjectId}`, {
+        page: 1,
+        size: 1000,
+        search: search.trim() || undefined,
+      });
+      const content = (response?.content ?? []) as AllocationLine[];
+      const mapped = content.map((line) => ({
+        ...line,
+        code: line.code ?? materialsMap.get(String(line.materialId))?.code ?? "",
+        name: line.name ?? materialsMap.get(String(line.materialId))?.name ?? "",
+        materialRef: materialsMap.get(String(line.materialId)),
+      }));
+      setFilteredAllocations(mapped);
+    };
+    loadAllocations();
+  }, [materialsMap, search, selectedProjectId]);
 
   // Handlers
   const handleSaveLines = useCallback(async (lines: AllocationInputLine[]) => {
@@ -573,7 +585,6 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
         <MultiAllocationPanel
           projectId={selectedProjectId}
           materials={materials}
-          allocatedMaterialIds={allocatedMaterialIds}
           onSaveLines={handleSaveLines}
         />
       )}

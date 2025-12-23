@@ -1,5 +1,6 @@
 package com.vebops.store.controller;
 
+import com.vebops.store.dto.AllocationOverviewDto;
 import com.vebops.store.dto.BomAllocationRequest;
 import com.vebops.store.dto.BomLineDto;
 import com.vebops.store.dto.PaginatedResponse;
@@ -47,10 +48,20 @@ public class BomController {
     public PaginatedResponse<BomLineDto> listLines(
         @PathVariable String projectId,
         @RequestParam(name = "page", defaultValue = "1") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+        @RequestParam(name = "size", defaultValue = "10") int size,
+        @RequestParam(name = "search", required = false) String search,
+        @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly
     ) {
         AuthUtils.requireAdmin();
-        return bomService.listLines(projectId, page, size);
+        return bomService.listLines(projectId, page, size, search, inStockOnly);
+    }
+
+    @GetMapping("/allocations")
+    public List<AllocationOverviewDto> listAllocations(
+        @RequestParam(name = "search", required = false) String search
+    ) {
+        AuthUtils.requireAdmin();
+        return bomService.listAllocations(search);
     }
 
     @PostMapping("/projects/{projectId}/materials")

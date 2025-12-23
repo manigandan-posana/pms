@@ -6,6 +6,7 @@ import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.NotFoundException;
 import com.vebops.store.model.Material;
+import com.vebops.store.repository.BomLineRepository;
 import com.vebops.store.repository.MaterialRepository;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
 import jakarta.persistence.criteria.Predicate;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -36,9 +38,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class MaterialService {
 
     private final MaterialRepository materialRepository;
+    private final BomLineRepository bomLineRepository;
 
-    public MaterialService(MaterialRepository materialRepository) {
+    public MaterialService(MaterialRepository materialRepository, BomLineRepository bomLineRepository) {
         this.materialRepository = materialRepository;
+        this.bomLineRepository = bomLineRepository;
     }
 
     public List<MaterialDto> list() {
@@ -50,6 +54,8 @@ public class MaterialService {
         List<String> categories,
         List<String> units,
         List<String> lineTypes,
+        Long projectId,
+        String allocation,
         int page,
         int size
     ) {
@@ -81,6 +87,16 @@ public class MaterialService {
             List<String> normalized = lineTypes.stream().filter(StringUtils::hasText).map(String::trim).toList();
             if (!normalized.isEmpty()) {
                 spec = spec.and((root, q, cb) -> root.get("lineType").in(normalized));
+            }
+        }
+        if (projectId != null && StringUtils.hasText(allocation)) {
+            Set<Long> materialIds = bomLineRepository.materialIdsForProject(projectId);
+            if ("UNALLOCATED".equalsIgnoreCase(allocation)) {
+                if (!materialIds.isEmpty()) {
+                    spec = spec.and((root, q, cb) -> cb.not(root.get("id").in(materialIds)));
+                }
+            } else if ("ALLOCATED".equalsIgnoreCase(allocation) && !materialIds.isEmpty()) {
+                spec = spec.and((root, q, cb) -> root.get("id").in(materialIds));
             }
         }
         Pageable pageable = PageRequest.of(safePage - 1, safeSize, Sort.by("code").ascending());

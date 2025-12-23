@@ -1,9 +1,10 @@
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomTextField from "../../widgets/CustomTextField";
+import { Get } from "../../utils/apiService";
 
 
 // ---- Types ---- //
@@ -38,27 +39,27 @@ export interface WorkspaceSliceState {
 // ---- Main page ---- //
 
 const BomPage: React.FC = () => {
-  const { selectedProjectId, bomByProject } = useSelector<
+  const { selectedProjectId } = useSelector<
     RootState,
     WorkspaceSliceState
   >((state) => state.workspace as unknown as WorkspaceSliceState);
 
   const [search, setSearch] = useState<string>("");
+  const [rows, setRows] = useState<BomRow[]>([]);
 
-  const rows = useMemo<BomRow[]>(() => {
-    const bom =
-      (selectedProjectId && bomByProject?.[selectedProjectId]) || [];
-
-    if (!search.trim()) return bom;
-
-    const term = search.toLowerCase();
-    return bom.filter(
-      (row) =>
-        row.code?.toLowerCase().includes(term) ||
-        row.name?.toLowerCase().includes(term) ||
-        row.category?.toLowerCase().includes(term)
-    );
-  }, [bomByProject, search, selectedProjectId]);
+  useEffect(() => {
+    const loadBom = async () => {
+      if (!selectedProjectId) {
+        setRows([]);
+        return;
+      }
+      const response = await Get<BomRow[]>(`/app/projects/${selectedProjectId}/bom`, {
+        search: search.trim() || undefined,
+      });
+      setRows(Array.isArray(response) ? response : []);
+    };
+    loadBom();
+  }, [search, selectedProjectId]);
 
   const columns: ColumnDef<BomRow>[] = [
     {
@@ -131,4 +132,3 @@ const BomPage: React.FC = () => {
 };
 
 export default BomPage;
-
