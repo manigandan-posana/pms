@@ -30,6 +30,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -106,15 +109,13 @@ public class HistoryController {
         // If projectId is specified, filter to only that project (if user has access)
         if (projectId != null) {
             if (!allowedProjectIds.contains(projectId)) {
-                return new PaginatedResponse<>(
-                        Collections.emptyList(), 0, safePage, safeSize, 1, false, false, Collections.emptyMap());
+                return emptyResponse(safePage, safeSize);
             }
             allowedProjectIds = Collections.singleton(projectId);
         }
 
         if (allowedProjectIds.isEmpty()) {
-            return new PaginatedResponse<>(
-                    Collections.emptyList(), 0, safePage, safeSize, 1, false, false, Collections.emptyMap());
+            return emptyResponse(safePage, safeSize);
         }
 
         // Parse filter dates
@@ -131,7 +132,7 @@ public class HistoryController {
                 .map(this::toInwardRecordDto)
                 .toList();
 
-        return paginateInwards(dtos, safePage, safeSize);
+        return toPaginatedResponse(buildPageFromList(dtos, safePage, safeSize));
     }
 
     /**
@@ -169,29 +170,13 @@ public class HistoryController {
         if (projectId != null) {
             if (!allowedProjectIds.contains(projectId)) {
                 // User doesn't have access to this project
-                return new PaginatedResponse<>(
-                        Collections.emptyList(),
-                        0,
-                        safePage,
-                        safeSize,
-                        1,
-                        false,
-                        false,
-                        Collections.emptyMap());
+                return emptyResponse(safePage, safeSize);
             }
             allowedProjectIds = Collections.singleton(projectId);
         }
 
         if (allowedProjectIds.isEmpty()) {
-            return new PaginatedResponse<>(
-                    Collections.emptyList(),
-                    0,
-                    safePage,
-                    safeSize,
-                    1,
-                    false,
-                    false,
-                    Collections.emptyMap());
+            return emptyResponse(safePage, safeSize);
         }
         // Parse filter dates
         final LocalDate startLocalDate = parseDateOrNull(startDate);
@@ -207,7 +192,7 @@ public class HistoryController {
                 .map(this::toOutwardRegisterDto)
                 .toList();
 
-        return paginateOutwards(dtos, safePage, safeSize);
+        return toPaginatedResponse(buildPageFromList(dtos, safePage, safeSize));
     }
 
     /**
@@ -245,29 +230,13 @@ public class HistoryController {
         if (projectId != null) {
             if (!allowedProjectIds.contains(projectId)) {
                 // User doesn't have access to this project
-                return new PaginatedResponse<>(
-                        Collections.emptyList(),
-                        0,
-                        safePage,
-                        safeSize,
-                        1,
-                        false,
-                        false,
-                        Collections.emptyMap());
+                return emptyResponse(safePage, safeSize);
             }
             allowedProjectIds = Collections.singleton(projectId);
         }
 
         if (allowedProjectIds.isEmpty()) {
-            return new PaginatedResponse<>(
-                    Collections.emptyList(),
-                    0,
-                    safePage,
-                    safeSize,
-                    1,
-                    false,
-                    false,
-                    Collections.emptyMap());
+            return emptyResponse(safePage, safeSize);
         }
         // Parse filter dates
         final LocalDate startLocalDate = parseDateOrNull(startDate);
@@ -288,7 +257,7 @@ public class HistoryController {
                 .map(this::toTransferRecordDto)
                 .toList();
 
-        return paginateTransfers(dtos, safePage, safeSize);
+        return toPaginatedResponse(buildPageFromList(dtos, safePage, safeSize));
     }
 
     // ---- Helpers ----
@@ -360,60 +329,29 @@ public class HistoryController {
                 .collect(Collectors.toSet());
     }
 
-    private PaginatedResponse<InwardHistoryDto> paginateInwards(List<InwardHistoryDto> items, int page, int size) {
-        int safeSize = sanitizeSize(size);
-        int safePage = sanitizePage(page);
-        int totalItems = items != null ? items.size() : 0;
-        int totalPages = totalItems == 0 ? 1 : (int) Math.ceil((double) totalItems / safeSize);
-        int fromIndex = Math.max(0, (safePage - 1) * safeSize);
-        int toIndex = Math.min(fromIndex + safeSize, totalItems);
-        List<InwardHistoryDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
-        return new PaginatedResponse<>(
-                pageItems,
-                totalItems,
-                safePage,
-                safeSize,
-                totalPages,
-                safePage < totalPages,
-                safePage > 1,
-                Collections.emptyMap());
+    private <T> PaginatedResponse<T> emptyResponse(int page, int size) {
+        return toPaginatedResponse(buildPageFromList(Collections.emptyList(), page, size));
     }
 
-    private PaginatedResponse<OutwardRegisterDto> paginateOutwards(List<OutwardRegisterDto> items, int page, int size) {
+    private <T> Page<T> buildPageFromList(List<T> items, int page, int size) {
         int safeSize = sanitizeSize(size);
         int safePage = sanitizePage(page);
         int totalItems = items != null ? items.size() : 0;
-        int totalPages = totalItems == 0 ? 1 : (int) Math.ceil((double) totalItems / safeSize);
         int fromIndex = Math.max(0, (safePage - 1) * safeSize);
         int toIndex = Math.min(fromIndex + safeSize, totalItems);
-        List<OutwardRegisterDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
-        return new PaginatedResponse<>(
-                pageItems,
-                totalItems,
-                safePage,
-                safeSize,
-                totalPages,
-                safePage < totalPages,
-                safePage > 1,
-                Collections.emptyMap());
+        List<T> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
+        return new PageImpl<>(pageItems, PageRequest.of(safePage - 1, safeSize), totalItems);
     }
 
-    private PaginatedResponse<TransferRecordDto> paginateTransfers(List<TransferRecordDto> items, int page, int size) {
-        int safeSize = sanitizeSize(size);
-        int safePage = sanitizePage(page);
-        int totalItems = items != null ? items.size() : 0;
-        int totalPages = totalItems == 0 ? 1 : (int) Math.ceil((double) totalItems / safeSize);
-        int fromIndex = Math.max(0, (safePage - 1) * safeSize);
-        int toIndex = Math.min(fromIndex + safeSize, totalItems);
-        List<TransferRecordDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
+    private <T> PaginatedResponse<T> toPaginatedResponse(Page<T> page) {
         return new PaginatedResponse<>(
-                pageItems,
-                totalItems,
-                safePage,
-                safeSize,
-                totalPages,
-                safePage < totalPages,
-                safePage > 1,
+                page.getContent(),
+                page.getTotalElements(),
+                Math.max(1, page.getTotalPages()),
+                page.getSize(),
+                page.getNumber(),
+                page.hasNext(),
+                page.hasPrevious(),
                 Collections.emptyMap());
     }
 

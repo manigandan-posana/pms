@@ -64,9 +64,11 @@ export interface RawUserFilters {
 }
 
 export interface UserSearchResponse {
-  items?: AdminUser[];
-  totalItems?: number;
+  content?: AdminUser[];
+  totalElements?: number;
   totalPages?: number;
+  number?: number;
+  size?: number;
   filters?: RawUserFilters;
 }
 
@@ -80,6 +82,8 @@ export interface AdminUsersState {
   items: AdminUser[];
   totalItems: number;
   totalPages: number;
+  page: number;
+  pageSize: number;
   status: RequestStatus;
   error: string;
   projects: AdminUserProject[];
@@ -92,6 +96,8 @@ const initialState: AdminUsersState = {
   items: [],
   totalItems: 0,
   totalPages: 1,
+  page: 1,
+  pageSize: 10,
   status: "idle",
   error: "",
   projects: [],
@@ -156,8 +162,11 @@ export const loadUserProjects = createAsyncThunk<
 
     while (hasNext) {
       const response = await Get(`/admin/projects${toQueryString({ page, size: 50 })}`);
-      projects.push(...((response?.items as AdminUserProject[]) || []));
-      hasNext = Boolean(response?.hasNext);
+      const content = (response?.content as AdminUserProject[]) || [];
+      projects.push(...content);
+      const totalPages = response?.totalPages ?? 0;
+      const currentPage = response?.number ?? page - 1;
+      hasNext = totalPages > 0 && currentPage < totalPages - 1;
       page += 1;
     }
 
@@ -259,9 +268,11 @@ const adminUsersSlice = createSlice({
         state.status = "succeeded";
 
         const response = action.payload;
-        state.items = response.items ?? [];
-        state.totalItems = response.totalItems ?? state.items.length;
+        state.items = response.content ?? [];
+        state.totalItems = response.totalElements ?? state.items.length;
         state.totalPages = Math.max(1, response.totalPages ?? 1);
+        state.page = (response.number ?? 0) + 1;
+        state.pageSize = response.size ?? state.pageSize;
         state.availableFilters = {
           roles: normalize(response.filters?.roles),
           accessTypes: normalize(response.filters?.accessTypes),
@@ -273,6 +284,8 @@ const adminUsersSlice = createSlice({
         state.items = [];
         state.totalItems = 0;
         state.totalPages = 1;
+        state.page = 1;
+        state.pageSize = 10;
         const message =
           action.payload ??
           action.error.message ??

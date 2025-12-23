@@ -123,7 +123,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await dispatch(listProjects({ limit: 1000 })).unwrap();
-      const data = response?.items || response?.content || response?.data?.content || [];
+      const data = response?.content || response?.data?.content || [];
       const list = Array.isArray(data) ? data : [];
       setProjects(list);
       if (!selectedAdminProjectId && list.length > 0) {
@@ -142,9 +142,9 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     setInwardLoading(true);
     try {
       const response = await dispatch(searchInwardHistory({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
-      const data = response?.items || response?.content || [];
+      const data = response?.content || [];
       setInwardRecords(data);
-      setInwardTotal(response?.totalItems || data.length);
+      setInwardTotal(response?.totalElements || data.length);
     } catch {
       setInwardRecords([]);
     } finally {
@@ -157,9 +157,9 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     setOutwardLoading(true);
     try {
       const response = await dispatch(searchOutwardHistory({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
-      const data = response?.items || response?.content || [];
+      const data = response?.content || [];
       setOutwardRecords(data);
-      setOutwardTotal(response?.totalItems || data.length);
+      setOutwardTotal(response?.totalElements || data.length);
     } catch {
       setOutwardRecords([]);
     } finally {
@@ -172,9 +172,9 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     setTransferLoading(true);
     try {
       const response = await dispatch(searchTransferHistory({ projectId: Number(selectedAdminProjectId), page: 1, size: 100 })).unwrap();
-      const data = response?.items || response?.content || [];
+      const data = response?.content || [];
       setTransferRecords(data);
-      setTransferTotal(response?.totalItems || data.length);
+      setTransferTotal(response?.totalElements || data.length);
     } catch {
       setTransferRecords([]);
     } finally {

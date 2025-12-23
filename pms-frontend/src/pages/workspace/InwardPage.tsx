@@ -103,9 +103,13 @@ const InwardPage: React.FC = () => {
         ...(trimmedSearch ? { search: trimmedSearch } : {}),
       };
       const response = await dispatch(searchInwardHistory(params)).unwrap();
-      const data = Array.isArray(response?.items) ? response.items : Array.isArray(response?.data) ? response.data : Array.isArray(response?.content) ? response.content : [];
+      const data = Array.isArray(response?.content)
+        ? response.content
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
       setHistoryRecords(data);
-      setHistoryTotalRecords(response?.totalItems || response?.totalElements || 0);
+      setHistoryTotalRecords(response?.totalElements || 0);
     } catch (error) {
       console.error('Failed to load history:', error);
       toast.error('Failed to load inward history');
