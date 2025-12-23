@@ -1,63 +1,135 @@
 import React, { useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { BarChart, PieChart } from "@mui/x-charts";
 import {
-  FiArrowUpRight,
-  FiArrowDownLeft,
-  FiActivity,
-  FiTruck,
-  FiTrendingUp,
-  FiTrendingDown,
-  FiBox
-} from "react-icons/fi";
-import { TbCurrencyRupee } from "react-icons/tb";
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Button,
+  Avatar,
+  Chip,
+  Paper,
+  Divider,
+  Stack,
+  IconButton,
+  CardHeader
+} from "@mui/material";
+import { BarChart, PieChart, LineChart, SparkLineChart, Gauge } from "@mui/x-charts";
+import {
+  MdArrowUpward as ArrowUpIcon,
+  MdArrowDownward as ArrowDownIcon,
+  MdInventory as InventoryIcon,
+  MdLocalShipping as TruckIcon,
+  MdSwapHoriz as TransferIcon,
+  MdAssignment as ValidationIcon,
+  MdLocalGasStation as FuelIcon,
+  MdDirectionsCar as CarIcon,
+  MdAdd as AddIcon,
+  MdOutbound as OutboundIcon
+} from "react-icons/md";
+
 import type { RootState, AppDispatch } from "../../store/store";
-import { searchInwardHistory, searchOutwardHistory } from "../../store/slices/historySlice";
+import { searchInwardHistory, searchOutwardHistory, searchTransferHistory } from "../../store/slices/historySlice";
 import { loadVehicleData } from "../../store/slices/vehicleSlice";
-import CustomButton from "../../widgets/CustomButton";
+
+// --- Helpers ---
+
+// Helper to extract array from paginated response
+const extractList = (data: any): any[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.content)) return data.content;
+  if (Array.isArray(data.data)) return data.data;
+  return [];
+};
 
 // --- Components ---
 
-const DashboardCard: React.FC<{
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: "up" | "down" | "neutral";
-  trendValue?: string;
-  icon: React.ReactNode;
-  colorClass: string;
-}> = ({ title, value, subtitle, trend, trendValue, icon, colorClass }) => (
-  <div className="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
-    <div className={`absolute top-0 right-0 p-4 opacity-10 ${colorClass}`}>
-      <div className="scale-150 transform translate-x-1/4 -translate-y-1/4">
-        {icon}
-      </div>
-    </div>
-    <div className="flex justify-between items-start mb-4">
-      <div className={`p-3 rounded-xl ${colorClass.replace('text-', 'bg-').replace('600', '50')} ${colorClass}`}>
-        {icon}
-      </div>
-      {trend && (
-        <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${trend === 'up' ? 'text-green-600 bg-green-50' : trend === 'down' ? 'text-red-600 bg-red-50' : 'text-slate-600 bg-slate-50'}`}>
-          {trend === 'up' ? <FiTrendingUp /> : <FiTrendingDown />}
-          {trendValue}
-        </div>
+const CompactMetricCard = ({ title, value, subtitle, icon, color, trend, trendValue, onClick, sparklineData }: any) => (
+  <Card
+    variant="outlined"
+    sx={{
+      height: '100%',
+      borderColor: 'rgba(0,0,0,0.06)',
+      borderRadius: 4,
+      background: 'white',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      cursor: onClick ? 'pointer' : 'default',
+      '&:hover': onClick ? { transform: 'translateY(-4px)', boxShadow: '0 12px 24px -10px rgba(0,0,0,0.1)' } : {},
+      position: 'relative',
+      overflow: 'hidden'
+    }}
+    onClick={onClick}
+  >
+    <Box sx={{ position: 'absolute', top: -10, right: -10, opacity: 0.05, transform: 'scale(1.5)', color }}>
+      {icon}
+    </Box>
+    <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+        <Box>
+          <Avatar variant="rounded" sx={{ bgcolor: `${color}10`, color: color, width: 42, height: 42, mb: 1.5, borderRadius: 2 }}>
+            {React.cloneElement(icon, { fontSize: "1.2rem" })}
+          </Avatar>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} letterSpacing={0.5}>
+            {title.toUpperCase()}
+          </Typography>
+          <Typography variant="h4" fontWeight={800} color="text.primary" sx={{ my: 0.5 }}>
+            {value}
+          </Typography>
+        </Box>
+        <Box sx={{ textAlign: 'right' }}>
+          {(trend || trendValue) && (
+            <Chip
+              icon={trend === 'up' ? <ArrowUpIcon /> : <ArrowDownIcon />}
+              label={trendValue || '0%'}
+              size="small"
+              sx={{
+                bgcolor: trend === 'up' ? '#ecfdf5' : '#fef2f2',
+                color: trend === 'up' ? '#059669' : '#dc2626',
+                borderRadius: 1,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                height: 24,
+                '& .MuiChip-icon': { fontSize: '1rem', color: 'inherit' }
+              }}
+            />
+          )}
+        </Box>
+      </Stack>
+
+      {sparklineData && (
+        <Box sx={{ flex: 1, minHeight: 60, mx: -2, mb: -2, opacity: 0.8 }}>
+          <SparkLineChart
+            data={sparklineData}
+            height={80}
+            curve="natural"
+            area
+            showHighlight
+            showTooltip
+            sx={{ '& .MuiSparkLineChart-area': { fill: color, fillOpacity: 0.2 }, '& .MuiSparkLineChart-line': { stroke: color, strokeWidth: 2 } }}
+          />
+        </Box>
       )}
-    </div>
-    <div>
-      <h3 className="text-slate-500 text-sm font-medium mb-1">{title}</h3>
-      <div className="text-2xl font-bold text-slate-800">{value}</div>
-      {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
-    </div>
-  </div>
+
+      {subtitle && !sparklineData && (
+        <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ mt: 'auto' }}>
+          {subtitle}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
 );
 
-const SectionHeader: React.FC<{ title: string; action?: React.ReactNode }> = ({ title, action }) => (
-  <div className="flex items-center justify-between mb-6">
-    <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+const SectionHeading = ({ title, action }: any) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, mt: 1 }}>
+    <Typography variant="h6" fontWeight={700} fontSize="1rem" color="text.primary">
+      {title}
+    </Typography>
     {action}
-  </div>
+  </Box>
 );
 
 const UserDashboardPage: React.FC = () => {
@@ -66,332 +138,461 @@ const UserDashboardPage: React.FC = () => {
 
   const { selectedProjectId } = useSelector((state: RootState) => state.workspace);
   const { vehicles, fuelEntries, dailyLogs } = useSelector((state: RootState) => state.vehicles);
-  const { inwardHistory: inwardHistoryRaw, outwardHistory: outwardHistoryRaw } = useSelector((state: RootState) => state.history);
+  const { inwardHistory, outwardHistory, transferHistory } = useSelector((state: RootState) => state.history);
 
-  // Safe array access
-  const inwardArray = Array.isArray(inwardHistoryRaw) ? inwardHistoryRaw : [];
-  const outwardArray = Array.isArray(outwardHistoryRaw) ? outwardHistoryRaw : [];
+  // Use helper to extract correct data arrays
+  // Use helper to extract correct data arrays
+  const inwardArray = useMemo(() => extractList(inwardHistory), [inwardHistory]);
+  const outwardArray = useMemo(() => extractList(outwardHistory), [outwardHistory]);
+  const transferArray = useMemo(() => extractList(transferHistory), [transferHistory]);
+
+  const dailyLogArray = useMemo(() => {
+    return [...dailyLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [dailyLogs]);
 
   useEffect(() => {
     if (selectedProjectId) {
-      dispatch(searchInwardHistory({ projectId: selectedProjectId, page: 1, size: 50 })); // Fetch more for charts
-      dispatch(searchOutwardHistory({ projectId: selectedProjectId, page: 1, size: 50 }));
-      dispatch(loadVehicleData(Number(selectedProjectId)));
+      const timer = setTimeout(() => {
+        dispatch(searchInwardHistory({ projectId: selectedProjectId, page: 1, size: 100 }));
+        dispatch(searchOutwardHistory({ projectId: selectedProjectId, page: 1, size: 100 }));
+        dispatch(searchTransferHistory({ projectId: selectedProjectId, page: 1, size: 100 }));
+        dispatch(loadVehicleData(Number(selectedProjectId)));
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
   }, [selectedProjectId, dispatch]);
 
-  // --- Derived Metrics ---
+  // --- Metrics Calculations ---
 
   const metrics = useMemo(() => {
     const totalInwards = inwardArray.length;
     const totalOutwards = outwardArray.length;
-    const activeVehicles = vehicles.filter(v => v.status === 'ACTIVE').length;
-    const totalFuelCost = fuelEntries.reduce((sum, entry) => sum + (entry.totalCost || 0), 0);
-    const totalKm = dailyLogs.reduce((sum, log) => sum + (log.distance || 0), 0);
+    const totalTransfers = transferArray.length;
+    const pendingValidations = [...inwardArray, ...outwardArray].filter((item: any) =>
+      item.validated === false || item.validated === "false" || item.status === "PENDING"
+    ).length;
+    const totalTransactions = totalInwards + totalOutwards + totalTransfers;
 
-    // Calculate trends (mock logic for now as we don't have separate previous period data easily accessible)
-    // In a real app, compare current month vs previous month
+    const activeVehicles = vehicles.filter((v) => v.status === 'ACTIVE').length;
+    const totalVehicles = vehicles.length;
+    const utilization = totalVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 100) : 0;
+
+    const totalFuelCost = fuelEntries.reduce((sum, e) => sum + (e.totalCost || 0), 0);
+    const totalDistance = dailyLogs.filter(log => log.status === 'CLOSED').reduce((sum, log) => sum + (log.distance || 0), 0);
+    const openEntries = fuelEntries.filter(e => e.status === 'OPEN').length + dailyLogs.filter(l => l.status === 'OPEN').length;
 
     return {
       totalInwards,
       totalOutwards,
+      totalTransfers,
+      pendingValidations,
+      totalTransactions,
       activeVehicles,
+      totalVehicles,
+      utilization,
       totalFuelCost,
-      totalKm
+      totalDistance,
+      openEntries
     };
-  }, [inwardArray, outwardArray, vehicles, fuelEntries, dailyLogs]);
+  }, [inwardArray, outwardArray, transferArray, vehicles, fuelEntries, dailyLogs]);
 
-  // --- Chart Data Preparation ---
+  // --- Charts Data ---
 
-  const monthlyActivityData = useMemo(() => {
+  const inventoryTrendData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
-
     const inwardData = new Array(12).fill(0);
     const outwardData = new Array(12).fill(0);
+    const transferData = new Array(12).fill(0);
+    const fuelData = new Array(12).fill(0);
 
-    inwardArray.forEach((item: any) => {
-      const date = new Date(item.date || item.entryDate);
-      if (date.getFullYear() === currentYear) {
-        inwardData[date.getMonth()] += 1;
+    const processDate = (curr: any, arr: number[], value?: number) => {
+      const d = new Date(curr.date || curr.entryDate || curr.createdAt);
+      if (!isNaN(d.getTime()) && d.getFullYear() === currentYear) {
+        if (value !== undefined) {
+          arr[d.getMonth()] += value;
+        } else {
+          arr[d.getMonth()] += 1;
+        }
       }
-    });
+    };
 
-    outwardArray.forEach((item: any) => {
-      const date = new Date(item.date);
-      if (date.getFullYear() === currentYear) {
-        outwardData[date.getMonth()] += 1;
-      }
-    });
+    inwardArray.forEach(i => processDate(i, inwardData));
+    outwardArray.forEach(o => processDate(o, outwardData));
+    transferArray.forEach(t => processDate(t, transferData));
+    fuelEntries.forEach(f => processDate(f, fuelData, f.totalCost || 0));
 
-    // Get last 6 months for cleaner view
     const currentMonth = new Date().getMonth();
-    const startMonth = Math.max(0, currentMonth - 5);
+    const start = Math.max(0, currentMonth - 5);
+    const range = currentMonth + 1;
 
     return {
-      xAxis: months.slice(startMonth, currentMonth + 1),
-      inward: inwardData.slice(startMonth, currentMonth + 1),
-      outward: outwardData.slice(startMonth, currentMonth + 1)
+      xAxis: months.slice(start, range),
+      inward: inwardData.slice(start, range),
+      outward: outwardData.slice(start, range),
+      transfer: transferData.slice(start, range),
+      fuel: fuelData.slice(start, range)
     };
-  }, [inwardArray, outwardArray]);
+  }, [inwardArray, outwardArray, transferArray, fuelEntries]);
 
-  const fuelCostByType = useMemo(() => {
-    const data = [
-      { id: 0, value: 0, label: 'Diesel', color: '#3b82f6' },
-      { id: 1, value: 0, label: 'Petrol', color: '#10b981' },
-      { id: 2, value: 0, label: 'Electric', color: '#f59e0b' },
-    ];
+  const categoryData = useMemo(() => {
+    // Simple pie chart based on counts
+    return [
+      { id: 0, value: metrics.totalInwards, label: 'Inwards', color: '#6366f1' },
+      { id: 1, value: metrics.totalOutwards, label: 'Outwards', color: '#f97316' },
+      { id: 2, value: metrics.totalTransfers, label: 'Transfers', color: '#8b5cf6' },
+    ].filter(d => d.value > 0);
+  }, [metrics]);
 
-    fuelEntries.forEach(entry => {
-      if (entry.fuelType === 'DIESEL') data[0].value += (entry.totalCost || 0);
-      else if (entry.fuelType === 'PETROL') data[1].value += (entry.totalCost || 0);
-      else if (entry.fuelType === 'ELECTRIC') data[2].value += (entry.totalCost || 0);
+
+
+  const topEntities = useMemo(() => {
+    // Top Suppliers
+    const supplierCounts: Record<string, number> = {};
+    inwardArray.forEach(i => {
+      const name = i.supplierName || 'Unknown';
+      supplierCounts[name] = (supplierCounts[name] || 0) + 1;
     });
+    const suppliers = Object.entries(supplierCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ label: name, count }));
 
-    return data.filter(d => d.value > 0); // Only show active types
-  }, [fuelEntries]);
+    // Top Receivers
+    const receiverCounts: Record<string, number> = {};
+    outwardArray.forEach(o => {
+      const name = o.issueTo || 'Unknown';
+      receiverCounts[name] = (receiverCounts[name] || 0) + 1;
+    });
+    const receivers = Object.entries(receiverCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ label: name, count }));
+
+    return { suppliers, receivers };
+  }, [inwardArray, outwardArray]);
 
   // --- Render ---
 
   if (!selectedProjectId) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-100px)]">
-        <div className="text-center bg-slate-50 p-10 rounded-2xl border border-slate-200">
-          <FiBox className="mx-auto text-4xl text-slate-300 mb-4" />
-          <h2 className="text-xl font-semibold text-slate-700">Select a Project</h2>
-          <p className="text-slate-500 mt-2">Please select a project from the sidebar to view the dashboard.</p>
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 4 }}>
+          <InventoryIcon style={{ fontSize: 48, color: '#94a3b8', marginBottom: 16 }} />
+          <Typography variant="h6" color="text.secondary">Select a Project</Typography>
+        </Paper>
+      </Box>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8 min-h-screen bg-slate-50/50">
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1600, mx: 'auto', bgcolor: '#f8fafc', minHeight: '100vh' }}>
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h1>
-          <p className="text-slate-500 mt-1">Overview of inventory movement and fleet performance</p>
-        </div>
-        <div className="flex gap-3">
-          <CustomButton
-            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
-            startIcon={<FiBox />}
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 4, gap: 2 }}>
+        <Box>
+          <Typography variant="h5" fontWeight={800} color="slate.900" sx={{ letterSpacing: '-0.5px' }}>
+            Executive Dashboard
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Real-time overview of inventory & fleet operations
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={() => navigate('/workspace/inventory/inwards')}
+            sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, textTransform: 'none', borderRadius: 2 }}
           >
             New Inward
-          </CustomButton>
-          <CustomButton
-            className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-            startIcon={<FiTruck />}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TruckIcon />}
             onClick={() => navigate('/workspace/vehicles')}
+            sx={{ borderColor: '#e2e8f0', color: '#475569', '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' }, textTransform: 'none', borderRadius: 2 }}
           >
-            Manage Fleet
-          </CustomButton>
-        </div>
-      </div>
+            Fleet Manager
+          </Button>
+        </Stack>
+      </Box>
 
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <DashboardCard
-          title="Total Inwards"
-          value={metrics.totalInwards}
-          subtitle="Items received this year"
-          trend="up"
-          trendValue="+12.5%"
-          icon={<FiArrowDownLeft size={24} />}
-          colorClass="text-indigo-600"
-        />
-        <DashboardCard
-          title="Total Outwards"
-          value={metrics.totalOutwards}
-          subtitle="Items issued this year"
-          trend="neutral"
-          trendValue="+2.1%"
-          icon={<FiArrowUpRight size={24} />}
-          colorClass="text-orange-600"
-        />
-        <DashboardCard
-          title="Fuel Cost"
-          value={`₹${(metrics.totalFuelCost / 1000).toFixed(1)}k`}
-          subtitle="Total spend on fuel"
-          trend="down"
-          trendValue="-5.4%"
-          icon={<TbCurrencyRupee size={24} />}
-          colorClass="text-rose-600"
-        />
-        <DashboardCard
-          title="Fleet Activity"
-          value={`${(metrics.totalKm / 1000).toFixed(1)}k km`}
-          subtitle={`${metrics.activeVehicles} active vehicles`}
-          trend="up"
-          trendValue="+8.2%"
-          icon={<FiActivity size={24} />}
-          colorClass="text-emerald-600"
-        />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Chart: Inventory Movement */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100">
-          <SectionHeader
-            title="Inventory Movement"
-            action={
-              <select className="text-xs border-none bg-slate-50 rounded-lg px-2 py-1 text-slate-600 focus:ring-0 cursor-pointer hover:bg-slate-100">
-                <option>Last 6 Months</option>
-                <option>Last Year</option>
-              </select>
-            }
+      {/* Overview Metrics Grid */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <CompactMetricCard
+            title="Total Inwards"
+            value={metrics.totalInwards}
+            icon={<InventoryIcon />}
+            color="#4f46e5"
+            onClick={() => navigate('/workspace/inventory/inwards')}
           />
-          <div className="w-full h-[320px]">
-            <BarChart
-              xAxis={[{ scaleType: 'band', data: monthlyActivityData.xAxis, disableLine: true, disableTicks: true, categoryGapRatio: 0.4 }]}
-              series={[
-                { data: monthlyActivityData.inward, label: 'Inward', color: '#6366f1' }, // Indigo
-                { data: monthlyActivityData.outward, label: 'Outward', color: '#f97316' }, // Orange
-              ]}
-              grid={{ horizontal: true }}
-              slotProps={{
-                legend: { hidden: false, position: { vertical: 'top', horizontal: 'end' }, itemMarkWidth: 10, itemMarkHeight: 10 },
-              }}
-              margin={{ left: 40, right: 10, top: 20, bottom: 20 }}
-            />
-          </div>
-        </div>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <CompactMetricCard
+            title="Total Outwards"
+            value={metrics.totalOutwards}
+            icon={<OutboundIcon />}
+            color="#ea580c"
+            onClick={() => navigate('/workspace/inventory/outwards')}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <CompactMetricCard
+            title="Transfers"
+            value={metrics.totalTransfers}
+            icon={<TransferIcon />}
+            color="#9333ea"
+            onClick={() => navigate('/workspace/inventory/transfers')}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <CompactMetricCard
+            title="Fuel Cost"
+            value={`₹${(metrics.totalFuelCost / 1000).toFixed(1)}k`}
+            subtitle={`${(metrics.totalDistance / 1000).toFixed(1)}k km run`}
+            icon={<FuelIcon />}
+            color="#e11d48"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <CompactMetricCard
+            title="Pending Actions"
+            value={metrics.pendingValidations + metrics.openEntries}
+            subtitle={`${metrics.pendingValidations} Val, ${metrics.openEntries} Logs`}
+            icon={<ValidationIcon />}
+            color="#d97706"
+            trend={metrics.pendingValidations + metrics.openEntries > 0 ? 'up' : 'neutral'}
+            trendValue={metrics.pendingValidations + metrics.openEntries > 0 ? 'Attention' : 'All Clear'}
+          />
+        </Grid>
+      </Grid>
 
-        {/* Secondary Chart: Fuel Distribution */}
-        <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100">
-          <SectionHeader title="Fuel Expense" />
-          <div className="flex flex-col items-center justify-center h-[320px] relative">
-            <PieChart
-              series={[
-                {
-                  data: fuelCostByType,
+      <Grid container spacing={3}>
+        {/* Charts Section */}
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Paper sx={{ p: 3, borderRadius: 3, height: '100%', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 10px -3px rgba(6,81,237,0.1)' }}>
+            <SectionHeading
+              title="Inventory Activity Trend"
+              action={
+                <Chip label="Last 6 Months" size="small" variant="outlined" sx={{ borderRadius: 1 }} />
+              }
+            />
+            <Box sx={{ width: '100%', height: 300 }}>
+              <BarChart
+                xAxis={[{ scaleType: 'band', data: inventoryTrendData.xAxis, disableLine: true, disableTicks: true, categoryGapRatio: 0.4 }]}
+                series={[
+                  { data: inventoryTrendData.inward, label: 'Inwards', color: '#6366f1', stack: 'total' },
+                  { data: inventoryTrendData.outward, label: 'Outwards', color: '#f97316', stack: 'total' },
+                  { data: inventoryTrendData.transfer, label: 'Transfers', color: '#a855f7', stack: 'total' },
+                ]}
+                margin={{ left: 40, right: 10, top: 20, bottom: 30 }}
+                slotProps={{ legend: { hidden: false, position: { vertical: 'top', horizontal: 'end' }, itemMarkWidth: 10, itemMarkHeight: 10 } as any }}
+                borderRadius={4}
+              />
+            </Box>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Paper sx={{ p: 3, borderRadius: 3, height: '100%', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 10px -3px rgba(6,81,237,0.1)' }}>
+            <SectionHeading title="Transaction Mix" />
+            <Box sx={{ height: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <PieChart
+                series={[{
+                  data: categoryData,
                   innerRadius: 80,
                   outerRadius: 100,
-                  paddingAngle: 5,
-                  cornerRadius: 8,
-                },
-              ]}
-              height={250}
-              slotProps={{ legend: { hidden: true } as any }}
-            />
-            {/* Center Text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-              <span className="text-3xl font-bold text-slate-800">₹{(metrics.totalFuelCost / 1000).toFixed(0)}k</span>
-              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total Spent</span>
-            </div>
-
-            {/* Custom Legend */}
-            <div className="flex w-full justify-center gap-4 mt-6">
-              {fuelCostByType.map((item) => (
-                <div key={item.id} className="flex flex-col items-center">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-slate-500 font-medium">{item.label}</span>
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">₹{(item.value / 1000).toFixed(1)}k</span>
-                </div>
+                  paddingAngle: 2,
+                  cornerRadius: 4,
+                  cx: 150,
+                  cy: 110
+                }]}
+                margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
+                slotProps={{ legend: { hidden: true } as any }}
+                height={220}
+              />
+              <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                <Typography variant="h4" fontWeight={800} color="text.primary">
+                  {metrics.totalTransactions}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} textTransform="uppercase">
+                  Total
+                </Typography>
+              </Box>
+            </Box>
+            <Stack direction="row" spacing={2} justifyContent="center" mt={3}>
+              {categoryData.map(d => (
+                <Box key={d.id} textAlign="center">
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: d.color, mx: 'auto', mb: 0.5 }} />
+                  <Typography variant="caption" display="block" color="text.secondary">{d.label}</Typography>
+                  <Typography variant="subtitle2" fontWeight={700}>{d.value}</Typography>
+                </Box>
               ))}
-            </div>
-            {fuelCostByType.length === 0 && <p className="text-slate-400 text-sm absolute">No fuel data available</p>}
-          </div>
-        </div>
-      </div>
+            </Stack>
+          </Paper>
+        </Grid>
 
-      {/* Recent Activity Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Inwards */}
-        <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100">
-          <SectionHeader title="Recent Inwards" action={<CustomButton variant="text" size="small" className="text-indigo-600" onClick={() => navigate('/workspace/inventory/inwards')}>View All</CustomButton>} />
-          <div className="overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 rounded-l-lg">Supplier</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Project</th>
-                  <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 rounded-r-lg">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {inwardArray.slice(0, 5).map((item: any, idx: number) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => navigate(`/workspace/inward/detail/${item.id}`)}>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                          {item.supplierName?.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-800">{item.supplierName}</div>
-                          <div className="text-xs text-slate-400 font-mono">{item.invoiceNo || 'No Invoice'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{item.projectName}</td>
-                    <td className="py-3 px-4 text-right text-sm text-slate-500 font-medium">
-                      {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
-                    </td>
-                  </tr>
-                ))}
-                {inwardArray.length === 0 && (
-                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 text-sm">No recent data found</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* New Analytics: Top Suppliers & Receivers */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3, borderRadius: 3, height: '100%', minHeight: 350, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 10px -3px rgba(6,81,237,0.1)' }}>
+            <SectionHeading title="Top Suppliers" />
+            {topEntities.suppliers.length > 0 ? (
+              <BarChart
+                layout="horizontal"
+                dataset={topEntities.suppliers}
+                yAxis={[{ scaleType: 'band', dataKey: 'label' }]}
+                series={[{ dataKey: 'count', label: 'Inwards', color: '#4f46e5' }]}
+                height={280}
+                margin={{ left: 100, right: 20, top: 20, bottom: 20 }}
+                slotProps={{ legend: { hidden: true } as any }}
+                borderRadius={4}
+              />
+            ) : (
+              <Box display="flex" justifyContent="center" alignItems="center" height={250}>
+                <Typography color="text.secondary">No supplier data available</Typography>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
 
-        {/* Recent Fuel */}
-        <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100">
-          <SectionHeader title="Recent Fuel Entries" action={<CustomButton variant="text" size="small" className="text-rose-600" onClick={() => navigate('/workspace/vehicles')}>View All</CustomButton>} />
-          <div className="overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 rounded-l-lg">Vehicle</th>
-                  <th className="text-center text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Type</th>
-                  <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 rounded-r-lg">Cost</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {fuelEntries.slice(0, 5).map((item: any, idx: number) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-                          <FiTruck size={14} />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-800">{item.vehicleName}</div>
-                          <div className="text-xs text-slate-400">{item.vehicleNumber}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide
-                          ${item.fuelType === 'DIESEL' ? 'bg-amber-100 text-amber-700' :
-                          item.fuelType === 'PETROL' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {item.fuelType}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="text-sm font-bold text-slate-700">₹{item.totalCost?.toLocaleString()}</div>
-                      <div className="text-xs text-slate-400">{item.litres?.toFixed(1)} L</div>
-                    </td>
-                  </tr>
-                ))}
-                {fuelEntries.length === 0 && (
-                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 text-sm">No recent data found</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3, borderRadius: 3, height: '100%', minHeight: 350, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 10px -3px rgba(6,81,237,0.1)' }}>
+            <SectionHeading title="Top Receivers" />
+            {topEntities.receivers.length > 0 ? (
+              <BarChart
+                layout="horizontal"
+                dataset={topEntities.receivers}
+                yAxis={[{ scaleType: 'band', dataKey: 'label' }]}
+                series={[{ dataKey: 'count', label: 'Outwards', color: '#ea580c' }]}
+                height={280}
+                margin={{ left: 100, right: 20, top: 20, bottom: 20 }}
+                slotProps={{ legend: { hidden: true } as any }}
+                borderRadius={4}
+              />
+            ) : (
+              <Box display="flex" justifyContent="center" alignItems="center" height={250}>
+                <Typography color="text.secondary">No receiver data available</Typography>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <CardHeader
+              title="Recent Inwards"
+              titleTypographyProps={{ variant: 'h6', fontWeight: 700, fontSize: '1rem' }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/inventory/inwards')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)' }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 350, overflow: 'auto' }}>
+              {inwardArray.slice(0, 5).map((item: any, i) => (
+                <Box key={i} sx={{ p: 2, display: 'flex', gap: 2, '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' }, cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.04)' }} onClick={() => navigate(`/workspace/inward/detail/${item.id}`)}>
+                  <Avatar variant="rounded" sx={{ bgcolor: '#eff6ff', color: '#3b82f6', width: 40, height: 40, fontWeight: 700, fontSize: '0.875rem' }}>
+                    {item.supplierName?.[0] || 'S'}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" fontWeight={600} noWrap>
+                      {item.supplierName || 'Unknown Supplier'}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip label={item.type || 'SUPPLY'} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: item.type === 'RETURN' ? '#fdf2f8' : '#eff6ff', color: item.type === 'RETURN' ? '#db2777' : '#2563eb' }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.items || 0} items • {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {inwardArray.length === 0 && <Box p={3} textAlign="center"><Typography variant="body2" color="text.secondary">No recent data</Typography></Box>}
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <CardHeader
+              title="Recent Outwards"
+              titleTypographyProps={{ variant: 'h6', fontWeight: 700, fontSize: '1rem' }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/inventory/outwards')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)' }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 350, overflow: 'auto' }}>
+              {outwardArray.slice(0, 5).map((item: any, i) => (
+                <Box key={i} sx={{ p: 2, display: 'flex', gap: 2, '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' }, cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.04)' }} onClick={() => navigate(`/workspace/outward/detail/${item.id}`)}>
+                  <Avatar variant="rounded" sx={{ bgcolor: '#fff7ed', color: '#ea580c', width: 40, height: 40, fontWeight: 700, fontSize: '0.875rem' }}>
+                    {item.issueTo?.[0] || 'O'}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" fontWeight={600} noWrap>
+                      {item.issueTo || 'Unknown Receiver'}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip label={item.status || 'OPEN'} size="small" sx={{ height: 20, fontSize: '0.65rem', bgcolor: item.status === 'CLOSED' ? '#ecfdf5' : '#fffbeb', color: item.status === 'CLOSED' ? '#059669' : '#d97706' }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.items || 0} items • {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {outwardArray.length === 0 && <Box p={3} textAlign="center"><Typography variant="body2" color="text.secondary">No recent data</Typography></Box>}
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 3, height: '100%', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <CardHeader
+              title="Recent Fuel Logs"
+              titleTypographyProps={{ variant: 'h6', fontWeight: 700, fontSize: '1rem' }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/vehicles')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)' }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 350, overflow: 'auto' }}>
+              {fuelEntries.slice(0, 5).map((item: any, i) => (
+                <Box key={i} sx={{ p: 2, display: 'flex', gap: 2, borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <Avatar variant="rounded" sx={{ bgcolor: '#f1f5f9', color: '#475569', width: 40, height: 40 }}>
+                    <CarIcon fontSize="small" />
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" fontWeight={600} noWrap>
+                      {item.vehicleName}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Typography variant="caption" fontWeight={700} color="text.primary">
+                        ₹{item.totalCost?.toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        • {item.litres}L • {item.fuelType}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {fuelEntries.length === 0 && <Box p={3} textAlign="center"><Typography variant="body2" color="text.secondary">No recent data</Typography></Box>}
+            </Box>
+          </Card>
+        </Grid>
+
+      </Grid>
+    </Box>
   );
 };
 
 export default UserDashboardPage;
+

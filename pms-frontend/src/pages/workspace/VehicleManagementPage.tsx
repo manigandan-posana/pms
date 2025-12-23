@@ -440,10 +440,13 @@ const VehicleManagementPage: React.FC = () => {
     date: new Date(),
     vehicleId: "" as string | number,
     openingKm: "" as string | number,
+    supplierId: "" as string | number,
+    litres: "" as string | number,
+    pricePerLitre: "" as string | number,
   });
 
   const handleRefillFuelEntry = async () => {
-    if (!selectedProjectId || !refillForm.vehicleId || !refillForm.openingKm) {
+    if (!selectedProjectId || !refillForm.vehicleId || !refillForm.openingKm || !refillForm.supplierId || !refillForm.litres || !refillForm.pricePerLitre) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -486,6 +489,9 @@ const VehicleManagementPage: React.FC = () => {
         projectId: Number(selectedProjectId),
         vehicleId: Number(refillForm.vehicleId),
         openingKm: openingKm,
+        supplierId: Number(refillForm.supplierId),
+        litres: Number(refillForm.litres),
+        pricePerLitre: Number(refillForm.pricePerLitre),
       })).unwrap();
 
       toast.success("Refill recorded successfully");
@@ -494,6 +500,9 @@ const VehicleManagementPage: React.FC = () => {
         date: new Date(),
         vehicleId: "",
         openingKm: "",
+        supplierId: "",
+        litres: "",
+        pricePerLitre: "",
       });
     } catch (error) {
       toast.error("Failed to record refill");
@@ -610,6 +619,9 @@ const VehicleManagementPage: React.FC = () => {
       date: new Date(),
       vehicleId: "",
       openingKm: "",
+      supplierId: "",
+      litres: "",
+      pricePerLitre: "",
     });
   };
 
@@ -1106,7 +1118,7 @@ const VehicleManagementPage: React.FC = () => {
               variant="contained"
               color="primary"
               onClick={handleRefillFuelEntry}
-              disabled={!refillForm.vehicleId || !refillForm.openingKm}
+              disabled={!refillForm.vehicleId || !refillForm.openingKm || !refillForm.supplierId || !refillForm.litres || !refillForm.pricePerLitre}
             >
               Confirm Refill
             </CustomButton>
@@ -1132,6 +1144,27 @@ const VehicleManagementPage: React.FC = () => {
             type="number"
             value={refillForm.openingKm}
             onChange={(e) => setRefillForm({ ...refillForm, openingKm: e.target.value })}
+          />
+          <CustomSelect
+            label="Supplier"
+            required
+            value={refillForm.supplierId}
+            onChange={(e) => setRefillForm({ ...refillForm, supplierId: e })}
+            options={suppliers.map(s => ({ label: s.supplierName, value: s.id }))}
+          />
+          <CustomTextField
+            label="Quantity (Litres)"
+            type="number"
+            required
+            value={refillForm.litres}
+            onChange={(e) => setRefillForm({ ...refillForm, litres: e.target.value })}
+          />
+          <CustomTextField
+            label="Unit Price (₹/L)"
+            type="number"
+            required
+            value={refillForm.pricePerLitre}
+            onChange={(e) => setRefillForm({ ...refillForm, pricePerLitre: e.target.value })}
           />
         </div>
       </CustomModal>

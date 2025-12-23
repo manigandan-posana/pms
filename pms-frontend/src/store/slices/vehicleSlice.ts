@@ -20,6 +20,9 @@ export interface RefillRequest {
   vehicleId: number;
   openingKm: number;
   openingKmPhoto?: string;
+  supplierId: number;
+  litres: number;
+  pricePerLitre: number;
 }
 
 // ---- Types ---- //

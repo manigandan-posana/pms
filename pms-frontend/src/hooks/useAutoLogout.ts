@@ -36,11 +36,11 @@ export const useAutoLogout = (): void => {
     const checkExpiry = () => {
       const expiry = sessionStorage.getItem("msal.tokenExpiry");
       if (!expiry) return;
-      
+
       const expiryTime = parseInt(expiry, 10);
       const now = Date.now();
       const timeout = expiryTime - now;
-      
+
       if (timeout <= 0) {
         // Token has already expired
         performLogout();
@@ -57,23 +57,13 @@ export const useAutoLogout = (): void => {
     // Initial check
     checkExpiry();
 
-    // Listen for user interaction events to re‑evaluate the expiry
-    const events = [
-      "mousemove",
-      "mousedown",
-      "keydown",
-      "scroll",
-      "touchstart",
-    ];
-    events.forEach((event) => {
-      window.addEventListener(event, checkExpiry);
-    });
+    // Check expiry every minute instead of on every user interaction
+    // Token expiry is absolute, not based on inactivity
+    const intervalId = setInterval(checkExpiry, 60000);
 
     return () => {
       clearTimeout(timer);
-      events.forEach((event) => {
-        window.removeEventListener(event, checkExpiry);
-      });
+      clearInterval(intervalId);
     };
   }, [instance, navigate, store]);
 };

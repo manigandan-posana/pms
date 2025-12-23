@@ -102,18 +102,35 @@ interface TransferModalProps {
   line: TransferMaterialLine | null;
   values: TransferModalValues;
   onChange: (values: TransferModalValues) => void;
-  onSave: () => void;
+  onSave: (qty?: string) => void;
   onClose: () => void;
 }
 
 const TransferModal: React.FC<TransferModalProps> = ({
   line,
-  values,
-  onChange,
+  values, // We will treat this as initial value provider
+  onChange, // Deprecated in favor of local state, but kept for signature if needed or we remove it
   onSave,
   onClose,
 }) => {
+  const [localQty, setLocalQty] = React.useState<string>(values.transferQty || "0");
+
+  // Sync with prop when modal opens/line changes
+  React.useEffect(() => {
+    setLocalQty(values.transferQty || "0");
+  }, [values.transferQty, line]);
+
   if (!line) return null;
+
+  const handleSave = () => {
+    // Update the parent's values before saving
+    onChange({ transferQty: localQty });
+    // Small delay to allow state propagation or just pass value to onSave if we refactored parent
+    // But since parent uses modalValues from Redux for onSave, we need to dispatch update.
+    // Actually, safer to pass value to onSave directly.
+    onSave(localQty);
+  };
+
   return (
     <CustomModal
       title={`${line.code} — ${line.name}`}
@@ -122,7 +139,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
       footer={
         <div className="flex justify-end gap-2">
           <CustomButton variant="text" onClick={onClose} size="small">Cancel</CustomButton>
-          <CustomButton onClick={onSave} size="small" startIcon={<FiSave />}>Save</CustomButton>
+          <CustomButton onClick={handleSave} size="small" startIcon={<FiSave />}>Save</CustomButton>
         </div>
       }
     >
@@ -135,13 +152,14 @@ const TransferModal: React.FC<TransferModalProps> = ({
         <CustomTextField
           label="Transfer Qty *"
           type="number"
-          value={values.transferQty}
-          onChange={(e) => onChange({ transferQty: e.target.value })}
+          value={localQty}
+          onChange={(e) => setLocalQty(e.target.value)}
           required
+          autoFocus
         />
       </div>
       <p className="mt-2 text-xs text-slate-400">
-        Save to include this material in transfer.
+        Enter quantity to transfer.
       </p>
     </CustomModal>
   );
@@ -293,9 +311,11 @@ const TransferCreatePage: React.FC = () => {
     );
   };
 
-  const handleModalSave = () => {
+  const handleModalSave = (qty?: string) => {
     if (!modalLine) return;
-    const transferQty = Number(modalValues.transferQty) || 0;
+    // Use passed qty if available, otherwise fallback (though fallback is risky if state pending)
+    const transferQty = Number(qty !== undefined ? qty : modalValues.transferQty) || 0;
+
     if (transferQty <= 0) {
       dispatch(setTransferModalLine(null));
       return;

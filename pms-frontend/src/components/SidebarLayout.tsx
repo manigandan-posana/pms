@@ -262,7 +262,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
 
       {/* Main content */}
       <main
-        className="transition-all duration-300"
+        className="transition-[margin-left] duration-300"
         style={{ marginLeft: collapsed ? 72 : 240 }}
       >
         <AdminTopBar

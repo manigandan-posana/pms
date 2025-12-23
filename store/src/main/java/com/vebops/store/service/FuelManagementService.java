@@ -298,6 +298,9 @@ public class FuelManagementService {
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
                 .orElseThrow(() -> new NotFoundException("Vehicle not found with id: " + request.getVehicleId()));
 
+        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+                .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + request.getSupplierId()));
+
         // Check for open Daily Log (Must exist and be OPEN? Or just not blocking?)
         // Create validation says: "Cannot create fuel entry. Please close the open
         // daily log first."
@@ -363,13 +366,16 @@ public class FuelManagementService {
             }
         }
 
-        // 2. Create New Open Entry
+        // 2. Create New Open Entry with fuel details
         FuelEntry newEntry = new FuelEntry();
         newEntry.setDate(request.getDate());
         newEntry.setProject(project);
         newEntry.setVehicle(vehicle);
         newEntry.setFuelType(vehicle.getFuelType());
-        // Supplier, Litres, Price, TotalCost are NULL
+        newEntry.setSupplier(supplier);
+        newEntry.setLitres(request.getLitres());
+        newEntry.setPricePerLitre(request.getPricePerLitre());
+        newEntry.setTotalCost(request.getLitres() * request.getPricePerLitre());
         newEntry.setOpeningKm(request.getOpeningKm());
         newEntry.setOpeningKmPhoto(request.getOpeningKmPhoto());
         newEntry.setStatus(EntryStatus.OPEN);
