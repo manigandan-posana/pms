@@ -1,7 +1,6 @@
 
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { useLocation, Navigate } from "react-router-dom";
 import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomTextField from "../../widgets/CustomTextField";
@@ -39,11 +38,6 @@ export interface WorkspaceSliceState {
 // ---- Main page ---- //
 
 const BomPage: React.FC = () => {
-  const location = useLocation();
-
-  if (location.pathname === '/workspace/bom') {
-    return <Navigate to="/workspace/inventory/bom" replace />;
-  }
   const { selectedProjectId, bomByProject } = useSelector<
     RootState,
     WorkspaceSliceState

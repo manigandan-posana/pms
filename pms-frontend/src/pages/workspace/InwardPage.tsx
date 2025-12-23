@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../store/hooks";
 import { searchInwardHistory } from "../../store/slices/historySlice";
@@ -32,6 +32,7 @@ export interface InwardHistoryRecord {
   deliveryDate?: string | null;
   date?: string | null;
   invoiceNo?: string | null;
+  type?: string | null;
   supplierName?: string | null;
   vehicleNo?: string | null;
   validated?: boolean | null;
@@ -47,12 +48,7 @@ interface AuthStateSlice {
 
 const InwardPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { token } = useSelector<RootState, AuthStateSlice>((state) => state.auth as AuthStateSlice);
-
-  if (location.pathname === '/workspace/inward') {
-    return <Navigate to="/workspace/inventory/inwards" replace />;
-  }
 
   const [historyRecords, setHistoryRecords] = useState<InwardHistoryRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -137,7 +133,7 @@ const InwardPage: React.FC = () => {
     },
     { field: 'projectName', header: 'Project', body: (row) => row.projectName || "—" },
     { field: 'supplierName', header: 'Supplier', body: (row) => row.supplierName || "—" },
-    { field: 'invoiceNo', header: 'Invoice No', body: (row) => row.invoiceNo || "—" },
+    { field: 'type', header: 'Type', body: (row) => row.type || "SUPPLY" },
     {
       field: 'date',
       header: 'Date',

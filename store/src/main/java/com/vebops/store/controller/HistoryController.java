@@ -36,11 +36,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Controller providing paginated history endpoints for inwards, outwards and transfers.
+ * Controller providing paginated history endpoints for inwards, outwards and
+ * transfers.
  *
- * These endpoints move pagination and filtering logic from the frontend to the backend.
- * They accept optional page/size parameters and will automatically clamp values to
- * sensible ranges. Only records from projects that the current user has access to
+ * These endpoints move pagination and filtering logic from the frontend to the
+ * backend.
+ * They accept optional page/size parameters and will automatically clamp values
+ * to
+ * sensible ranges. Only records from projects that the current user has access
+ * to
  * (based on their AccessType and assigned projects) are returned.
  */
 @RestController
@@ -56,12 +60,11 @@ public class HistoryController {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public HistoryController(
-        AuthService authService,
-        ProjectRepository projectRepository,
-        InwardRecordRepository inwardRecordRepository,
-        OutwardRecordRepository outwardRecordRepository,
-        TransferRecordRepository transferRecordRepository
-    ) {
+            AuthService authService,
+            ProjectRepository projectRepository,
+            InwardRecordRepository inwardRecordRepository,
+            OutwardRecordRepository outwardRecordRepository,
+            TransferRecordRepository transferRecordRepository) {
         this.authService = authService;
         this.projectRepository = projectRepository;
         this.inwardRecordRepository = inwardRecordRepository;
@@ -70,103 +73,117 @@ public class HistoryController {
     }
 
     /**
-     * Returns paginated inward record history for the current user with advanced filtering.
+     * Returns paginated inward record history for the current user with advanced
+     * filtering.
      * Records are ordered by entry date descending.
      *
-     * @param page 1‑based page number (defaults to 1 if invalid)
-     * @param size maximum number of items per page (capped between 1 and 100, defaults to 10)
-     * @param projectId filter by project ID
+     * @param page         1‑based page number (defaults to 1 if invalid)
+     * @param size         maximum number of items per page (capped between 1 and
+     *                     100, defaults to 10)
+     * @param projectId    filter by project ID
      * @param supplierName filter by supplier name (contains search)
-     * @param invoiceNo filter by invoice number (contains search)
-     * @param startDate filter records from this date (ISO format: YYYY-MM-DD)
-     * @param endDate filter records until this date (ISO format: YYYY-MM-DD)
+     * @param invoiceNo    filter by invoice number (contains search)
+     * @param startDate    filter records from this date (ISO format: YYYY-MM-DD)
+     * @param endDate      filter records until this date (ISO format: YYYY-MM-DD)
      * @return a paginated response containing inward record DTOs
      */
     @GetMapping("/inwards")
     public PaginatedResponse<InwardHistoryDto> getInwards(
-        @RequestParam(name = "page", defaultValue = "1") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size,
-        @RequestParam(name = "projectId", required = false) Long projectId,
-        @RequestParam(name = "search", required = false) String search,
-        @RequestParam(name = "supplierName", required = false) String supplierName,
-        @RequestParam(name = "invoiceNo", required = false) String invoiceNo,
-        @RequestParam(name = "startDate", required = false) String startDate,
-        @RequestParam(name = "endDate", required = false) String endDate
-    ) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "projectId", required = false) Long projectId,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "supplierName", required = false) String supplierName,
+            @RequestParam(name = "invoiceNo", required = false) String invoiceNo,
+            @RequestParam(name = "startDate", required = false) String startDate,
+            @RequestParam(name = "endDate", required = false) String endDate) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         Set<Long> allowedProjectIds = resolveAllowedProjectIds(user);
         int safePage = sanitizePage(page);
         int safeSize = sanitizeSize(size);
-        
+
         // If projectId is specified, filter to only that project (if user has access)
         if (projectId != null) {
             if (!allowedProjectIds.contains(projectId)) {
                 return new PaginatedResponse<>(
-                    Collections.emptyList(), 0, safePage, safeSize, 1, false, false, Collections.emptyMap()
-                );
+                        Collections.emptyList(), 0, safePage, safeSize, 1, false, false, Collections.emptyMap());
             }
             allowedProjectIds = Collections.singleton(projectId);
         }
-        
+
         if (allowedProjectIds.isEmpty()) {
             return new PaginatedResponse<>(
-                Collections.emptyList(), 0, safePage, safeSize, 1, false, false, Collections.emptyMap()
-            );
+                    Collections.emptyList(), 0, safePage, safeSize, 1, false, false, Collections.emptyMap());
         }
-        
+
         // Parse filter dates
         final LocalDate startLocalDate = parseDateOrNull(startDate);
         final LocalDate endLocalDate = parseDateOrNull(endDate);
         final Set<Long> scopedProjectIds = allowedProjectIds;
 
         List<InwardHistoryDto> dtos = inwardRecordRepository
-            .findAllByOrderByEntryDateDesc()
-            .stream()
-            .filter(record -> record.getProject() != null && scopedProjectIds.contains(record.getProject().getId()))
-            .filter(record -> filterInward(record, supplierName, invoiceNo, startLocalDate, endLocalDate))
-            .filter(record -> search == null || search.trim().isEmpty() || matchesInwardSearch(record, search))
-            .map(this::toInwardRecordDto)
-            .toList();
+                .findAllByOrderByEntryDateDesc()
+                .stream()
+                .filter(record -> record.getProject() != null && scopedProjectIds.contains(record.getProject().getId()))
+                .filter(record -> filterInward(record, supplierName, invoiceNo, startLocalDate, endLocalDate))
+                .filter(record -> search == null || search.trim().isEmpty() || matchesInwardSearch(record, search))
+                .map(this::toInwardRecordDto)
+                .toList();
 
         return paginateInwards(dtos, safePage, safeSize);
     }
 
     /**
-     * Returns paginated outward register history for the current user with advanced filtering.
+     * Returns paginated outward register history for the current user with advanced
+     * filtering.
      * Records are ordered by register date descending.
      *
-     * @param page 1‑based page number (defaults to 1 if invalid)
-     * @param size maximum number of items per page (capped between 1 and 100, defaults to 10)
+     * @param page      1‑based page number (defaults to 1 if invalid)
+     * @param size      maximum number of items per page (capped between 1 and 100,
+     *                  defaults to 10)
      * @param projectId filter by project ID
-     * @param issueTo filter by issue-to (contains search)
-     * @param jobNo filter by job number (contains search)
+     * @param issueTo   filter by issue-to (contains search)
+     * @param jobNo     filter by job number (contains search)
      * @param startDate filter records from this date (ISO format: YYYY-MM-DD)
-     * @param endDate filter records until this date (ISO format: YYYY-MM-DD)
+     * @param endDate   filter records until this date (ISO format: YYYY-MM-DD)
      * @return a paginated response containing outward register DTOs
      */
     @GetMapping("/outwards")
     public PaginatedResponse<OutwardRegisterDto> getOutwards(
-        @RequestParam(name = "page", defaultValue = "1") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size,
-        @RequestParam(name = "projectId", required = false) Long projectId,
-        @RequestParam(name = "search", required = false) String search,
-        @RequestParam(name = "issueTo", required = false) String issueTo,
-        @RequestParam(name = "jobNo", required = false) String jobNo,
-        @RequestParam(name = "startDate", required = false) String startDate,
-        @RequestParam(name = "endDate", required = false) String endDate
-    ) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "projectId", required = false) Long projectId,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "issueTo", required = false) String issueTo,
+            @RequestParam(name = "jobNo", required = false) String jobNo,
+            @RequestParam(name = "startDate", required = false) String startDate,
+            @RequestParam(name = "endDate", required = false) String endDate) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         Set<Long> allowedProjectIds = resolveAllowedProjectIds(user);
         int safePage = sanitizePage(page);
         int safeSize = sanitizeSize(size);
-        
+
         // If projectId is specified, filter to only that project (if user has access)
         if (projectId != null) {
             if (!allowedProjectIds.contains(projectId)) {
                 // User doesn't have access to this project
                 return new PaginatedResponse<>(
+                        Collections.emptyList(),
+                        0,
+                        safePage,
+                        safeSize,
+                        1,
+                        false,
+                        false,
+                        Collections.emptyMap());
+            }
+            allowedProjectIds = Collections.singleton(projectId);
+        }
+
+        if (allowedProjectIds.isEmpty()) {
+            return new PaginatedResponse<>(
                     Collections.emptyList(),
                     0,
                     safePage,
@@ -174,23 +191,7 @@ public class HistoryController {
                     1,
                     false,
                     false,
-                    Collections.emptyMap()
-                );
-            }
-            allowedProjectIds = Collections.singleton(projectId);
-        }
-        
-        if (allowedProjectIds.isEmpty()) {
-            return new PaginatedResponse<>(
-                Collections.emptyList(),
-                0,
-                safePage,
-                safeSize,
-                1,
-                false,
-                false,
-                Collections.emptyMap()
-            );
+                    Collections.emptyMap());
         }
         // Parse filter dates
         final LocalDate startLocalDate = parseDateOrNull(startDate);
@@ -198,52 +199,67 @@ public class HistoryController {
         final Set<Long> scopedProjectIds = allowedProjectIds;
 
         List<OutwardRegisterDto> dtos = outwardRecordRepository
-            .findAllByOrderByEntryDateDesc()
-            .stream()
-            .filter(record -> record.getProject() != null && scopedProjectIds.contains(record.getProject().getId()))
-            .filter(record -> filterOutward(record, issueTo, jobNo, startLocalDate, endLocalDate))
-            .filter(record -> search == null || search.trim().isEmpty() || matchesOutwardSearch(record, search))
-            .map(this::toOutwardRegisterDto)
-            .toList();
+                .findAllByOrderByEntryDateDesc()
+                .stream()
+                .filter(record -> record.getProject() != null && scopedProjectIds.contains(record.getProject().getId()))
+                .filter(record -> filterOutward(record, issueTo, jobNo, startLocalDate, endLocalDate))
+                .filter(record -> search == null || search.trim().isEmpty() || matchesOutwardSearch(record, search))
+                .map(this::toOutwardRegisterDto)
+                .toList();
 
         return paginateOutwards(dtos, safePage, safeSize);
     }
 
     /**
-     * Returns paginated transfer record history for the current user with advanced filtering.
+     * Returns paginated transfer record history for the current user with advanced
+     * filtering.
      * Records are ordered by transfer date descending.
      *
-     * @param page 1‑based page number (defaults to 1 if invalid)
-     * @param size maximum number of items per page (capped between 1 and 100, defaults to 10)
-     * @param projectId filter by project ID
+     * @param page        1‑based page number (defaults to 1 if invalid)
+     * @param size        maximum number of items per page (capped between 1 and
+     *                    100, defaults to 10)
+     * @param projectId   filter by project ID
      * @param fromProject filter by from-project (contains search)
-     * @param toProject filter by to-project (contains search)
-     * @param startDate filter records from this date (ISO format: YYYY-MM-DD)
-     * @param endDate filter records until this date (ISO format: YYYY-MM-DD)
+     * @param toProject   filter by to-project (contains search)
+     * @param startDate   filter records from this date (ISO format: YYYY-MM-DD)
+     * @param endDate     filter records until this date (ISO format: YYYY-MM-DD)
      * @return a paginated response containing transfer record DTOs
      */
     @GetMapping("/transfers")
     public PaginatedResponse<TransferRecordDto> getTransfers(
-        @RequestParam(name = "page", defaultValue = "1") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size,
-        @RequestParam(name = "projectId", required = false) Long projectId,
-        @RequestParam(name = "search", required = false) String search,
-        @RequestParam(name = "fromProject", required = false) String fromProject,
-        @RequestParam(name = "toProject", required = false) String toProject,
-        @RequestParam(name = "startDate", required = false) String startDate,
-        @RequestParam(name = "endDate", required = false) String endDate
-    ) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "projectId", required = false) Long projectId,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "fromProject", required = false) String fromProject,
+            @RequestParam(name = "toProject", required = false) String toProject,
+            @RequestParam(name = "startDate", required = false) String startDate,
+            @RequestParam(name = "endDate", required = false) String endDate) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         Set<Long> allowedProjectIds = resolveAllowedProjectIds(user);
         int safePage = sanitizePage(page);
         int safeSize = sanitizeSize(size);
-        
+
         // If projectId is specified, filter to only that project (if user has access)
         if (projectId != null) {
             if (!allowedProjectIds.contains(projectId)) {
                 // User doesn't have access to this project
                 return new PaginatedResponse<>(
+                        Collections.emptyList(),
+                        0,
+                        safePage,
+                        safeSize,
+                        1,
+                        false,
+                        false,
+                        Collections.emptyMap());
+            }
+            allowedProjectIds = Collections.singleton(projectId);
+        }
+
+        if (allowedProjectIds.isEmpty()) {
+            return new PaginatedResponse<>(
                     Collections.emptyList(),
                     0,
                     safePage,
@@ -251,23 +267,7 @@ public class HistoryController {
                     1,
                     false,
                     false,
-                    Collections.emptyMap()
-                );
-            }
-            allowedProjectIds = Collections.singleton(projectId);
-        }
-        
-        if (allowedProjectIds.isEmpty()) {
-            return new PaginatedResponse<>(
-                Collections.emptyList(),
-                0,
-                safePage,
-                safeSize,
-                1,
-                false,
-                false,
-                Collections.emptyMap()
-            );
+                    Collections.emptyMap());
         }
         // Parse filter dates
         final LocalDate startLocalDate = parseDateOrNull(startDate);
@@ -275,18 +275,18 @@ public class HistoryController {
         final Set<Long> scopedProjectIds = allowedProjectIds;
 
         List<TransferRecordDto> dtos = transferRecordRepository
-            .findAllByOrderByTransferDateDesc()
-            .stream()
-            .filter(record -> {
-                Long fromId = record.getFromProject() != null ? record.getFromProject().getId() : null;
-                Long toId = record.getToProject() != null ? record.getToProject().getId() : null;
-                return (fromId != null && scopedProjectIds.contains(fromId)) ||
-                    (toId != null && scopedProjectIds.contains(toId));
-            })
-            .filter(record -> filterTransfer(record, fromProject, toProject, startLocalDate, endLocalDate))
-            .filter(record -> search == null || search.trim().isEmpty() || matchesTransferSearch(record, search))
-            .map(this::toTransferRecordDto)
-            .toList();
+                .findAllByOrderByTransferDateDesc()
+                .stream()
+                .filter(record -> {
+                    Long fromId = record.getFromProject() != null ? record.getFromProject().getId() : null;
+                    Long toId = record.getToProject() != null ? record.getToProject().getId() : null;
+                    return (fromId != null && scopedProjectIds.contains(fromId)) ||
+                            (toId != null && scopedProjectIds.contains(toId));
+                })
+                .filter(record -> filterTransfer(record, fromProject, toProject, startLocalDate, endLocalDate))
+                .filter(record -> search == null || search.trim().isEmpty() || matchesTransferSearch(record, search))
+                .map(this::toTransferRecordDto)
+                .toList();
 
         return paginateTransfers(dtos, safePage, safeSize);
     }
@@ -336,7 +336,7 @@ public class HistoryController {
             Long fromId = record.getFromProject() != null ? record.getFromProject().getId() : null;
             Long toId = record.getToProject() != null ? record.getToProject().getId() : null;
             boolean allowed = (fromId != null && allowedProjectIds.contains(fromId)) ||
-                (toId != null && allowedProjectIds.contains(toId));
+                    (toId != null && allowedProjectIds.contains(toId));
             if (allowed) {
                 dtos.add(toTransferRecordDto(record));
             }
@@ -348,16 +348,16 @@ public class HistoryController {
         // Users with ALL access can see all projects
         if (user.getAccessType() == AccessType.ALL) {
             return projectRepository
-                .findAll()
+                    .findAll()
+                    .stream()
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
+        }
+        return user
+                .getProjects()
                 .stream()
                 .map(Project::getId)
                 .collect(Collectors.toSet());
-        }
-        return user
-            .getProjects()
-            .stream()
-            .map(Project::getId)
-            .collect(Collectors.toSet());
     }
 
     private PaginatedResponse<InwardHistoryDto> paginateInwards(List<InwardHistoryDto> items, int page, int size) {
@@ -369,15 +369,14 @@ public class HistoryController {
         int toIndex = Math.min(fromIndex + safeSize, totalItems);
         List<InwardHistoryDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
         return new PaginatedResponse<>(
-            pageItems,
-            totalItems,
-            safePage,
-            safeSize,
-            totalPages,
-            safePage < totalPages,
-            safePage > 1,
-            Collections.emptyMap()
-        );
+                pageItems,
+                totalItems,
+                safePage,
+                safeSize,
+                totalPages,
+                safePage < totalPages,
+                safePage > 1,
+                Collections.emptyMap());
     }
 
     private PaginatedResponse<OutwardRegisterDto> paginateOutwards(List<OutwardRegisterDto> items, int page, int size) {
@@ -389,15 +388,14 @@ public class HistoryController {
         int toIndex = Math.min(fromIndex + safeSize, totalItems);
         List<OutwardRegisterDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
         return new PaginatedResponse<>(
-            pageItems,
-            totalItems,
-            safePage,
-            safeSize,
-            totalPages,
-            safePage < totalPages,
-            safePage > 1,
-            Collections.emptyMap()
-        );
+                pageItems,
+                totalItems,
+                safePage,
+                safeSize,
+                totalPages,
+                safePage < totalPages,
+                safePage > 1,
+                Collections.emptyMap());
     }
 
     private PaginatedResponse<TransferRecordDto> paginateTransfers(List<TransferRecordDto> items, int page, int size) {
@@ -409,15 +407,14 @@ public class HistoryController {
         int toIndex = Math.min(fromIndex + safeSize, totalItems);
         List<TransferRecordDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
         return new PaginatedResponse<>(
-            pageItems,
-            totalItems,
-            safePage,
-            safeSize,
-            totalPages,
-            safePage < totalPages,
-            safePage > 1,
-            Collections.emptyMap()
-        );
+                pageItems,
+                totalItems,
+                safePage,
+                safeSize,
+                totalPages,
+                safePage < totalPages,
+                safePage > 1,
+                Collections.emptyMap());
     }
 
     private int sanitizePage(int page) {
@@ -431,7 +428,8 @@ public class HistoryController {
         return Math.min(size, 100);
     }
 
-    // Mapping functions to DTOs. These mirror logic in AppDataService but are redefined here
+    // Mapping functions to DTOs. These mirror logic in AppDataService but are
+    // redefined here
     // because AppDataService methods are private.
     private InwardHistoryDto toInwardRecordDto(InwardRecord record) {
         // Map lines - create light DTOs for history
@@ -450,18 +448,18 @@ public class HistoryController {
         }
         Project project = record.getProject();
         return new InwardHistoryDto(
-            record.getId() != null ? String.valueOf(record.getId()) : null,
-            project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
-            project != null ? project.getName() : null,
-            record.getCode(),
-            record.getEntryDate() != null ? DATE_FMT.format(record.getEntryDate()) : null,
-            record.getDeliveryDate() != null ? DATE_FMT.format(record.getDeliveryDate()) : null,
-            record.getInvoiceNo(),
-            record.getSupplierName(),
-            record.isValidated(),
-            lines.size(),
-            lines
-        );
+                record.getId() != null ? String.valueOf(record.getId()) : null,
+                project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
+                project != null ? project.getName() : null,
+                record.getCode(),
+                record.getEntryDate() != null ? DATE_FMT.format(record.getEntryDate()) : null,
+                record.getDeliveryDate() != null ? DATE_FMT.format(record.getDeliveryDate()) : null,
+                record.getInvoiceNo(),
+                record.getSupplierName(),
+                record.getType() != null ? record.getType().name() : "SUPPLY",
+                record.isValidated(),
+                lines.size(),
+                lines);
     }
 
     private OutwardRegisterDto toOutwardRegisterDto(OutwardRecord record) {
@@ -470,28 +468,26 @@ public class HistoryController {
         for (OutwardLine line : record.getLines()) {
             Material mat = line.getMaterial();
             lines.add(new OutwardLineDto(
-                String.valueOf(line.getId()),
-                mat != null && mat.getId() != null ? String.valueOf(mat.getId()) : null,
-                mat != null ? mat.getCode() : null,
-                mat != null ? mat.getName() : null,
-                mat != null ? mat.getUnit() : null,
-                line.getIssueQty()
-            ));
+                    String.valueOf(line.getId()),
+                    mat != null && mat.getId() != null ? String.valueOf(mat.getId()) : null,
+                    mat != null ? mat.getCode() : null,
+                    mat != null ? mat.getName() : null,
+                    mat != null ? mat.getUnit() : null,
+                    line.getIssueQty()));
         }
         Project project = record.getProject();
         return new OutwardRegisterDto(
-            record.getId() != null ? String.valueOf(record.getId()) : null,
-            project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
-            project != null ? project.getName() : null,
-            record.getCode(),
-            record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
-            record.getIssueTo(),
-            record.getStatus() != null ? record.getStatus().name() : null,
-            record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
-            record.isValidated(),
-            lines.size(),
-            lines
-        );
+                record.getId() != null ? String.valueOf(record.getId()) : null,
+                project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
+                project != null ? project.getName() : null,
+                record.getCode(),
+                record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
+                record.getIssueTo(),
+                record.getStatus() != null ? record.getStatus().name() : null,
+                record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
+                record.isValidated(),
+                lines.size(),
+                lines);
     }
 
     private TransferRecordDto toTransferRecordDto(TransferRecord record) {
@@ -500,29 +496,28 @@ public class HistoryController {
         for (TransferLine line : record.getLines()) {
             Material mat = line.getMaterial();
             lines.add(new TransferLineDto(
-                String.valueOf(line.getId()),
-                mat != null && mat.getId() != null ? String.valueOf(mat.getId()) : null,
-                mat != null ? mat.getCode() : null,
-                mat != null ? mat.getName() : null,
-                mat != null ? mat.getUnit() : null,
-                line.getTransferQty()
-            ));
+                    String.valueOf(line.getId()),
+                    mat != null && mat.getId() != null ? String.valueOf(mat.getId()) : null,
+                    mat != null ? mat.getCode() : null,
+                    mat != null ? mat.getName() : null,
+                    mat != null ? mat.getUnit() : null,
+                    line.getTransferQty()));
         }
         Project from = record.getFromProject();
         Project to = record.getToProject();
         return new TransferRecordDto(
-            record.getId() != null ? String.valueOf(record.getId()) : null,
-            record.getCode(),
-            from != null && from.getId() != null ? String.valueOf(from.getId()) : null,
-            from != null ? from.getName() : null,
-            record.getFromSite(),
-            to != null && to.getId() != null ? String.valueOf(to.getId()) : null,
-            to != null ? to.getName() : null,
-            record.getToSite(),
-            record.getTransferDate() != null ? DATE_FMT.format(record.getTransferDate()) : null,
-            record.getRemarks(),
-            lines,
-            lines.size()  // Add items count
+                record.getId() != null ? String.valueOf(record.getId()) : null,
+                record.getCode(),
+                from != null && from.getId() != null ? String.valueOf(from.getId()) : null,
+                from != null ? from.getName() : null,
+                record.getFromSite(),
+                to != null && to.getId() != null ? String.valueOf(to.getId()) : null,
+                to != null ? to.getName() : null,
+                record.getToSite(),
+                record.getTransferDate() != null ? DATE_FMT.format(record.getTransferDate()) : null,
+                record.getRemarks(),
+                lines,
+                lines.size() // Add items count
         );
     }
 
@@ -539,14 +534,17 @@ public class HistoryController {
         }
     }
 
-    private boolean filterInward(InwardRecord record, String supplierName, String invoiceNo, LocalDate startDate, LocalDate endDate) {
+    private boolean filterInward(InwardRecord record, String supplierName, String invoiceNo, LocalDate startDate,
+            LocalDate endDate) {
         if (supplierName != null && !supplierName.isEmpty()) {
-            if (record.getSupplierName() == null || !record.getSupplierName().toLowerCase().contains(supplierName.toLowerCase())) {
+            if (record.getSupplierName() == null
+                    || !record.getSupplierName().toLowerCase().contains(supplierName.toLowerCase())) {
                 return false;
             }
         }
         if (invoiceNo != null && !invoiceNo.isEmpty()) {
-            if (record.getInvoiceNo() == null || !record.getInvoiceNo().toLowerCase().contains(invoiceNo.toLowerCase())) {
+            if (record.getInvoiceNo() == null
+                    || !record.getInvoiceNo().toLowerCase().contains(invoiceNo.toLowerCase())) {
                 return false;
             }
         }
@@ -559,7 +557,8 @@ public class HistoryController {
         return true;
     }
 
-    private boolean filterOutward(OutwardRecord record, String issueTo, String jobNo, LocalDate startDate, LocalDate endDate) {
+    private boolean filterOutward(OutwardRecord record, String issueTo, String jobNo, LocalDate startDate,
+            LocalDate endDate) {
         if (issueTo != null && !issueTo.isEmpty()) {
             if (record.getIssueTo() == null || !record.getIssueTo().toLowerCase().contains(issueTo.toLowerCase())) {
                 return false;
@@ -579,7 +578,8 @@ public class HistoryController {
         return true;
     }
 
-    private boolean filterTransfer(TransferRecord record, String fromProject, String toProject, LocalDate startDate, LocalDate endDate) {
+    private boolean filterTransfer(TransferRecord record, String fromProject, String toProject, LocalDate startDate,
+            LocalDate endDate) {
         if (fromProject != null && !fromProject.isEmpty()) {
             String fromProjectName = record.getFromProject() != null ? record.getFromProject().getName() : null;
             if (fromProjectName == null || !fromProjectName.toLowerCase().contains(fromProject.toLowerCase())) {
@@ -604,44 +604,45 @@ public class HistoryController {
     private boolean matchesInwardSearch(InwardRecord record, String search) {
         String lowerSearch = search.toLowerCase();
         return (record.getCode() != null && record.getCode().toLowerCase().contains(lowerSearch)) ||
-               (record.getSupplierName() != null && record.getSupplierName().toLowerCase().contains(lowerSearch)) ||
-               (record.getInvoiceNo() != null && record.getInvoiceNo().toLowerCase().contains(lowerSearch)) ||
-               (record.getProject() != null && record.getProject().getName() != null && 
-                record.getProject().getName().toLowerCase().contains(lowerSearch)) ||
-               (record.getLines() != null && record.getLines().stream().anyMatch(line -> 
-                    (line.getMaterial() != null && line.getMaterial().getName() != null && 
-                     line.getMaterial().getName().toLowerCase().contains(lowerSearch)) ||
-                    (line.getMaterial() != null && line.getMaterial().getCode() != null && 
-                     line.getMaterial().getCode().toLowerCase().contains(lowerSearch))
-               ));
+                (record.getSupplierName() != null && record.getSupplierName().toLowerCase().contains(lowerSearch)) ||
+                (record.getInvoiceNo() != null && record.getInvoiceNo().toLowerCase().contains(lowerSearch)) ||
+                (record.getProject() != null && record.getProject().getName() != null &&
+                        record.getProject().getName().toLowerCase().contains(lowerSearch))
+                ||
+                (record.getLines() != null && record.getLines().stream()
+                        .anyMatch(line -> (line.getMaterial() != null && line.getMaterial().getName() != null &&
+                                line.getMaterial().getName().toLowerCase().contains(lowerSearch)) ||
+                                (line.getMaterial() != null && line.getMaterial().getCode() != null &&
+                                        line.getMaterial().getCode().toLowerCase().contains(lowerSearch))));
     }
 
     private boolean matchesOutwardSearch(OutwardRecord record, String search) {
         String lowerSearch = search.toLowerCase();
         return (record.getCode() != null && record.getCode().toLowerCase().contains(lowerSearch)) ||
-               (record.getIssueTo() != null && record.getIssueTo().toLowerCase().contains(lowerSearch)) ||
-               (record.getProject() != null && record.getProject().getName() != null && 
-                record.getProject().getName().toLowerCase().contains(lowerSearch)) ||
-               (record.getLines() != null && record.getLines().stream().anyMatch(line -> 
-                    (line.getMaterial() != null && line.getMaterial().getName() != null && 
-                     line.getMaterial().getName().toLowerCase().contains(lowerSearch)) ||
-                    (line.getMaterial() != null && line.getMaterial().getCode() != null && 
-                     line.getMaterial().getCode().toLowerCase().contains(lowerSearch))
-               ));
+                (record.getIssueTo() != null && record.getIssueTo().toLowerCase().contains(lowerSearch)) ||
+                (record.getProject() != null && record.getProject().getName() != null &&
+                        record.getProject().getName().toLowerCase().contains(lowerSearch))
+                ||
+                (record.getLines() != null && record.getLines().stream()
+                        .anyMatch(line -> (line.getMaterial() != null && line.getMaterial().getName() != null &&
+                                line.getMaterial().getName().toLowerCase().contains(lowerSearch)) ||
+                                (line.getMaterial() != null && line.getMaterial().getCode() != null &&
+                                        line.getMaterial().getCode().toLowerCase().contains(lowerSearch))));
     }
 
     private boolean matchesTransferSearch(TransferRecord record, String search) {
         String lowerSearch = search.toLowerCase();
         return (record.getCode() != null && record.getCode().toLowerCase().contains(lowerSearch)) ||
-               (record.getFromProject() != null && record.getFromProject().getName() != null && 
-                record.getFromProject().getName().toLowerCase().contains(lowerSearch)) ||
-               (record.getToProject() != null && record.getToProject().getName() != null && 
-                record.getToProject().getName().toLowerCase().contains(lowerSearch)) ||
-               (record.getLines() != null && record.getLines().stream().anyMatch(line -> 
-                    (line.getMaterial() != null && line.getMaterial().getName() != null && 
-                     line.getMaterial().getName().toLowerCase().contains(lowerSearch)) ||
-                    (line.getMaterial() != null && line.getMaterial().getCode() != null && 
-                     line.getMaterial().getCode().toLowerCase().contains(lowerSearch))
-               ));
+                (record.getFromProject() != null && record.getFromProject().getName() != null &&
+                        record.getFromProject().getName().toLowerCase().contains(lowerSearch))
+                ||
+                (record.getToProject() != null && record.getToProject().getName() != null &&
+                        record.getToProject().getName().toLowerCase().contains(lowerSearch))
+                ||
+                (record.getLines() != null && record.getLines().stream()
+                        .anyMatch(line -> (line.getMaterial() != null && line.getMaterial().getName() != null &&
+                                line.getMaterial().getName().toLowerCase().contains(lowerSearch)) ||
+                                (line.getMaterial() != null && line.getMaterial().getCode() != null &&
+                                        line.getMaterial().getCode().toLowerCase().contains(lowerSearch))));
     }
 }

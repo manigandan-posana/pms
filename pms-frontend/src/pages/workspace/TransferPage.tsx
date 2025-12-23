@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../store/hooks";
 import { searchTransferHistory } from "../../store/slices/historySlice";
 import toast from "react-hot-toast";
@@ -38,11 +38,6 @@ interface AuthStateShape {
 
 const TransferPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  if (location.pathname === '/workspace/transfer') {
-    return <Navigate to="/workspace/inventory/transfers" replace />;
-  }
 
   const { token } = useSelector<RootState, AuthStateShape>(
     (state) => state.auth as unknown as AuthStateShape

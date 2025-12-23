@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../store/hooks";
 import { searchOutwardHistory } from "../../store/slices/historySlice";
 import toast from "react-hot-toast";
@@ -46,15 +46,10 @@ interface AuthStateSlice {
 
 const OutwardPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const { token } = useSelector<RootState, AuthStateSlice>(
     (state) => state.auth as AuthStateSlice
   );
-
-  if (location.pathname === '/workspace/outward') {
-    return <Navigate to="/workspace/inventory/outwards" replace />;
-  }
 
   const [historyRecords, setHistoryRecords] = useState<OutwardHistoryRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
