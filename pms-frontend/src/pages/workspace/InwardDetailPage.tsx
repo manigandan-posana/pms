@@ -95,7 +95,7 @@ const InwardDetailPage: React.FC = () => {
 
       if (!data) {
         toast.error('No record data received');
-        navigate('/workspace/inward');
+        navigate('/workspace/inventory/inwards');
         return;
       }
 
@@ -116,7 +116,7 @@ const InwardDetailPage: React.FC = () => {
       console.error('Failed to load inward detail:', error);
       const errorMsg = error?.response?.data?.error || error?.message || 'Failed to load inward details';
       toast.error(errorMsg);
-      navigate('/workspace/inward');
+      navigate('/workspace/inventory/inwards');
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ const InwardDetailPage: React.FC = () => {
 
       // Reload to ensure sync? Or just navigate/stay? 
       // Original code navigated to list, but maybe better to stay or navigate
-      navigate('/workspace/inward');
+      navigate('/workspace/inventory/inwards');
     } catch (error) {
       console.error('Failed to save changes:', error);
       toast.error('Failed to save changes');
@@ -164,7 +164,7 @@ const InwardDetailPage: React.FC = () => {
 
       await dispatch(validateInward(record.id)).unwrap();
       toast.success('Inward record saved and validated');
-      navigate('/workspace/inward');
+      navigate('/workspace/inventory/inwards');
     } catch (error) {
       console.error('Failed to validate:', error);
       toast.error('Failed to validate record');
@@ -190,7 +190,7 @@ const InwardDetailPage: React.FC = () => {
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 mb-4">No record found</p>
           <CustomButton
-            onClick={() => navigate('/workspace/inward')}
+            onClick={() => navigate('/workspace/inventory/inwards')}
             startIcon={<FiArrowLeft />}
           >
             Back to Inwards
@@ -292,7 +292,7 @@ const InwardDetailPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <CustomButton
               variant="text"
-              onClick={() => navigate('/workspace/inward')}
+              onClick={() => navigate('/workspace/inventory/inwards')}
               className="!p-2 text-slate-500 hover:bg-slate-100 rounded-full"
             >
               <FiArrowLeft size={20} />

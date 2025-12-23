@@ -68,7 +68,7 @@ const TransferDetailPage: React.FC = () => {
 
       if (!data) {
         toast.error('No record data received');
-        navigate('/workspace/transfer');
+        navigate('/workspace/inventory/transfers');
         return;
       }
 
@@ -77,7 +77,7 @@ const TransferDetailPage: React.FC = () => {
       console.error('Failed to load transfer detail:', error);
       const errorMsg = error?.response?.data?.error || error?.message || 'Failed to load transfer details';
       toast.error(errorMsg);
-      navigate('/workspace/transfer');
+      navigate('/workspace/inventory/transfers');
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ const TransferDetailPage: React.FC = () => {
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 mb-4">No record found</p>
           <CustomButton
-            onClick={() => navigate('/workspace/transfer')}
+            onClick={() => navigate('/workspace/inventory/transfers')}
             startIcon={<FiArrowLeft />}
           >
             Back to Transfers
@@ -152,7 +152,7 @@ const TransferDetailPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <CustomButton
               variant="text"
-              onClick={() => navigate('/workspace/transfer')}
+              onClick={() => navigate('/workspace/inventory/transfers')}
               className="!p-2 text-slate-500 hover:bg-slate-100 rounded-full"
             >
               <FiArrowLeft size={20} />

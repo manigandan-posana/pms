@@ -70,7 +70,7 @@ const OutwardDetailPage: React.FC = () => {
 
       if (!data) {
         toast.error('No record data received');
-        navigate('/workspace/outward');
+        navigate('/workspace/inventory/outwards');
         return;
       }
 
@@ -90,7 +90,7 @@ const OutwardDetailPage: React.FC = () => {
       console.error('Failed to load outward detail:', error);
       const errorMsg = error?.response?.data?.error || error?.message || 'Failed to load outward details';
       toast.error(errorMsg);
-      navigate('/workspace/outward');
+      navigate('/workspace/inventory/outwards');
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ const OutwardDetailPage: React.FC = () => {
 
       await dispatch(updateOutward({ id: record.id, payload: { lines } })).unwrap();
       toast.success('Quantities updated successfully');
-      navigate('/workspace/outward');
+      navigate('/workspace/inventory/outwards');
     } catch (error) {
       console.error('Failed to save changes:', error);
       toast.error('Failed to save changes');
@@ -137,7 +137,7 @@ const OutwardDetailPage: React.FC = () => {
       // Then close the outward
       await dispatch(closeOutward(record.id)).unwrap();
       toast.success('Quantities saved and outward closed successfully');
-      navigate('/workspace/outward');
+      navigate('/workspace/inventory/outwards');
     } catch (error) {
       console.error('Failed to close:', error);
       toast.error('Failed to close record');
@@ -163,7 +163,7 @@ const OutwardDetailPage: React.FC = () => {
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-200">
           <p className="text-slate-500 mb-4">No record found</p>
           <CustomButton
-            onClick={() => navigate('/workspace/outward')}
+            onClick={() => navigate('/workspace/inventory/outwards')}
             startIcon={<FiArrowLeft />}
           >
             Back to Outwards
@@ -236,7 +236,7 @@ const OutwardDetailPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <CustomButton
               variant="text"
-              onClick={() => navigate('/workspace/outward')}
+              onClick={() => navigate('/workspace/inventory/outwards')}
               className="!p-2 text-slate-500 hover:bg-slate-100 rounded-full"
             >
               <FiArrowLeft size={20} />
