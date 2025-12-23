@@ -225,15 +225,15 @@ const ProjectDetailsPage: React.FC = () => {
 
     try {
       const inwardResponse = await historyApi.searchInwardHistory({ projectId: selectedProjectId, page: 1, size: 100 });
-      const inwards = inwardResponse?.items || inwardResponse?.content || [];
+      const inwards = inwardResponse?.content || [];
       setInwardRecords(inwards);
 
       const outwardResponse = await historyApi.searchOutwardHistory({ projectId: selectedProjectId, page: 1, size: 100 });
-      const outwards = outwardResponse?.items || outwardResponse?.content || [];
+      const outwards = outwardResponse?.content || [];
       setOutwardRecords(outwards);
 
       const transferResponse = await historyApi.searchTransferHistory({ projectId: selectedProjectId, page: 1, size: 100 });
-      const transfers = transferResponse?.items || transferResponse?.content || [];
+      const transfers = transferResponse?.content || [];
 
       const transfersIn = transfers.filter((t: TransferRecord) =>
         t.toProjectName && t.toProjectName.includes(selectedProject?.name || "")

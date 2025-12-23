@@ -81,13 +81,12 @@ public class BomService {
         Pageable pageable = PageRequest.of(safePage - 1, safeSize);
         Page<BomLine> linesPage = bomLineRepository.findByProjectId(project.getId(), pageable);
         List<BomLineDto> items = linesPage.stream().map(this::toDto).toList();
-        int totalPages = linesPage.getTotalPages() == 0 ? 1 : linesPage.getTotalPages();
         return new PaginatedResponse<>(
             items,
             linesPage.getTotalElements(),
-            safePage,
-            safeSize,
-            totalPages,
+            Math.max(1, linesPage.getTotalPages()),
+            linesPage.getSize(),
+            linesPage.getNumber(),
             linesPage.hasNext(),
             linesPage.hasPrevious(),
             java.util.Collections.emptyMap()

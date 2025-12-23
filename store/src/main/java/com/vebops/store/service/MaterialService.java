@@ -97,9 +97,9 @@ public class MaterialService {
         return new PaginatedResponse<>(
             items,
             result.getTotalElements(),
-            safePage,
-            safeSize,
-            result.getTotalPages(),
+            Math.max(1, result.getTotalPages()),
+            result.getSize(),
+            result.getNumber(),
             result.hasNext(),
             result.hasPrevious(),
             filters

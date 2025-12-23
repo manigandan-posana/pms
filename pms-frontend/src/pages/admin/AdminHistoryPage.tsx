@@ -53,10 +53,11 @@ interface TransferHistoryRecord {
 }
 
 interface PaginatedResponse<T> {
-  items?: T[];
   content?: T[];
-  totalItems?: number;
   totalElements?: number;
+  totalPages?: number;
+  number?: number;
+  size?: number;
 }
 
 // ---- Component ---- //
@@ -123,7 +124,7 @@ const AdminHistoryPage: React.FC = () => {
     if (!token) return;
     try {
       const response = await apiGet<any>("/admin/projects", { limit: 1000 }); // Assuming /admin/projects exists
-      const data = response?.content || response?.items || response || [];
+      const data = response?.content || response || [];
       setProjects(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to load projects:", error);
@@ -146,9 +147,9 @@ const AdminHistoryPage: React.FC = () => {
       };
 
       const response = await apiGet<PaginatedResponse<InwardHistoryRecord>>("/history/inwards", params);
-      const data = response?.items || response?.content || [];
+      const data = response?.content || [];
       setInwardRecords(data);
-      setInwardTotal(response?.totalItems || response?.totalElements || 0);
+      setInwardTotal(response?.totalElements || 0);
     } catch (error) {
       console.error("Failed to load inward history:", error);
       toast.error("Failed to load inward history");
@@ -170,9 +171,9 @@ const AdminHistoryPage: React.FC = () => {
         toDate: outwardDateTo ? outwardDateTo.toISOString().split('T')[0] : undefined,
       };
       const response = await apiGet<PaginatedResponse<OutwardHistoryRecord>>("/history/outwards", params);
-      const data = response?.items || response?.content || [];
+      const data = response?.content || [];
       setOutwardRecords(data);
-      setOutwardTotal(response?.totalItems || response?.totalElements || 0);
+      setOutwardTotal(response?.totalElements || 0);
     } catch (error) {
       console.error("Failed to load outward history:", error);
       toast.error("Failed to load outward history");
@@ -194,9 +195,9 @@ const AdminHistoryPage: React.FC = () => {
         toDate: transferDateTo ? transferDateTo.toISOString().split('T')[0] : undefined,
       };
       const response = await apiGet<PaginatedResponse<TransferHistoryRecord>>("/history/transfers", params);
-      const data = response?.items || response?.content || [];
+      const data = response?.content || [];
       setTransferRecords(data);
-      setTransferTotal(response?.totalItems || response?.totalElements || 0);
+      setTransferTotal(response?.totalElements || 0);
     } catch (error) {
       console.error("Failed to load transfer history:", error);
       toast.error("Failed to load transfer history");
