@@ -16,7 +16,7 @@ import {
   IconButton,
   CardHeader
 } from "@mui/material";
-import { BarChart, PieChart, LineChart, SparkLineChart, Gauge } from "@mui/x-charts";
+import { BarChart, PieChart, SparkLineChart } from "@mui/x-charts";
 import {
   MdArrowUpward as ArrowUpIcon,
   MdArrowDownward as ArrowDownIcon,
@@ -146,9 +146,8 @@ const UserDashboardPage: React.FC = () => {
   const outwardArray = useMemo(() => extractList(outwardHistory), [outwardHistory]);
   const transferArray = useMemo(() => extractList(transferHistory), [transferHistory]);
 
-  const dailyLogArray = useMemo(() => {
-    return [...dailyLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [dailyLogs]);
+  // `dailyLogs` exists in state but we don't need a derived sorted array here.
+  // If needed later, compute on demand. Removed unused `dailyLogArray` to avoid lint errors.
 
   useEffect(() => {
     if (selectedProjectId) {
@@ -389,7 +388,7 @@ const UserDashboardPage: React.FC = () => {
                   { data: inventoryTrendData.transfer, label: 'Transfers', color: '#a855f7', stack: 'total' },
                 ]}
                 margin={{ left: 40, right: 10, top: 20, bottom: 30 }}
-                slotProps={{ legend: { hidden: false, position: { vertical: 'top', horizontal: 'end' } } }}
+                slotProps={{ legend: { position: { vertical: 'top', horizontal: 'end' } } } as any}
                 borderRadius={4}
               />
             </Box>

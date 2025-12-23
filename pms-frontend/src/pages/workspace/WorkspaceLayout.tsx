@@ -67,7 +67,8 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   // Only bootstrap workspace on initial mount or when token changes, not on every navigation
   useEffect(() => {
     if (!token) return;
-    dispatch(bootstrapWorkspace(token));
+    // bootstrapWorkspace thunk does not take an argument; call without params
+    dispatch(bootstrapWorkspace());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
