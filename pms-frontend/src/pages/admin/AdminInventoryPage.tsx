@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import CustomTabs from "../../widgets/CustomTabs";
-import MaterialDirectoryPage from "./MaterialDirectoryPage";
-import MaterialAllocationsPage from "./MaterialAllocationsPage";
-import AllocatedMaterialsPage from "./AllocatedMaterialsPage";
+import GlobalLoader from "../../components/GlobalLoader";
+
+const MaterialDirectoryPage = React.lazy(() => import("./MaterialDirectoryPage"));
+const MaterialAllocationsPage = React.lazy(() => import("./MaterialAllocationsPage"));
+const AllocatedMaterialsPage = React.lazy(() => import("./AllocatedMaterialsPage"));
 
 const AdminInventoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,11 +13,14 @@ const AdminInventoryPage: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Map tab indices to routes
-  const tabRoutes = [
-    "/admin/inventory/materials",
-    "/admin/inventory/allocations",
-    "/admin/inventory/allocated",
-  ];
+  const tabRoutes = useMemo(
+    () => [
+      "/admin/inventory/materials",
+      "/admin/inventory/allocations",
+      "/admin/inventory/allocated",
+    ],
+    []
+  );
 
   // Sync active tab with current route
   useEffect(() => {
@@ -31,7 +36,7 @@ const AdminInventoryPage: React.FC = () => {
         setActiveIndex(index);
       }
     }
-  }, [location.pathname]);
+  }, [activeIndex, location.pathname, navigate, tabRoutes]);
 
   // Handle tab change and navigate
   const handleTabChange = (index: number) => {
@@ -39,11 +44,35 @@ const AdminInventoryPage: React.FC = () => {
     navigate(tabRoutes[index]);
   };
 
-  const tabs = [
-    { label: "Material Directory", content: <MaterialDirectoryPage /> },
-    { label: "Material Allocations", content: <MaterialAllocationsPage /> },
-    { label: "Allocated Materials", content: <AllocatedMaterialsPage /> }
-  ];
+  const tabs = useMemo(
+    () => [
+      {
+        label: "Material Directory",
+        content: (
+          <Suspense fallback={<GlobalLoader overlay={false} className="py-12" />}>
+            <MaterialDirectoryPage />
+          </Suspense>
+        ),
+      },
+      {
+        label: "Material Allocations",
+        content: (
+          <Suspense fallback={<GlobalLoader overlay={false} className="py-12" />}>
+            <MaterialAllocationsPage />
+          </Suspense>
+        ),
+      },
+      {
+        label: "Allocated Materials",
+        content: (
+          <Suspense fallback={<GlobalLoader overlay={false} className="py-12" />}>
+            <AllocatedMaterialsPage />
+          </Suspense>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="admin-inventory-page">
