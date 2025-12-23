@@ -5,7 +5,6 @@ import { useAppDispatch } from "../../store/hooks";
 import { getOutwardById, updateOutward, closeOutward } from "../../store/slices/inventorySlice";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiSave, FiLock, FiInfo, FiSearch } from "react-icons/fi";
-import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 import type { RootState } from "../../store/store";
 
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
@@ -229,7 +228,6 @@ const OutwardDetailPage: React.FC = () => {
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Inventory Navigation Tabs */}
       <div className="px-6 pt-6">
-        <InventoryNavigationTabs />
       </div>
       
       {/* Header */}

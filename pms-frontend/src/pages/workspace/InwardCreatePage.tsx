@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Get } from "../../utils/apiService";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
-import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -435,7 +434,6 @@ const InwardCreatePage: React.FC = () => {
     <div className="flex flex-col h-full bg-slate-50">
       {/* Inventory Navigation Tabs */}
       <div className="px-6 pt-6">
-        <InventoryNavigationTabs />
       </div>
 
       {/* Header */}
