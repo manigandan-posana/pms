@@ -313,7 +313,7 @@ const OutwardCreatePage: React.FC = () => {
       dispatch(refreshInventoryCodes());
       dispatch(setOutwardField({ field: "issueTo", value: "" }));
       dispatch(clearOutwardSelections());
-      navigate('/workspace/outward');
+      navigate('/workspace/inventory/outwards');
     } catch (err) {
       // Error already handled by thunk
     } finally {
@@ -371,7 +371,7 @@ const OutwardCreatePage: React.FC = () => {
         <div className="flex items-center gap-4">
           <CustomButton
             variant="text"
-            onClick={() => navigate('/workspace/outward')}
+            onClick={() => navigate('/workspace/inventory/outwards')}
             className="text-slate-500 hover:text-slate-700"
             size="small"
           >

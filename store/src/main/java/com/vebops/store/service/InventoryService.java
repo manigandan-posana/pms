@@ -141,7 +141,7 @@ public class InventoryService {
             if (record.getType() == InwardType.RETURN) {
                 if (record.getOutwardRecord() != null) {
                     OutwardLine outLine = record.getOutwardRecord().getLines().stream()
-                            .filter(l -> l.getMaterial().getId().equals(lineReq.materialId()))
+                            .filter(l -> String.valueOf(l.getMaterial().getId()).equals(lineReq.materialId()))
                             .findFirst()
                             .orElseThrow(
                                     () -> new BadRequestException("Material not found in selected Outward Record"));

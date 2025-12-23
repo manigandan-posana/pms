@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiPackage, FiTruck, FiRepeat, FiShoppingCart } from "react-icons/fi";
+import { FiPackage, FiTruck, FiRepeat } from "react-icons/fi";
 
 const InventoryNavigationTabs: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +11,6 @@ const InventoryNavigationTabs: React.FC = () => {
     { label: "Inwards", path: "/workspace/inventory/inwards", icon: FiPackage },
     { label: "Outwards", path: "/workspace/inventory/outwards", icon: FiTruck },
     { label: "Transfers", path: "/workspace/inventory/transfers", icon: FiRepeat },
-    { label: "Procurement", path: "/workspace/inventory/procurement", icon: FiShoppingCart },
   ];
 
   const isActive = (path: string) => {

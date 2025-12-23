@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../store/hooks";
 import { searchInwardHistory } from "../../store/slices/historySlice";
@@ -47,7 +47,12 @@ interface AuthStateSlice {
 
 const InwardPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { token } = useSelector<RootState, AuthStateSlice>((state) => state.auth as AuthStateSlice);
+
+  if (location.pathname === '/workspace/inward') {
+    return <Navigate to="/workspace/inventory/inwards" replace />;
+  }
 
   const [historyRecords, setHistoryRecords] = useState<InwardHistoryRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);

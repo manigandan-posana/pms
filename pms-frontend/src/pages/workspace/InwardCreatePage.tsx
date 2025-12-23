@@ -89,16 +89,20 @@ interface WorkspaceStateSlice {
 
 // -------- Quantity Modal -------- //
 
+
 interface QuantityModalProps {
   line: AllocatedMaterial | null;
   values: InwardModalValues;
+  type: string;
   onChange: (values: InwardModalValues) => void;
   onSave: () => void;
   onClose: () => void;
 }
 
-const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, onChange, onSave, onClose }) => {
+const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, type, onChange, onSave, onClose }) => {
   if (!line) return null;
+  const isReturn = type === "RETURN";
+
   return (
     <CustomModal
       title={`${line.code} — ${line.name}`}
@@ -115,20 +119,27 @@ const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, onChange, o
         <span className="font-semibold text-slate-700">{line.unit}</span>
         {" \u00b7 "}
         Allocated: <span className="font-semibold text-slate-700">{line.allocatedQty ?? (line as any).qty ?? 0}</span>
+        {!isReturn && (
+          <>
+            {" \u00b7 "}
+            Ordered: <span className="font-semibold text-slate-700">{(line as any).orderedQty ?? 0}</span>
+          </>
+        )}
         {" \u00b7 "}
-        Ordered: <span className="font-semibold text-slate-700">{(line as any).orderedQty ?? 0}</span>
-        {" \u00b7 "}
-        Received: <span className="font-semibold text-slate-700">{(line as any).receivedQty ?? 0}</span>
+        {isReturn ? "Returned: " : "Received: "}
+        <span className="font-semibold text-slate-700">{(line as any).receivedQty ?? 0}</span>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={`grid gap-4 ${isReturn ? '' : 'md:grid-cols-2'}`}>
+        {!isReturn && (
+          <CustomTextField
+            label="Ordered Qty"
+            type="number"
+            value={values.orderedQty}
+            onChange={(e) => onChange({ ...values, orderedQty: e.target.value })}
+          />
+        )}
         <CustomTextField
-          label="Ordered Qty"
-          type="number"
-          value={values.orderedQty}
-          onChange={(e) => onChange({ ...values, orderedQty: e.target.value })}
-        />
-        <CustomTextField
-          label="Received Qty *"
+          label={isReturn ? "Returned Qty *" : "Received Qty *"}
           type="number"
           value={values.receivedQty}
           onChange={(e) => onChange({ ...values, receivedQty: e.target.value })}
@@ -321,49 +332,58 @@ const InwardCreatePage: React.FC = () => {
     dispatch(setInwardModalLine(null));
   };
 
-  const columns: ColumnDef<any>[] = [
-    {
-      field: "_selected",
-      header: "",
-      width: "50px",
-      align: "center",
-      body: (row) => (
-        <div
-          className="flex items-center justify-center cursor-pointer p-2"
-          onClick={(e) => handleCheckboxClick(e, row)}
-        >
-          {row._selected ? (
-            <FiCheckCircle className="text-emerald-600 text-xs" />
-          ) : (
-            <FiCircle className="text-slate-300 text-xs" />
-          )}
-        </div>
-      )
-    },
-    { field: "code", header: "Code", sortable: true, width: "120px", body: (row) => <span className="font-mono font-semibold text-slate-700">{row.code || "—"}</span> },
-    { field: "name", header: "Material", sortable: true, body: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
-    { field: "unit", header: "Unit", width: "80px", body: (row) => <span className="text-slate-500">{row.unit || "—"}</span> },
-    {
-      field: "_orderedQty",
-      header: "Ordered",
-      align: "right",
-      width: "100px",
-      body: (row) => <span className="font-medium text-slate-600">{row._orderedQty || "—"}</span>
-    },
-    {
+  const columns: ColumnDef<any>[] = useMemo(() => {
+    const isReturn = type === "RETURN";
+    const cols: ColumnDef<any>[] = [
+      {
+        field: "_selected",
+        header: "",
+        width: "50px",
+        align: "center",
+        body: (row) => (
+          <div
+            className="flex items-center justify-center cursor-pointer p-2"
+            onClick={(e) => handleCheckboxClick(e, row)}
+          >
+            {row._selected ? (
+              <FiCheckCircle className="text-emerald-600 text-xs" />
+            ) : (
+              <FiCircle className="text-slate-300 text-xs" />
+            )}
+          </div>
+        )
+      },
+      { field: "code", header: "Code", sortable: true, width: "120px", body: (row) => <span className="font-mono font-semibold text-slate-700">{row.code || "—"}</span> },
+      { field: "name", header: "Material", sortable: true, body: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
+      { field: "unit", header: "Unit", width: "80px", body: (row) => <span className="text-slate-500">{row.unit || "—"}</span> },
+    ];
+
+    if (!isReturn) {
+      cols.push({
+        field: "_orderedQty",
+        header: "Ordered",
+        align: "right",
+        width: "100px",
+        body: (row) => <span className="font-medium text-slate-600">{row._orderedQty || "—"}</span>
+      });
+    }
+
+    cols.push({
       field: "_receivedQty",
-      header: "Received",
+      header: isReturn ? "Returned Qty" : "Received",
       align: "right",
       width: "100px",
       body: (row) => <span className="font-bold text-emerald-600">{row._receivedQty || "—"}</span>
-    },
-  ];
+    });
+
+    return cols;
+  }, [type, handleCheckboxClick]);
 
   const handleSubmit = async () => {
     const selectedLinesArray = Object.entries(selectedLines)
       .map(([lineMaterialId, values]: [string, InwardSelectedLineValues]) => ({
         materialId: String(lineMaterialId),
-        orderedQty: Number(values.orderedQty || 0),
+        orderedQty: type === "RETURN" ? 0 : Number(values.orderedQty || 0),
         receivedQty: Number(values.receivedQty || 0),
       }))
       .filter((line) => line.receivedQty > 0 || line.orderedQty > 0);
@@ -403,7 +423,7 @@ const InwardCreatePage: React.FC = () => {
       dispatch(setInwardField({ field: "outwardId", value: "" }));
       dispatch(setInwardField({ field: "type", value: "SUPPLY" }));
       dispatch(clearInwardSelections());
-      navigate('/workspace/inward');
+      navigate('/workspace/inventory/inwards');
     } catch (err) {
       // Error already handled by thunk
     } finally {
@@ -423,7 +443,7 @@ const InwardCreatePage: React.FC = () => {
         <div className="flex items-center gap-4">
           <CustomButton
             variant="text"
-            onClick={() => navigate('/workspace/inward')}
+            onClick={() => navigate('/workspace/inventory/inwards')}
             className="text-slate-500 hover:text-slate-700"
             size="small"
           >
@@ -574,6 +594,7 @@ const InwardCreatePage: React.FC = () => {
       <QuantityModal
         line={modalLine}
         values={modalValues}
+        type={type}
         onChange={(values) => dispatch(setInwardModalValues(values))}
         onSave={saveModalLine}
         onClose={() => dispatch(setInwardModalLine(null))}

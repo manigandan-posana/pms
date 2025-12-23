@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { FiArrowLeft, FiSearch, FiCheckCircle, FiCircle, FiSave, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
 import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 import CustomButton from "../../widgets/CustomButton";
@@ -159,9 +159,7 @@ const TransferCreatePage: React.FC = () => {
         state.workspace as unknown as WorkspaceStateShape
     );
 
-  const { token } = useSelector<RootState, AuthStateShape>(
-    (state) => state.auth as unknown as AuthStateShape
-  );
+
 
   const {
     fromProject,
@@ -341,11 +339,11 @@ const TransferCreatePage: React.FC = () => {
       };
       await (dispatch as any)(submitTransfer(payload)).unwrap();
       toast.success("Transfer saved successfully");
-      (dispatch as any)(refreshInventoryCodes(token || ""));
+      (dispatch as any)(refreshInventoryCodes());
       dispatch(clearTransferSelections());
 
       // Navigate back to history
-      navigate('/workspace/transfer');
+      navigate('/workspace/inventory/transfers');
     } catch (err) {
       // Error already handled by thunk
     } finally {
@@ -397,13 +395,13 @@ const TransferCreatePage: React.FC = () => {
       <div className="px-6 pt-6">
         <InventoryNavigationTabs />
       </div>
-      
+
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <CustomButton
             variant="text"
-            onClick={() => navigate('/workspace/transfer')}
+            onClick={() => navigate('/workspace/inventory/transfers')}
             className="text-slate-500 hover:text-slate-700"
             size="small"
           >
