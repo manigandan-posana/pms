@@ -28,6 +28,7 @@ import CustomTextField from "../../widgets/CustomTextField";
 import CustomSelect from "../../widgets/CustomSelect";
 import CustomDateInput from "../../widgets/CustomDateInput";
 import CustomTabs from "../../widgets/CustomTabs";
+import { Get } from "../../utils/apiService";
 
 const VehicleManagementPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -198,54 +199,40 @@ const VehicleManagementPage: React.FC = () => {
     return km >= selectedDailyLog.openingKm;
   }, [selectedDailyLog, closeClosingKm]);
 
-  // Filtered fuel entries
-  const filteredFuelEntries = useMemo(() => {
-    let filtered = fuelEntries.filter(e => e.fuelType === activeFuelType);
+  const [filteredFuelEntries, setFilteredFuelEntries] = useState<FuelEntry[]>([]);
 
-    if (fuelViewMode === "current") {
-      filtered = filtered.filter((e) => e.status === "OPEN");
-    } else {
-      filtered = filtered.filter((e) => e.status === "CLOSED");
+  useEffect(() => {
+    const loadFilteredFuelEntries = async () => {
+      if (!selectedProjectId) {
+        setFilteredFuelEntries([]);
+        return;
+      }
+      const params: Record<string, any> = {
+        fuelType: activeFuelType,
+        status: fuelViewMode === "current" ? "OPEN" : "CLOSED",
+      };
 
-      if (fuelVehicleFilter) {
-        filtered = filtered.filter((e) => e.vehicleId === fuelVehicleFilter);
+      if (fuelViewMode === "history") {
+        if (fuelVehicleFilter) params.vehicleId = fuelVehicleFilter;
+        if (fuelSupplierFilter) params.supplierId = fuelSupplierFilter;
+        if (fuelSearchQuery.trim()) params.search = fuelSearchQuery.trim();
+        if (fuelDateFrom) params.startDate = fuelDateFrom.toISOString().split("T")[0];
+        if (fuelDateTo) params.endDate = fuelDateTo.toISOString().split("T")[0];
       }
 
-      if (fuelSearchQuery.trim()) {
-        const query = fuelSearchQuery.toLowerCase();
-        filtered = filtered.filter(
-          (e) =>
-            e.vehicleName.toLowerCase().includes(query) ||
-            e.supplierName.toLowerCase().includes(query)
-        );
-      }
-
-      if (fuelDateFrom) {
-        const fromDate = new Date(fuelDateFrom);
-        fromDate.setHours(0, 0, 0, 0);
-        filtered = filtered.filter((e) => new Date(e.date) >= fromDate);
-      }
-      if (fuelDateTo) {
-        const toDate = new Date(fuelDateTo);
-        toDate.setHours(23, 59, 59, 999);
-        filtered = filtered.filter((e) => new Date(e.date) <= toDate);
-      }
-
-      if (fuelSupplierFilter) {
-        filtered = filtered.filter((e) => e.supplierId === fuelSupplierFilter);
-      }
-    }
-
-    return filtered.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const response = await Get<FuelEntry[]>(`/vehicles/fuel-entries/project/${selectedProjectId}`, params);
+      setFilteredFuelEntries(Array.isArray(response) ? response : []);
+    };
+    loadFilteredFuelEntries();
   }, [
-    fuelEntries,
+    selectedProjectId,
     activeFuelType,
     fuelViewMode,
     fuelVehicleFilter,
+    fuelSupplierFilter,
     fuelSearchQuery,
     fuelDateFrom,
     fuelDateTo,
-    fuelSupplierFilter,
   ]);
 
   // Summary metrics

@@ -1,5 +1,6 @@
 package com.vebops.store.controller;
 
+import com.vebops.store.dto.AllocationOverviewDto;
 import com.vebops.store.dto.BomAllocationRequest;
 import com.vebops.store.dto.BomLineDto;
 import com.vebops.store.dto.PaginatedResponse;
@@ -47,57 +48,20 @@ public class BomController {
     public PaginatedResponse<BomLineDto> listLines(
         @PathVariable String projectId,
         @RequestParam(name = "page", defaultValue = "1") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+        @RequestParam(name = "size", defaultValue = "10") int size,
+        @RequestParam(name = "search", required = false) String search,
+        @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly
     ) {
         AuthUtils.requireAdmin();
-        return bomService.listLines(projectId, page, size);
+        return bomService.listLines(projectId, page, size, search, inStockOnly);
     }
 
-    // ---- Helpers ----
-
-    /**
-     * Sanitize the page number to ensure it is at least 1. Any non‑positive
-     * values are mapped to 1.
-     */
-    private int sanitizePage(int page) {
-        return page < 1 ? 1 : page;
-    }
-
-    /**
-     * Sanitize the page size. If the size is less than 1, a default of 10
-     * is used. The size is capped at 100 to prevent excessive payloads.
-     */
-    private int sanitizeSize(int size) {
-        if (size < 1) {
-            return 10;
-        }
-        return Math.min(size, 100);
-    }
-
-    /**
-     * Produce a paginated response from a list of items. The logic mirrors
-     * the pagination helpers found in {@link HistoryController} to ensure
-     * consistent behaviour across endpoints. The meta field is left
-     * empty.
-     */
-    private PaginatedResponse<BomLineDto> paginate(List<BomLineDto> items, int page, int size) {
-        int safeSize = sanitizeSize(size);
-        int safePage = sanitizePage(page);
-        int totalItems = items != null ? items.size() : 0;
-        int totalPages = totalItems == 0 ? 1 : (int) Math.ceil((double) totalItems / safeSize);
-        int fromIndex = Math.max(0, (safePage - 1) * safeSize);
-        int toIndex = Math.min(fromIndex + safeSize, totalItems);
-        List<BomLineDto> pageItems = fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
-        return new PaginatedResponse<>(
-            pageItems,
-            totalItems,
-            safePage,
-            safeSize,
-            totalPages,
-            safePage < totalPages,
-            safePage > 1,
-            java.util.Collections.emptyMap()
-        );
+    @GetMapping("/allocations")
+    public List<AllocationOverviewDto> listAllocations(
+        @RequestParam(name = "search", required = false) String search
+    ) {
+        AuthUtils.requireAdmin();
+        return bomService.listAllocations(search);
     }
 
     @PostMapping("/projects/{projectId}/materials")

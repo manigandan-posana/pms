@@ -19,12 +19,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -54,7 +56,10 @@ public class InwardController {
      * Only accessible to users who have access to the record's project.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getInwardById(@PathVariable Long id) {
+    public ResponseEntity<?> getInwardById(
+        @PathVariable Long id,
+        @RequestParam(name = "search", required = false) String search
+    ) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
@@ -81,7 +86,7 @@ public class InwardController {
         }
 
         // Convert to DTO
-        InwardRecordDto dto = convertToDto(record);
+        InwardRecordDto dto = convertToDto(record, filterLines(record.getLines(), search));
         return ResponseEntity.ok(dto);
     }
 
@@ -145,7 +150,7 @@ public class InwardController {
         }
 
         InwardRecord saved = inwardRecordRepository.save(record);
-        InwardRecordDto dto = convertToDto(saved);
+        InwardRecordDto dto = convertToDto(saved, saved.getLines());
         return ResponseEntity.ok(dto);
     }
 
@@ -187,11 +192,11 @@ public class InwardController {
 
         record.setValidated(true);
         InwardRecord saved = inwardRecordRepository.save(record);
-        InwardRecordDto dto = convertToDto(saved);
+        InwardRecordDto dto = convertToDto(saved, saved.getLines());
         return ResponseEntity.ok(dto);
     }
 
-    private InwardRecordDto convertToDto(InwardRecord record) {
+    private InwardRecordDto convertToDto(InwardRecord record, List<InwardLine> lines) {
         InwardRecordDto dto = new InwardRecordDto();
         dto.setId(record.getId());
         dto.setCode(record.getCode());
@@ -206,7 +211,7 @@ public class InwardController {
         dto.setEntryDate(record.getEntryDate());
         dto.setValidated(record.isValidated());
         
-        List<InwardLineDto> lineDtos = record.getLines().stream()
+        List<InwardLineDto> lineDtos = lines.stream()
             .map(line -> {
                 InwardLineDto lineDto = new InwardLineDto();
                 lineDto.setId(line.getId());
@@ -225,6 +230,23 @@ public class InwardController {
         
         dto.setLines(lineDtos);
         return dto;
+    }
+
+    private List<InwardLine> filterLines(List<InwardLine> lines, String search) {
+        if (lines == null || !StringUtils.hasText(search)) {
+            return lines;
+        }
+        String term = search.trim().toLowerCase();
+        return lines.stream()
+            .filter(line -> {
+                Material material = line.getMaterial();
+                if (material == null) {
+                    return false;
+                }
+                return (material.getCode() != null && material.getCode().toLowerCase().contains(term)) ||
+                    (material.getName() != null && material.getName().toLowerCase().contains(term));
+            })
+            .toList();
     }
 
     /**

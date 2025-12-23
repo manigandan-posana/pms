@@ -1,5 +1,6 @@
 package com.vebops.store.service;
 
+import com.vebops.store.dto.AllocationOverviewDto;
 import com.vebops.store.dto.BomLineDto;
 import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.NotFoundException;
@@ -13,11 +14,13 @@ import com.vebops.store.repository.OutwardLineRepository;
 import com.vebops.store.repository.ProjectRepository;
 import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import com.vebops.store.dto.PaginatedResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import java.util.stream.Stream;
 
 @Service
 public class BomService {
@@ -70,6 +73,16 @@ public class BomService {
      * @return a paginated response containing BOM line DTOs
      */
     public PaginatedResponse<BomLineDto> listLines(String projectId, int page, int size) {
+        return listLines(projectId, page, size, null, false);
+    }
+
+    public PaginatedResponse<BomLineDto> listLines(
+        String projectId,
+        int page,
+        int size,
+        String search,
+        boolean inStockOnly
+    ) {
         Project project = requireProject(projectId);
         int safePage = page < 1 ? 1 : page;
         int safeSize;
@@ -78,20 +91,44 @@ public class BomService {
         } else {
             safeSize = Math.min(size, 100);
         }
-        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
-        Page<BomLine> linesPage = bomLineRepository.findByProjectId(project.getId(), pageable);
-        List<BomLineDto> items = linesPage.stream().map(this::toDto).toList();
-        int totalPages = linesPage.getTotalPages() == 0 ? 1 : linesPage.getTotalPages();
+        List<BomLineDto> allItems = bomLineRepository.findByProjectId(project.getId())
+            .stream()
+            .map(this::toDto)
+            .toList();
+        Stream<BomLineDto> stream = allItems.stream();
+        if (StringUtils.hasText(search)) {
+            String term = search.trim().toLowerCase();
+            stream = stream.filter(item ->
+                (item.code() != null && item.code().toLowerCase().contains(term)) ||
+                (item.name() != null && item.name().toLowerCase().contains(term)) ||
+                (item.category() != null && item.category().toLowerCase().contains(term))
+            );
+        }
+        if (inStockOnly) {
+            stream = stream.filter(item -> item.balanceQty() > 0);
+        }
+        List<BomLineDto> filtered = stream.toList();
+        Page<BomLineDto> linesPage = new PageImpl<>(
+            paginate(filtered, safePage, safeSize),
+            PageRequest.of(safePage - 1, safeSize),
+            filtered.size()
+        );
         return new PaginatedResponse<>(
-            items,
+            linesPage.getContent(),
             linesPage.getTotalElements(),
-            safePage,
-            safeSize,
-            totalPages,
+            Math.max(1, linesPage.getTotalPages()),
+            linesPage.getSize(),
+            linesPage.getNumber(),
             linesPage.hasNext(),
             linesPage.hasPrevious(),
             java.util.Collections.emptyMap()
         );
+    }
+
+    private <T> List<T> paginate(List<T> items, int page, int size) {
+        int fromIndex = Math.max(0, (page - 1) * size);
+        int toIndex = Math.min(fromIndex + size, items.size());
+        return fromIndex < toIndex ? items.subList(fromIndex, toIndex) : List.of();
     }
 
     public BomLine upsertLine(Project project, Material material, double quantity) {
@@ -114,6 +151,41 @@ public class BomService {
         Project project = requireProject(projectId);
         Material material = requireMaterial(materialId);
         bomLineRepository.deleteByProjectIdAndMaterialId(project.getId(), material.getId());
+    }
+
+    public List<AllocationOverviewDto> listAllocations(String search) {
+        List<BomLine> lines = bomLineRepository.findAllWithProjectAndMaterial();
+        Stream<BomLine> stream = lines.stream();
+        if (StringUtils.hasText(search)) {
+            String term = search.trim().toLowerCase();
+            stream = stream.filter(line -> {
+                Project project = line.getProject();
+                Material material = line.getMaterial();
+                return (project != null && project.getName() != null && project.getName().toLowerCase().contains(term)) ||
+                    (project != null && project.getCode() != null && project.getCode().toLowerCase().contains(term)) ||
+                    (material != null && material.getName() != null && material.getName().toLowerCase().contains(term)) ||
+                    (material != null && material.getCode() != null && material.getCode().toLowerCase().contains(term));
+            });
+        }
+        return stream
+            .map(line -> {
+                Project project = line.getProject();
+                Material material = line.getMaterial();
+                double quantity = line.getQuantity();
+                return new AllocationOverviewDto(
+                    line.getId() != null ? String.valueOf(line.getId()) : null,
+                    project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
+                    project != null ? project.getName() : null,
+                    project != null ? project.getCode() : null,
+                    material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
+                    material != null ? material.getName() : null,
+                    material != null ? material.getCategory() : null,
+                    quantity,
+                    quantity,
+                    material != null ? material.getUnit() : null
+                );
+            })
+            .toList();
     }
 
     public double currentAllocation(Long projectId, Long materialId) {

@@ -7,6 +7,9 @@ import com.vebops.store.model.*;
 import com.vebops.store.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
+import jakarta.persistence.criteria.JoinType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,6 +45,54 @@ public class FuelManagementService {
 
     public List<FuelEntryDto> getFuelEntriesByProject(Long projectId) {
         return fuelEntryRepository.findByProjectId(projectId).stream()
+                .map(FuelEntryDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<FuelEntryDto> searchFuelEntriesByProject(
+            Long projectId,
+            EntryStatus status,
+            Long vehicleId,
+            Long supplierId,
+            FuelType fuelType,
+            String search,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        Specification<FuelEntry> spec = Specification.where(
+                (root, query, cb) -> cb.equal(root.get("project").get("id"), projectId)
+        );
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (vehicleId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("vehicle").get("id"), vehicleId));
+        }
+        if (supplierId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("supplier").get("id"), supplierId));
+        }
+        if (fuelType != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("fuelType"), fuelType));
+        }
+        if (startDate != null && endDate != null) {
+            spec = spec.and((root, query, cb) -> cb.between(root.get("date"), startDate, endDate));
+        } else if (startDate != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), startDate));
+        } else if (endDate != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), endDate));
+        }
+        if (search != null && !search.isBlank()) {
+            String term = "%" + search.trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> {
+                var vehicleJoin = root.join("vehicle", JoinType.LEFT);
+                var supplierJoin = root.join("supplier", JoinType.LEFT);
+                return cb.or(
+                        cb.like(cb.lower(vehicleJoin.get("vehicleName")), term),
+                        cb.like(cb.lower(supplierJoin.get("supplierName")), term)
+                );
+            });
+        }
+        return fuelEntryRepository.findAll(spec, Sort.by("date").descending()).stream()
                 .map(FuelEntryDto::fromEntity)
                 .collect(Collectors.toList());
     }

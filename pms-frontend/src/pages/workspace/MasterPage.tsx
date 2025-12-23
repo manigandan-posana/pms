@@ -1,9 +1,8 @@
 
-import React, { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../store/store";
+import React, { useEffect, useState } from "react";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomTextField from "../../widgets/CustomTextField";
+import { Get } from "../../utils/apiService";
 
 // ---- Types ---- //
 export interface WorkspaceMaterial {
@@ -15,28 +14,25 @@ export interface WorkspaceMaterial {
   [key: string]: unknown;
 }
 
-interface WorkspaceStateSlice {
-  materials: WorkspaceMaterial[];
-}
-
 // ---- Component ---- //
 const MasterPage: React.FC = () => {
-  const { materials } = useSelector<RootState, WorkspaceStateSlice>(
-    (state) => state.workspace as unknown as WorkspaceStateSlice
-  );
-
+  const [materials, setMaterials] = useState<WorkspaceMaterial[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [search, setSearch] = useState<string>("");
 
-  const filteredMaterials = useMemo<WorkspaceMaterial[]>(() => {
-    if (!search.trim()) return materials;
-    const term = search.toLowerCase();
-    return materials.filter(
-      (m) =>
-        m.code?.toLowerCase().includes(term) ||
-        m.name?.toLowerCase().includes(term) ||
-        m.category?.toLowerCase().includes(term)
-    );
-  }, [materials, search]);
+  useEffect(() => {
+    const loadMaterials = async () => {
+      const response = await Get<any>("/materials/search", {
+        page: 1,
+        size: 1000,
+        search: search.trim() || undefined,
+      });
+      const content = (response?.content ?? []) as WorkspaceMaterial[];
+      setMaterials(content);
+      setTotalItems(response?.totalElements ?? content.length);
+    };
+    loadMaterials();
+  }, [search]);
 
   const columns: ColumnDef<WorkspaceMaterial>[] = [
     { field: "code", header: "Code", body: (row) => <span className="font-mono text-xs">{row.code}</span>, width: 150 },
@@ -64,11 +60,11 @@ const MasterPage: React.FC = () => {
               size="small"
             />
           </div>
-          <div className="text-xs text-slate-500">{filteredMaterials.length} items</div>
+          <div className="text-xs text-slate-500">{totalItems} items</div>
         </div>
 
         <CustomTable
-          data={filteredMaterials}
+          data={materials}
           columns={columns}
           pagination
           rows={10}

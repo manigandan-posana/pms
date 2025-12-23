@@ -58,9 +58,11 @@ export interface RawAdminProjectsFilters {
 }
 
 export interface SearchProjectsResponse {
-  items?: AdminProject[];
-  totalItems?: number;
+  content?: AdminProject[];
+  totalElements?: number;
   totalPages?: number;
+  number?: number;
+  size?: number;
   filters?: RawAdminProjectsFilters;
 }
 
@@ -68,6 +70,8 @@ export interface AdminProjectsState {
   items: AdminProject[];
   totalItems: number;
   totalPages: number;
+  page: number;
+  pageSize: number;
   status: RequestStatus;
   error: string;
   availableFilters: AdminProjectsFilters;
@@ -80,6 +84,8 @@ const initialState: AdminProjectsState = {
   items: [],
   totalItems: 0,
   totalPages: 1,
+  page: 1,
+  pageSize: 10,
   status: "idle",
   error: "",
   availableFilters: { prefixes: [] },
@@ -196,9 +202,11 @@ const adminProjectsSlice = createSlice({
       .addCase(searchProjects.fulfilled, (state, action) => {
         state.status = "succeeded";
         const response = action.payload;
-        state.items = response.items ?? [];
-        state.totalItems = response.totalItems ?? state.items.length;
+        state.items = response.content ?? [];
+        state.totalItems = response.totalElements ?? state.items.length;
         state.totalPages = Math.max(1, response.totalPages ?? 1);
+        state.page = (response.number ?? 0) + 1;
+        state.pageSize = response.size ?? state.pageSize;
         state.availableFilters = {
           prefixes: normalizePrefixes(response.filters?.prefixes),
         };
@@ -208,6 +216,8 @@ const adminProjectsSlice = createSlice({
         state.items = [];
         state.totalItems = 0;
         state.totalPages = 1;
+        state.page = 1;
+        state.pageSize = 10;
         const message =
           action.payload ??
           action.error.message ??

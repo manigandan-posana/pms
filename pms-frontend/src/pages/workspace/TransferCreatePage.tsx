@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
-import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -11,6 +10,7 @@ import type { ColumnDef } from "../../widgets/CustomTable";
 import CustomModal from "../../widgets/CustomModal";
 import CustomTextField from "../../widgets/CustomTextField";
 import CustomSelect from "../../widgets/CustomSelect";
+import { Get } from "../../utils/apiService";
 
 import {
   refreshInventoryCodes,
@@ -172,7 +172,7 @@ const TransferCreatePage: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { codes, assignedProjects, bomByProject, projects } =
+  const { codes, assignedProjects, projects } =
     useSelector<RootState, WorkspaceStateShape>(
       (state) =>
         state.workspace as unknown as WorkspaceStateShape
@@ -198,6 +198,7 @@ const TransferCreatePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState(10);
+  const [allocatedMaterials, setAllocatedMaterials] = useState<TransferMaterialLine[]>([]);
 
   // Default project selection - select first project as FROM project if none selected
   React.useEffect(() => {
@@ -241,34 +242,30 @@ const TransferCreatePage: React.FC = () => {
     [projects, assignedProjects, fromProject]
   );
 
-  const fromProjectBom = useMemo(
-    () => (fromProject ? bomByProject?.[fromProject] || [] : []),
-    [fromProject, bomByProject]
-  );
-
-  const allocatedMaterials = useMemo<TransferMaterialLine[]>(() => {
-    return fromProjectBom
-      .map((bomLine: BomLine) => ({
-        ...bomLine,
-        materialId: String(bomLine.materialId),
-        availableQty:
-          bomLine.balanceQty ?? bomLine.allocatedQty ?? bomLine.qty ?? 0,
-      }))
-      .filter((m: any) => m.availableQty > 0);
-  }, [fromProjectBom]);
-
-  const filteredMaterials = useMemo(() => {
-    if (!searchQuery.trim()) return allocatedMaterials;
-    const lowerQuery = searchQuery.toLowerCase();
-    return allocatedMaterials.filter(
-      (m) =>
-        m.code?.toLowerCase().includes(lowerQuery) ||
-        m.name?.toLowerCase().includes(lowerQuery)
-    );
-  }, [allocatedMaterials, searchQuery]);
+  useEffect(() => {
+    const loadMaterials = async () => {
+      if (!fromProject) {
+        setAllocatedMaterials([]);
+        return;
+      }
+      const response = await Get<TransferMaterialLine[]>(`/app/projects/${fromProject}/bom`, {
+        search: searchQuery.trim() || undefined,
+        inStockOnly: true,
+      });
+      const content = Array.isArray(response) ? response : [];
+      setAllocatedMaterials(
+        content.map((bomLine) => ({
+          ...bomLine,
+          materialId: String(bomLine.materialId),
+          availableQty: bomLine.balanceQty ?? bomLine.allocatedQty ?? bomLine.qty ?? 0,
+        }))
+      );
+    };
+    loadMaterials();
+  }, [fromProject, searchQuery]);
 
   const tableRows = useMemo(() => {
-    return filteredMaterials.map((m) => {
+    return allocatedMaterials.map((m) => {
       const sel = selectedLines[m.materialId];
       return {
         ...m,
@@ -276,7 +273,7 @@ const TransferCreatePage: React.FC = () => {
         _transferQty: sel ? Number(sel.transferQty || 0) : 0,
       };
     });
-  }, [filteredMaterials, selectedLines]);
+  }, [allocatedMaterials, selectedLines]);
 
   const selectedLineCount = useMemo(
     () => Object.keys(selectedLines).length,
@@ -415,7 +412,6 @@ const TransferCreatePage: React.FC = () => {
     <div className="flex flex-col h-full bg-slate-50">
       {/* Inventory Navigation Tabs */}
       <div className="px-6 pt-6">
-        <InventoryNavigationTabs />
       </div>
 
       {/* Header */}

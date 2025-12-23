@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../store/hooks";
 import { getTransferById } from "../../store/slices/inventorySlice";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiArrowRight, FiSearch, FiRepeat } from "react-icons/fi";
-import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 import type { RootState } from "../../store/store";
 
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
@@ -58,14 +57,14 @@ const TransferDetailPage: React.FC = () => {
     if (id && token) {
       loadTransferDetail();
     }
-  }, [id, token]);
+  }, [id, token, searchQuery]);
 
   const loadTransferDetail = async () => {
     if (!id || !token) return;
 
     setLoading(true);
     try {
-      const data = await dispatch(getTransferById(Number(id))).unwrap();
+      const data = await dispatch(getTransferById({ id: Number(id), search: searchQuery.trim() || undefined })).unwrap();
 
       if (!data) {
         toast.error('No record data received');
@@ -84,17 +83,7 @@ const TransferDetailPage: React.FC = () => {
     }
   };
 
-  // Filter lines based on search
-  const filteredLines = useMemo(() => {
-    if (!record?.lines) return [];
-    if (!searchQuery.trim()) return record.lines;
-
-    const lowerQuery = searchQuery.toLowerCase();
-    return record.lines.filter(line =>
-      line.code?.toLowerCase().includes(lowerQuery) ||
-      line.name?.toLowerCase().includes(lowerQuery)
-    );
-  }, [record?.lines, searchQuery]);
+  const filteredLines = record?.lines ?? [];
 
   if (loading) {
     return (
@@ -155,7 +144,6 @@ const TransferDetailPage: React.FC = () => {
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Inventory Navigation Tabs */}
       <div className="px-6 pt-6">
-        <InventoryNavigationTabs />
       </div>
       
       {/* Header */}

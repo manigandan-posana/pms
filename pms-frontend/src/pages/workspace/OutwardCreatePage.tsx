@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
-import InventoryNavigationTabs from "../../components/InventoryNavigationTabs";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -11,6 +10,7 @@ import type { ColumnDef } from "../../widgets/CustomTable";
 import CustomModal from "../../widgets/CustomModal";
 import CustomTextField from "../../widgets/CustomTextField";
 import CustomSelect from "../../widgets/CustomSelect";
+import { Get } from "../../utils/apiService";
 
 import {
   refreshInventoryCodes,
@@ -139,7 +139,7 @@ const OutwardCreatePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const { codes, assignedProjects, bomByProject } = useSelector<
+  const { codes, assignedProjects } = useSelector<
     RootState,
     WorkspaceStateSlice
   >((state) => state.workspace as unknown as WorkspaceStateSlice);
@@ -162,6 +162,7 @@ const OutwardCreatePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState(10);
+  const [availableMaterials, setAvailableMaterials] = useState<AvailableMaterial[]>([]);
 
   // Ensure status is always OPEN for new outwards
   React.useEffect(() => {
@@ -187,37 +188,31 @@ const OutwardCreatePage: React.FC = () => {
     dispatch(clearOutwardSelections());
   }, [dispatch, projectId]);
 
-  // Get selected project's BOM
-  const selectedProjectBom = useMemo(
-    () => (projectId ? bomByProject?.[projectId] || [] : []),
-    [projectId, bomByProject]
-  );
-
-  // Convert to available materials with in-stock quantity
-  const availableMaterials = useMemo<AvailableMaterial[]>(() => {
-    return selectedProjectBom
-      .map((bomLine) => ({
-        ...bomLine,
-        materialId: String(bomLine.materialId),
-        inStockQty: bomLine.balanceQty ?? bomLine.allocatedQty ?? bomLine.qty ?? 0,
-      }))
-      .filter((m) => m.inStockQty > 0);
-  }, [selectedProjectBom]);
-
-  // Filter by search
-  const filteredMaterials = useMemo(() => {
-    if (!searchQuery.trim()) return availableMaterials;
-    const lowerQuery = searchQuery.toLowerCase();
-    return availableMaterials.filter(
-      (m) =>
-        m.code?.toLowerCase().includes(lowerQuery) ||
-        m.name?.toLowerCase().includes(lowerQuery)
-    );
-  }, [availableMaterials, searchQuery]);
+  useEffect(() => {
+    const loadMaterials = async () => {
+      if (!projectId) {
+        setAvailableMaterials([]);
+        return;
+      }
+      const response = await Get<AvailableMaterial[]>(`/app/projects/${projectId}/bom`, {
+        search: searchQuery.trim() || undefined,
+        inStockOnly: true,
+      });
+      const content = Array.isArray(response) ? response : [];
+      setAvailableMaterials(
+        content.map((bomLine) => ({
+          ...bomLine,
+          materialId: String(bomLine.materialId),
+          inStockQty: bomLine.balanceQty ?? bomLine.allocatedQty ?? bomLine.qty ?? 0,
+        }))
+      );
+    };
+    loadMaterials();
+  }, [projectId, searchQuery]);
 
   // Build table rows with selection state
   const tableRows = useMemo(() => {
-    return filteredMaterials.map((m) => {
+    return availableMaterials.map((m) => {
       const sel = selectedLines[m.materialId];
       return {
         ...m,
@@ -225,7 +220,7 @@ const OutwardCreatePage: React.FC = () => {
         _issueQty: sel ? Number(sel.issueQty || 0) : 0,
       };
     });
-  }, [filteredMaterials, selectedLines]);
+  }, [availableMaterials, selectedLines]);
 
   const selectedLineCount = useMemo(
     () => Object.keys(selectedLines).length,
@@ -363,7 +358,6 @@ const OutwardCreatePage: React.FC = () => {
     <div className="flex flex-col h-full bg-slate-50">
       {/* Inventory Navigation Tabs */}
       <div className="px-6 pt-6">
-        <InventoryNavigationTabs />
       </div>
 
       {/* Header */}
