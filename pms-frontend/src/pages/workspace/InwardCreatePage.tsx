@@ -212,8 +212,8 @@ const InwardCreatePage: React.FC = () => {
       return outwardItems.map((item) => ({
         id: item.materialId, // Using materialId as unique key for table row
         materialId: item.materialId,
-        code: item.materialCode,
-        name: item.materialName,
+        code: item.code,
+        name: item.name,
         unit: item.unit,
         allocatedQty: item.issueQty, // Show issue qty
         qty: item.issueQty,
