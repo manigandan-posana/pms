@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 public record PaginatedResponse<T>(
-    List<T> items,
-    long totalItems,
-    int page,
-    int size,
+    List<T> content,
+    long totalElements,
     int totalPages,
+    int size,
+    int number,
     boolean hasNext,
     boolean hasPrevious,
     Map<String, List<String>> filters

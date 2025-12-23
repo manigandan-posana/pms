@@ -27,7 +27,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
 
 /**
  * Controller for outward record CRUD operations.
@@ -78,7 +80,7 @@ public class OutwardController {
 
         List<OutwardRecord> records = outwardRecordRepository.findByProjectIdOrderByEntryDateDesc(projectId);
         List<OutwardRegisterDto> dtos = records.stream()
-                .map(this::convertToDto)
+                .map(record -> convertToDto(record, record.getLines()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -88,7 +90,9 @@ public class OutwardController {
      * Only accessible to users who have access to the record's project.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOutwardById(@PathVariable Long id) {
+    public ResponseEntity<?> getOutwardById(
+            @PathVariable Long id,
+            @RequestParam(name = "search", required = false) String search) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         if (user == null) {
@@ -115,7 +119,7 @@ public class OutwardController {
         }
 
         // Convert to DTO
-        OutwardRegisterDto dto = convertToDto(record);
+        OutwardRegisterDto dto = convertToDto(record, filterLines(record.getLines(), search));
         return ResponseEntity.ok(dto);
     }
 
@@ -173,7 +177,7 @@ public class OutwardController {
         }
 
         OutwardRecord saved = outwardRecordRepository.save(record);
-        OutwardRegisterDto dto = convertToDto(saved);
+        OutwardRegisterDto dto = convertToDto(saved, saved.getLines());
         return ResponseEntity.ok(dto);
     }
 
@@ -215,7 +219,7 @@ public class OutwardController {
 
         record.setValidated(true);
         OutwardRecord saved = outwardRecordRepository.save(record);
-        OutwardRegisterDto dto = convertToDto(saved);
+        OutwardRegisterDto dto = convertToDto(saved, saved.getLines());
         return ResponseEntity.ok(dto);
     }
 
@@ -258,13 +262,13 @@ public class OutwardController {
         record.setStatus(OutwardStatus.CLOSED);
         record.setCloseDate(java.time.LocalDate.now());
         OutwardRecord saved = outwardRecordRepository.save(record);
-        OutwardRegisterDto dto = convertToDto(saved);
+        OutwardRegisterDto dto = convertToDto(saved, saved.getLines());
         return ResponseEntity.ok(dto);
     }
 
-    private OutwardRegisterDto convertToDto(OutwardRecord record) {
+    private OutwardRegisterDto convertToDto(OutwardRecord record, List<OutwardLine> recordLines) {
         List<OutwardLineDto> lines = new ArrayList<>();
-        for (OutwardLine line : record.getLines()) {
+        for (OutwardLine line : recordLines) {
             Material material = line.getMaterial();
             lines.add(new OutwardLineDto(
                     line.getId() != null ? String.valueOf(line.getId()) : null,
@@ -288,6 +292,23 @@ public class OutwardController {
                 record.isValidated(),
                 lines.size(),
                 lines);
+    }
+
+    private List<OutwardLine> filterLines(List<OutwardLine> lines, String search) {
+        if (lines == null || !StringUtils.hasText(search)) {
+            return lines;
+        }
+        String term = search.trim().toLowerCase();
+        return lines.stream()
+                .filter(line -> {
+                    Material material = line.getMaterial();
+                    if (material == null) {
+                        return false;
+                    }
+                    return (material.getCode() != null && material.getCode().toLowerCase().contains(term)) ||
+                            (material.getName() != null && material.getName().toLowerCase().contains(term));
+                })
+                .toList();
     }
 
     /**

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface BomLineRepository extends JpaRepository<BomLine, Long> {
+    @EntityGraph(attributePaths = {"material", "project"})
     List<BomLine> findByProjectId(Long projectId);
 
     /**
@@ -34,4 +35,11 @@ public interface BomLineRepository extends JpaRepository<BomLine, Long> {
 
     @Query("select distinct b.project.id from BomLine b where b.project.id is not null")
     Set<Long> projectIdsWithAllocations();
+
+    @Query("select b.material.id from BomLine b where b.project.id = :projectId and b.material.id is not null")
+    Set<Long> materialIdsForProject(Long projectId);
+
+    @EntityGraph(attributePaths = {"material", "project"})
+    @Query("select b from BomLine b")
+    List<BomLine> findAllWithProjectAndMaterial();
 }

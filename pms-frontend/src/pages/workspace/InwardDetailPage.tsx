@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../store/hooks";
@@ -85,14 +85,14 @@ const InwardDetailPage: React.FC = () => {
     if (id && token) {
       loadInwardDetail();
     }
-  }, [id, token]);
+  }, [id, token, searchQuery]);
 
   const loadInwardDetail = async () => {
     if (!id || !token) return;
 
     setLoading(true);
     try {
-      const data = await dispatch(getInwardById(Number(id))).unwrap();
+      const data = await dispatch(getInwardById({ id: Number(id), search: searchQuery.trim() || undefined })).unwrap();
 
       if (!data) {
         toast.error('No record data received');
@@ -123,17 +123,7 @@ const InwardDetailPage: React.FC = () => {
     }
   };
 
-  // Filter lines based on search
-  const filteredLines = useMemo(() => {
-    if (!record?.lines) return [];
-    if (!searchQuery.trim()) return record.lines;
-
-    const lowerQuery = searchQuery.toLowerCase();
-    return record.lines.filter(line =>
-      line.materialCode?.toLowerCase().includes(lowerQuery) ||
-      line.materialName?.toLowerCase().includes(lowerQuery)
-    );
-  }, [record?.lines, searchQuery]);
+  const filteredLines = record?.lines ?? [];
 
   // Save changes
   const handleSaveChanges = async () => {

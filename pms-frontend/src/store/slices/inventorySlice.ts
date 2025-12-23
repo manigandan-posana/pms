@@ -117,11 +117,11 @@ export const getInventoryCodes = createAsyncThunk<
  */
 export const getInwardById = createAsyncThunk<
   any,
-  number,
+  { id: number; search?: string },
   { rejectValue: string }
->("inventory/getInwardById", async (id, { rejectWithValue }) => {
+>("inventory/getInwardById", async ({ id, search }, { rejectWithValue }) => {
   try {
-    return await Get(`/inwards/${id}`);
+    return await Get(`/inwards/${id}`, { search });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to get inward record";
@@ -171,11 +171,11 @@ export const validateInward = createAsyncThunk<
  */
 export const getOutwardById = createAsyncThunk<
   any,
-  number,
+  { id: number; search?: string },
   { rejectValue: string }
->("inventory/getOutwardById", async (id, { rejectWithValue }) => {
+>("inventory/getOutwardById", async ({ id, search }, { rejectWithValue }) => {
   try {
-    return await Get(`/outwards/${id}`);
+    return await Get(`/outwards/${id}`, { search });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to get outward record";
@@ -227,11 +227,11 @@ export const closeOutward = createAsyncThunk<
  */
 export const getTransferById = createAsyncThunk<
   any,
-  number,
+  { id: number; search?: string },
   { rejectValue: string }
->("inventory/getTransferById", async (id, { rejectWithValue }) => {
+>("inventory/getTransferById", async ({ id, search }, { rejectWithValue }) => {
   try {
-    return await Get(`/transfers/${id}`);
+    return await Get(`/transfers/${id}`, { search });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to get transfer record";

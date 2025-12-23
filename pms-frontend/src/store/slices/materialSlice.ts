@@ -71,9 +71,10 @@ export interface FetchMaterialsArgs {
 
 export interface FetchMaterialsResult {
   items: Material[];
-  totalItems: number;
+  totalElements: number;
   totalPages: number;
-  page: number;
+  size: number;
+  number: number;
   filters: MaterialFilters;
 }
 
@@ -102,13 +103,14 @@ export const fetchMaterials = createAsyncThunk<
 >("materials/fetch", async ({ query }, { rejectWithValue }) => {
   try {
     const response = await Get(`/materials/search${toQueryString(query)}`);
-    const items = (response?.items ?? []) as Material[];
+    const items = (response?.content ?? []) as Material[];
 
     return {
       items,
-      totalItems: response?.totalItems ?? items.length,
+      totalElements: response?.totalElements ?? items.length,
       totalPages: Math.max(1, response?.totalPages ?? 1),
-      page: response?.page ?? query?.page ?? 1,
+      size: response?.size ?? query?.size ?? 10,
+      number: response?.number ?? (query?.page ? query.page - 1 : 0),
       filters: {
         categories: response?.filters?.categories ?? [],
         units: response?.filters?.units ?? [],
@@ -273,9 +275,9 @@ const materialSlice = createSlice({
       .addCase(fetchMaterials.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.items = action.payload.items;
-        state.totalItems = action.payload.totalItems;
+        state.totalItems = action.payload.totalElements;
         state.totalPages = action.payload.totalPages;
-        state.page = action.payload.page;
+        state.page = action.payload.number + 1;
         state.availableFilters = {
           categories: action.payload.filters.categories
             .map((value) => (value ?? "").trim())

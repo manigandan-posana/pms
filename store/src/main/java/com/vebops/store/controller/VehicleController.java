@@ -1,6 +1,8 @@
 package com.vebops.store.controller;
 
 import com.vebops.store.dto.*;
+import com.vebops.store.model.EntryStatus;
+import com.vebops.store.model.FuelType;
 import com.vebops.store.service.VehicleService;
 import com.vebops.store.service.FuelManagementService;
 import jakarta.validation.Valid;
@@ -71,8 +73,27 @@ public class VehicleController {
     }
 
     @GetMapping("/fuel-entries/project/{projectId}")
-    public ResponseEntity<List<FuelEntryDto>> getFuelEntriesByProject(@PathVariable Long projectId) {
-        return ResponseEntity.ok(fuelManagementService.getFuelEntriesByProject(projectId));
+    public ResponseEntity<List<FuelEntryDto>> getFuelEntriesByProject(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long vehicleId,
+            @RequestParam(required = false) Long supplierId,
+            @RequestParam(required = false) String fuelType,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate) {
+        EntryStatus entryStatus = status != null ? EntryStatus.valueOf(status) : null;
+        FuelType resolvedFuelType = fuelType != null ? FuelType.valueOf(fuelType) : null;
+        return ResponseEntity.ok(
+                fuelManagementService.searchFuelEntriesByProject(
+                        projectId,
+                        entryStatus,
+                        vehicleId,
+                        supplierId,
+                        resolvedFuelType,
+                        search,
+                        startDate,
+                        endDate));
     }
 
     @GetMapping("/fuel-entries/project/{projectId}/status/{status}")

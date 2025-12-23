@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -47,7 +47,7 @@ const AdminOutwardDetailPage: React.FC = () => {
     if (id && token) {
       loadOutwardDetail();
     }
-  }, [id, token]);
+  }, [id, token, searchQuery]);
 
   const loadOutwardDetail = async () => {
     if (!id || !token) return;
@@ -61,7 +61,7 @@ const AdminOutwardDetailPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const data = await dispatch(getOutwardById(numericId)).unwrap();
+      const data = await dispatch(getOutwardById({ id: numericId, search: searchQuery.trim() || undefined })).unwrap();
 
       if (!data) {
         toast.error('No record data received');
@@ -80,16 +80,7 @@ const AdminOutwardDetailPage: React.FC = () => {
     }
   };
 
-  const filteredLines = useMemo(() => {
-    if (!record?.lines) return [];
-    if (!searchQuery.trim()) return record.lines;
-
-    const lowerQuery = searchQuery.toLowerCase();
-    return record.lines.filter(line =>
-      line.code?.toLowerCase().includes(lowerQuery) ||
-      line.name?.toLowerCase().includes(lowerQuery)
-    );
-  }, [record?.lines, searchQuery]);
+  const filteredLines = record?.lines ?? [];
 
   if (loading) {
     return (

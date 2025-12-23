@@ -104,8 +104,11 @@ export const loadAllocationData = createAsyncThunk<
         page: projectPage,
         size: 50,
       })}`);
-      projects.push(...((response?.items as AllocationProject[]) || []));
-      hasMoreProjects = Boolean(response?.hasNext);
+      const content = (response?.content as AllocationProject[]) || [];
+      projects.push(...content);
+      const totalPages = response?.totalPages ?? 0;
+      const currentPage = response?.number ?? projectPage - 1;
+      hasMoreProjects = totalPages > 0 && currentPage < totalPages - 1;
       projectPage += 1;
     }
 
@@ -116,8 +119,11 @@ export const loadAllocationData = createAsyncThunk<
         page: materialPage,
         size: 50,
       })}`);
-      materials.push(...((response?.items as AllocationMaterial[]) || []));
-      hasMoreMaterials = Boolean(response?.hasNext);
+      const content = (response?.content as AllocationMaterial[]) || [];
+      materials.push(...content);
+      const totalPages = response?.totalPages ?? 0;
+      const currentPage = response?.number ?? materialPage - 1;
+      hasMoreMaterials = totalPages > 0 && currentPage < totalPages - 1;
       materialPage += 1;
     }
 
@@ -146,8 +152,8 @@ export const fetchProjectBom = createAsyncThunk<
     if (data) {
       if (Array.isArray((data as any).materials)) {
         bom = (data as any).materials as BomLine[];
-      } else if (Array.isArray((data as any).items)) {
-        bom = (data as any).items as BomLine[];
+      } else if (Array.isArray((data as any).content)) {
+        bom = (data as any).content as BomLine[];
       }
     }
     return { projectId, bom };

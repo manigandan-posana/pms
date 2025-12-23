@@ -27,6 +27,8 @@ interface AdminDataTableProps<T extends DataRow = DataRow> {
   onAdd?: () => void;
   loading?: boolean;
   totalRecords?: number;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   first?: number;
   rows?: number;
   onPageChange?: (event: any) => void; // PrimeReact signature
@@ -46,25 +48,14 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
   onAdd,
   loading = false,
   totalRecords = 0,
+  searchValue,
+  onSearchChange,
   first = 0,
   rows = 10,
   onPageChange,
   className = "",
 }: AdminDataTableProps<T>) => {
   const [filterText, setFilterText] = useState("");
-
-  // Filter data client-side if no server-side pagination handler is usually involved for search in this component
-  // note: The original component set globalFilter on DataTable.
-  const filteredData = React.useMemo(() => {
-    if (!filterText) return data;
-    const lower = filterText.toLowerCase();
-    return data.filter((row) => {
-      // Simple checking of all string values in row
-      return Object.values(row).some((val) =>
-        String(val).toLowerCase().includes(lower)
-      );
-    });
-  }, [data, filterText]);
 
   const tableColumns: ColumnDef<T>[] = columns.map((col) => ({
     field: col.field,
@@ -133,8 +124,11 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
           <div className="w-64">
             <CustomTextField
               placeholder="Search..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              value={searchValue ?? filterText}
+              onChange={(e) => {
+                setFilterText(e.target.value);
+                onSearchChange?.(e.target.value);
+              }}
               size="small"
             />
           </div>
@@ -151,7 +145,7 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
       </div>
 
       <CustomTable
-        data={filteredData}
+        data={data}
         columns={tableColumns as any} // Cast because of width type mismatch potentially
         loading={loading}
         pagination
@@ -166,7 +160,7 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
               first: p * r,
               rows: r,
               page: p,
-              pageCount: Math.ceil((totalRecords || filteredData.length) / r)
+              pageCount: Math.ceil((totalRecords || data.length) / r)
             });
           }
         }}
