@@ -64,10 +64,12 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     (state) => state.workspace as unknown as WorkspaceStateShape
   );
 
+  // Only bootstrap workspace on initial mount or when token changes, not on every navigation
   useEffect(() => {
     if (!token) return;
     dispatch(bootstrapWorkspace(token));
-  }, [dispatch, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   useEffect(() => {
     if (error) {

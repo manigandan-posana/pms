@@ -106,18 +106,19 @@ interface TransferModalProps {
   onClose: () => void;
 }
 
-const TransferModal: React.FC<TransferModalProps> = ({
+  const TransferModal: React.FC<TransferModalProps> = ({
   line,
   values, // We will treat this as initial value provider
   onChange, // Deprecated in favor of local state, but kept for signature if needed or we remove it
   onSave,
   onClose,
 }) => {
-  const [localQty, setLocalQty] = React.useState<string>(values.transferQty || "0");
+  // Use empty string as default so the input appears empty when user opens modal
+  const [localQty, setLocalQty] = React.useState<string>(values.transferQty ?? "");
 
   // Sync with prop when modal opens/line changes
   React.useEffect(() => {
-    setLocalQty(values.transferQty || "0");
+    setLocalQty(values.transferQty ?? "");
   }, [values.transferQty, line]);
 
   if (!line) return null;
@@ -306,26 +307,27 @@ const TransferCreatePage: React.FC = () => {
     dispatch(setTransferModalLine(line));
     dispatch(
       setTransferModalValues({
-        transferQty: existing ? String(existing.transferQty) : "0",
+        // default to empty string so input is empty like inward/outward
+        transferQty: existing ? String(existing.transferQty) : "",
       })
     );
   };
 
   const handleModalSave = (qty?: string) => {
     if (!modalLine) return;
-    // Use passed qty if available, otherwise fallback (though fallback is risky if state pending)
-    const transferQty = Number(qty !== undefined ? qty : modalValues.transferQty) || 0;
+    // Use passed qty if available, otherwise fallback to modal values.
+    // Allow empty string so input can be left blank; parsedQty will be 0 in that case
+    const raw = qty !== undefined ? qty : modalValues.transferQty;
+    const parsed = raw === "" ? 0 : Number(raw || 0);
 
-    if (transferQty <= 0) {
-      dispatch(setTransferModalLine(null));
-      return;
-    }
+    // Always update selection state in the store; reducer will delete entry when qty <= 0
     dispatch(
       setTransferSelectedLine({
         materialId: modalLine.materialId,
-        transferQty: transferQty,
+        transferQty: parsed,
       })
     );
+    // Close modal
     dispatch(setTransferModalLine(null));
   };
 

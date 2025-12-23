@@ -389,7 +389,7 @@ const UserDashboardPage: React.FC = () => {
                   { data: inventoryTrendData.transfer, label: 'Transfers', color: '#a855f7', stack: 'total' },
                 ]}
                 margin={{ left: 40, right: 10, top: 20, bottom: 30 }}
-                slotProps={{ legend: { hidden: false, position: { vertical: 'top', horizontal: 'end' }, itemMarkWidth: 10, itemMarkHeight: 10 } as any }}
+                slotProps={{ legend: { hidden: false, position: { vertical: 'top', horizontal: 'end' } } }}
                 borderRadius={4}
               />
             </Box>
