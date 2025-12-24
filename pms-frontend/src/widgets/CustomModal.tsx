@@ -40,7 +40,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
             {...props}
         >
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, pb: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                <Typography variant="subtitle2" component="div" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
                     {title}
                 </Typography>
                 <IconButton

@@ -7,7 +7,7 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import {
-  FiCheck, FiCircle, FiFilter, FiPlus, FiSearch, FiTrash2, FiEye, FiEdit2, FiX, FiCheckCircle
+  FiCircle, FiSearch, FiTrash2, FiEdit2, FiCheckCircle
 } from "react-icons/fi";
 
 import {
@@ -64,12 +64,7 @@ export interface AllocationInputLine {
   quantity: number;
 }
 
-import type { BomLine } from "../store/slices/adminAllocationsSlice";
-interface AdminAllocationsState {
-  bomByProject: Record<string, BomLine[]>;
-  bomStatusByProject: Record<string, string>;
-  error: string;
-}
+
 
 /* ---------- Helpers & Small Types ---------- */
 
@@ -93,10 +88,7 @@ interface AllocationFormState {
   line: AllocationWithMaterial | null;
 }
 
-interface ViewModalState {
-  open: boolean;
-  line: AllocationWithMaterial | null;
-}
+
 
 interface SelectedLine {
   quantity: number;
@@ -317,7 +309,7 @@ function MultiAllocationPanel({
               </div>
             )}
             <CustomButton
-              variant="secondary"
+              variant="outlined"
               size="small"
               onClick={() => setSelectedLines({})}
               disabled={selectedCount === 0 || saving}
@@ -348,13 +340,13 @@ function MultiAllocationPanel({
             label="Line Type"
             value={filters.lineType}
             options={[{ label: 'All', value: '' }, ...lineTypeOptions.map(l => ({ label: l, value: l }))]}
-            onChange={(e) => setFilters(prev => ({ ...prev, lineType: e.target.value }))}
+            onChange={(val) => setFilters(prev => ({ ...prev, lineType: val }))}
           />
           <CustomSelect
             label="Category"
             value={filters.category}
             options={[{ label: 'All', value: '' }, ...categoryOptions.map(c => ({ label: c, value: c }))]}
-            onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+            onChange={(val) => setFilters(prev => ({ ...prev, category: val }))}
           />
         </div>
       </div>
@@ -416,14 +408,14 @@ interface ProjectAllocationManagerProps {
 }
 
 const emptyFormState: AllocationFormState = { open: false, mode: "create", materialId: "", quantity: "", saving: false, line: null };
-const emptyViewState: ViewModalState = { open: false, line: null };
+
 
 const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
-  token, projects = [], materials = [], defaultProjectId, onBack, onProjectBomUpdate, onCreateMaterial, showMultiAllocator = true, showAllocationTable = true,
+  token, projects = [], materials = [], defaultProjectId, onBack: _onBack, onProjectBomUpdate, onCreateMaterial: _onCreateMaterial, showMultiAllocator = true, showAllocationTable = true,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const storeToken = useSelector((state: RootState) => state.auth.token);
-  const { bomByProject, bomStatusByProject, error } = useSelector((state: RootState) => state.adminAllocations as AdminAllocationsState);
+
   const resolvedToken = token || storeToken || undefined;
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>(() => normalizeId(defaultProjectId ?? projects[0]?.id));
@@ -431,8 +423,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   const [filteredAllocations, setFilteredAllocations] = useState<AllocationWithMaterial[]>([]);
 
   const [formModal, setFormModal] = useState<AllocationFormState>(emptyFormState);
-  const [viewModal, setViewModal] = useState<ViewModalState>(emptyViewState);
-  const [selectedLineIds, setSelectedLineIds] = useState<Set<string>>(new Set());
+
 
   // ... (Project sorting logic reuse)
   const sortedProjects = useMemo(() => [...projects].sort((a, b) => (a.code || "").localeCompare(b.code || "")), [projects]);
@@ -451,7 +442,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
 
   const refreshBom = useCallback(async (pid: string) => {
     if (!resolvedToken || !pid) return;
-    try { await dispatch(fetchProjectBom({ token: resolvedToken, projectId: pid })).unwrap(); }
+    try { await dispatch(fetchProjectBom({ projectId: pid })).unwrap(); }
     catch (err) { console.error(err); }
   }, [dispatch, resolvedToken]);
 
@@ -484,7 +475,6 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   const handleSaveLines = useCallback(async (lines: AllocationInputLine[]) => {
     if (!resolvedToken || !selectedProjectId) return;
     await dispatch(createProjectAllocations({
-      token: resolvedToken,
       projectId: selectedProjectId,
       lines: lines.map(line => ({ materialId: String(line.materialId), quantity: line.quantity }))
     })).unwrap();
@@ -496,7 +486,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   const handleDelete = async (line: AllocationWithMaterial) => {
     if (!resolvedToken || !selectedProjectId || !line.materialId) return;
     if (!window.confirm("Remove allocation?")) return;
-    await dispatch(deleteProjectAllocation({ token: resolvedToken, projectId: selectedProjectId, materialId: line.materialId })).unwrap();
+    await dispatch(deleteProjectAllocation({ projectId: selectedProjectId, materialId: line.materialId })).unwrap();
     toast.success("Removed");
     refreshBom(selectedProjectId);
   };

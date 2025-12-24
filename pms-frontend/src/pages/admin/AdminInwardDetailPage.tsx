@@ -337,32 +337,32 @@ const AdminInwardDetailPage: React.FC = () => {
               Record Information
             </Typography>
             <Grid container spacing={1.5}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Project</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.projectName || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Supplier</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.supplierName || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Invoice No</Typography>
                 <Chip label={record.invoiceNo || '—'} size="small" sx={{ height: 20, fontSize: '0.65rem', fontFamily: 'monospace' }} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Entry Date</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
                   {record.entryDate ? new Date(record.entryDate).toLocaleDateString() : '—'}
                 </Typography>
               </Grid>
               {record.vehicleNo && (
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Vehicle No</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.vehicleNo}</Typography>
                 </Grid>
               )}
               {record.remarks && (
-                <Grid item xs={12} >
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Remarks</Typography>
                   <Typography variant="caption" sx={{ bgcolor: 'grey.50', p: 1, borderRadius: 0.5, display: 'block', border: 1, borderColor: 'divider' }}>
                     {record.remarks}

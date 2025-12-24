@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
-import { Box, Stack, Typography, Paper, Grid, Chip } from "@mui/material";
+import { Box, Stack, Typography, Paper, Grid } from "@mui/material";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -153,7 +153,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
         </Typography>
       </Box>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <CustomTextField
             label="Transfer Qty *"
             type="number"
@@ -502,7 +502,7 @@ const TransferCreatePage: React.FC = () => {
               Transfer Details
             </Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4} lg={2.4}>
+              <Grid size={{ xs: 12, md: 4, lg: 2.4 }}>
                 <CustomSelect
                   label="From Project *"
                   value={fromProject}
@@ -520,7 +520,7 @@ const TransferCreatePage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={4} lg={2.4}>
+              <Grid size={{ xs: 12, md: 4, lg: 2.4 }}>
                 <CustomTextField
                   label="From Site"
                   value={fromSite}
@@ -534,7 +534,7 @@ const TransferCreatePage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={4} lg={2.4}>
+              <Grid size={{ xs: 12, md: 4, lg: 2.4 }}>
                 <CustomSelect
                   label="To Project *"
                   value={toProject}
@@ -552,7 +552,7 @@ const TransferCreatePage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={4} lg={2.4}>
+              <Grid size={{ xs: 12, md: 4, lg: 2.4 }}>
                 <CustomTextField
                   label="To Site"
                   value={toSite}
@@ -566,7 +566,7 @@ const TransferCreatePage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={8} lg={2.4}>
+              <Grid size={{ xs: 12, md: 8, lg: 2.4 }}>
                 <CustomTextField
                   label="Remarks"
                   value={remarks}

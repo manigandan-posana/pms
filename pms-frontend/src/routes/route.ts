@@ -22,9 +22,6 @@ const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPag
 
 // Lazy‑loaded admin pages
 const AdminInventoryPage = lazy(() => import("../pages/admin/AdminInventoryPage"));
-const MaterialDirectoryPage = lazy(() => import("../pages/admin/MaterialDirectoryPage"));
-const MaterialAllocationsPage = lazy(() => import("../pages/admin/MaterialAllocationsPage"));
-const AllocatedMaterialsPage = lazy(() => import("../pages/admin/AllocatedMaterialsPage"));
 const AllocatedMaterialsManagementPage = lazy(() => import("../pages/admin/AllocatedMaterialsManagementPage"));
 const ProjectManagementPage = lazy(() => import("../pages/admin/ProjectManagementPage"));
 const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));

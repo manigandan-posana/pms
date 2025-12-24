@@ -105,7 +105,7 @@ const ProjectActivityPage: React.FC = () => {
         acc.inwards += item.inwardCount || 0;
         acc.outwards += item.outwardCount || 0;
         acc.transfers += item.transferCount || 0;
-        acc.procurements += item.procurementCount || 0;
+        acc.procurements += (item as any).procurementCount || 0;
         return acc;
       },
       { inwards: 0, outwards: 0, transfers: 0, procurements: 0 }
@@ -150,7 +150,7 @@ const ProjectActivityPage: React.FC = () => {
           {/* Summary Cards */}
           <Grid container spacing={1}>
             {summaryCards.map(({ label, value, icon: Icon, color, bgcolor }) => (
-              <Grid item xs={12} sm={6} md={3} key={label}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={label}>
                 <Paper sx={{ p: 1.5, borderRadius: 1, bgcolor }}>
                   <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                     <Box>
@@ -191,13 +191,13 @@ const ProjectActivityPage: React.FC = () => {
                       <Chip label={`${project.inwardCount} Inwards`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'success.lighter', color: 'success.dark' }} />
                       <Chip label={`${project.outwardCount} Outwards`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'primary.lighter', color: 'primary.dark' }} />
                       <Chip label={`${project.transferCount} Transfers`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'warning.lighter', color: 'warning.dark' }} />
-                      <Chip label={`${project.procurementCount} Procurements`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'secondary.lighter', color: 'secondary.dark' }} />
+                      <Chip label={`${(project as any).procurementCount || 0} Procurements`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'secondary.lighter', color: 'secondary.dark' }} />
                     </Stack>
                   </Stack>
                 </Box>
                 <Box sx={{ p: 1 }}>
                   <Grid container spacing={1}>
-                    <Grid item xs={12} sm={6} lg={3}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                       <ActivityPanel
                         title="Inwards"
                         accentColor="success.dark"
@@ -205,7 +205,7 @@ const ProjectActivityPage: React.FC = () => {
                         entries={project.recentInwards}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} lg={3}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                       <ActivityPanel
                         title="Outwards"
                         accentColor="primary.dark"
@@ -213,7 +213,7 @@ const ProjectActivityPage: React.FC = () => {
                         entries={project.recentOutwards}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} lg={3}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                       <ActivityPanel
                         title="Transfers"
                         accentColor="warning.dark"
@@ -221,12 +221,12 @@ const ProjectActivityPage: React.FC = () => {
                         entries={project.recentTransfers}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} lg={3}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                       <ActivityPanel
                         title="Procurements"
                         accentColor="secondary.dark"
                         emptyLabel="No procurement requests yet"
-                        entries={project.recentProcurements}
+                        entries={(project as any).recentProcurements}
                       />
                     </Grid>
                   </Grid>

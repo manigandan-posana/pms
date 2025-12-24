@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Get } from "../../utils/apiService";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
-import { Box, Stack, Typography, Paper, Grid, Chip } from "@mui/material";
+import { Box, Stack, Typography, Paper, Grid } from "@mui/material";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -133,7 +133,7 @@ const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, type, onCha
       </Box>
       <Grid container spacing={2}>
         {!isReturn && (
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <CustomTextField
               label="Ordered Qty"
               type="number"
@@ -142,7 +142,7 @@ const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, type, onCha
             />
           </Grid>
         )}
-        <Grid item xs={12} sm={isReturn ? 12 : 6}>
+        <Grid size={{ xs: 12, sm: isReturn ? 12 : 6 }}>
           <CustomTextField
             label={isReturn ? "Returned Qty *" : "Received Qty *"}
             type="number"
@@ -530,7 +530,7 @@ const InwardCreatePage: React.FC = () => {
               Entry Details
             </Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <CustomSelect
                   label="Project *"
                   value={projectId}
@@ -539,7 +539,7 @@ const InwardCreatePage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <CustomSelect
                   label="Type *"
                   value={type || "SUPPLY"}
@@ -559,7 +559,7 @@ const InwardCreatePage: React.FC = () => {
 
               {type === "RETURN" ? (
                 <>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomSelect
                       label="Outward Record *"
                       value={outwardId || ""}
@@ -570,7 +570,7 @@ const InwardCreatePage: React.FC = () => {
                       onChange={(value) => dispatch(setInwardField({ field: 'outwardId', value: String(value) }))}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Return Date *"
                       type="date"
@@ -579,7 +579,7 @@ const InwardCreatePage: React.FC = () => {
                       InputLabelProps={{ shrink: true }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Return By *"
                       value={supplierName}
@@ -589,14 +589,14 @@ const InwardCreatePage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Invoice No."
                       value={invoiceNo}
                       onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Invoice Date"
                       type="date"
@@ -605,7 +605,7 @@ const InwardCreatePage: React.FC = () => {
                       InputLabelProps={{ shrink: true }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Delivery Date"
                       type="date"
@@ -614,14 +614,14 @@ const InwardCreatePage: React.FC = () => {
                       InputLabelProps={{ shrink: true }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Vehicle No."
                       value={vehicleNo}
                       onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CustomTextField
                       label="Supplier Name"
                       value={supplierName}
@@ -631,7 +631,7 @@ const InwardCreatePage: React.FC = () => {
                 </>
               )}
 
-              <Grid item xs={12} >
+              <Grid size={{ xs: 12 }}>
                 <CustomTextField
                   label="Remarks"
                   value={remarks}

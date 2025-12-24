@@ -396,7 +396,7 @@ const OutwardCreatePage: React.FC = () => {
               Issue Details
             </Typography>
             <Grid container spacing={1.5}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <CustomSelect
                   label="Project *"
                   value={projectId}
@@ -414,7 +414,7 @@ const OutwardCreatePage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <CustomTextField
                   label="Issue To *"
                   value={issueTo}
@@ -428,7 +428,7 @@ const OutwardCreatePage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <CustomTextField
                   label="Issue Date"
                   type="date"
@@ -444,7 +444,7 @@ const OutwardCreatePage: React.FC = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Box sx={{ p: 1, bgcolor: 'info.lighter', borderRadius: 1, border: 1, borderColor: 'info.light' }}>
                   <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'info.dark', display: 'block' }}>
                     Status: <Chip label="OPEN" size="small" color="info" sx={{ height: 18, fontSize: '0.6rem', ml: 0.5 }} />

@@ -936,7 +936,7 @@ const VehicleManagementPage: React.FC = () => {
                             { label: "Total Cost", value: `₹${fuelSummaryMetrics.totalCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` },
                             { label: "Total Distance", value: `${fuelSummaryMetrics.totalDistance.toFixed(2)} km` }
                           ].map((metric, i) => (
-                            <Grid item xs={12} sm={4} key={i}>
+                            <Grid size={{ xs: 12, sm: 4 }} key={i}>
                               <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'grey.50' }}>
                                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>{metric.label}</Typography>
                                 <Typography variant="subtitle2" fontWeight={700}>{metric.value}</Typography>
@@ -984,10 +984,10 @@ const VehicleManagementPage: React.FC = () => {
 
                         {fuelViewMode === 'history' && (
                           <Grid container spacing={2} sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 2 }}>
-                            <Grid item xs={12} md={3}>
+                            <Grid size={{ xs: 12, md: 3 }}>
                               <CustomTextField placeholder="Search..." value={fuelSearchQuery} onChange={(e) => setFuelSearchQuery(e.target.value)} />
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid size={{ xs: 12, md: 2 }}>
                               <CustomSelect
                                 label="Vehicle"
                                 value={fuelVehicleFilter || ""}
@@ -995,7 +995,7 @@ const VehicleManagementPage: React.FC = () => {
                                 options={[{ label: "All Vehicles", value: "" }, ...vehicles.map(v => ({ label: v.vehicleName, value: v.id }))]}
                               />
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid size={{ xs: 12, md: 2 }}>
                               <CustomSelect
                                 label="Supplier"
                                 value={fuelSupplierFilter || ""}
@@ -1003,10 +1003,10 @@ const VehicleManagementPage: React.FC = () => {
                                 options={[{ label: "All Suppliers", value: "" }, ...suppliers.map(s => ({ label: s.supplierName, value: s.id }))]}
                               />
                             </Grid>
-                            <Grid item xs={12} md={2.5}>
+                            <Grid size={{ xs: 12, md: 2.5 }}>
                               <CustomDateInput value={fuelDateFrom} onChange={(e) => setFuelDateFrom(e.value as Date)} label="From Date" />
                             </Grid>
-                            <Grid item xs={12} md={2.5}>
+                            <Grid size={{ xs: 12, md: 2.5 }}>
                               <CustomDateInput value={fuelDateTo} onChange={(e) => setFuelDateTo(e.value as Date)} label="To Date" />
                             </Grid>
                           </Grid>
@@ -1069,30 +1069,30 @@ const VehicleManagementPage: React.FC = () => {
         }
       >
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomTextField label="Vehicle Name" required value={vehicleForm.vehicleName} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleName: e.target.value })} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomTextField label="Vehicle Number" required value={vehicleForm.vehicleNumber} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleNumber: e.target.value })} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomSelect label="Vehicle Type" required value={vehicleForm.vehicleType} onChange={(v) => setVehicleForm({ ...vehicleForm, vehicleType: v as VehicleType })} options={vehicleTypeOptions} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomSelect label="Fuel Type" required value={vehicleForm.fuelType} onChange={(v) => setVehicleForm({ ...vehicleForm, fuelType: v as FuelType })} options={fuelTypeOptions} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomSelect label="Status" required value={vehicleForm.status} onChange={(v) => setVehicleForm({ ...vehicleForm, status: v as VehicleStatus })} options={statusOptions} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomDateInput label="Start Date" required value={vehicleForm.startDate} onChange={(e) => setVehicleForm({ ...vehicleForm, startDate: e.value as Date })} />
           </Grid>
           {vehicleForm.vehicleType !== "OWN_VEHICLE" && (
             <>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <CustomTextField label="Rent Price" type="number" value={vehicleForm.rentPrice || ""} onChange={(e) => setVehicleForm({ ...vehicleForm, rentPrice: parseFloat(e.target.value) || null })} />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <CustomSelect label="Rent Period" value={vehicleForm.rentPeriod} onChange={(v) => setVehicleForm({ ...vehicleForm, rentPeriod: v as any })} options={[{ label: "Monthly", value: "MONTHLY" }, { label: "Daily", value: "DAILY" }, { label: "Hourly", value: "HOURLY" }]} />
               </Grid>
             </>
@@ -1110,16 +1110,16 @@ const VehicleManagementPage: React.FC = () => {
         }
       >
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <CustomTextField label="Supplier Name" required value={supplierForm.supplierName} onChange={(e) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomTextField label="Contact Person" value={supplierForm.contactPerson} onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomTextField label="Phone Number" value={supplierForm.phoneNumber} onChange={(e) => setSupplierForm({ ...supplierForm, phoneNumber: e.target.value })} />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <CustomTextField label="Address" value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} />
           </Grid>
         </Grid>
@@ -1135,22 +1135,22 @@ const VehicleManagementPage: React.FC = () => {
         }
       >
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <CustomDateInput label="Date" required value={fuelForm.date} onChange={(e) => setFuelForm({ ...fuelForm, date: e.value as Date })} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomSelect label="Vehicle" required value={fuelForm.vehicleId} onChange={(v) => setFuelForm({ ...fuelForm, vehicleId: v })} options={vehicles.map(v => ({ label: `${v.vehicleName} (${v.vehicleNumber})`, value: v.id }))} />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomSelect label="Supplier" required value={fuelForm.supplierId} onChange={(v) => setFuelForm({ ...fuelForm, supplierId: v })} options={suppliers.map(s => ({ label: s.supplierName, value: s.id }))} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <CustomTextField label="Quantity" required type="number" value={fuelForm.litres} onChange={(e) => setFuelForm({ ...fuelForm, litres: e.target.value })} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <CustomTextField label="Opening KM" required type="number" value={fuelForm.openingKm} onChange={(e) => setFuelForm({ ...fuelForm, openingKm: e.target.value })} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <CustomTextField label="Unit Price" required type="number" value={fuelForm.pricePerLitre} onChange={(e) => setFuelForm({ ...fuelForm, pricePerLitre: e.target.value })} />
           </Grid>
         </Grid>

@@ -7,7 +7,7 @@ import { FiArrowDown, FiArrowUp, FiRefreshCw, FiSearch, FiArrowRight, FiArrowLef
 import { Get as apiGet } from "../../utils/apiService";
 import type { RootState, AppDispatch } from "../../store/store";
 import { setSelectedAdminProject } from "../../store/slices/adminProjectsSlice";
-import CustomTable, { ColumnDef } from "../../widgets/CustomTable";
+import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomTabs from "../../widgets/CustomTabs";
 import CustomSelect from "../../widgets/CustomSelect";
 import CustomTextField from "../../widgets/CustomTextField";
@@ -272,7 +272,7 @@ const AdminHistoryPage: React.FC = () => {
           placeholder={placeholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          startIcon={<FiSearch className="text-slate-400" />}
+          startAdornment={<FiSearch className="text-slate-400" />}
         />
       </div>
       <div className="w-40">
@@ -308,7 +308,6 @@ const AdminHistoryPage: React.FC = () => {
                 setTransferPage(0);
               }}
               options={projectOptions}
-              placeholder="All Projects"
             />
           </div>
         </div>

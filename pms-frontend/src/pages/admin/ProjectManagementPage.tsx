@@ -1,115 +1,116 @@
-import React, { useEffect } from 'react';
-import { Box, Stack, Typography, Paper, Chip, Alert } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import { Box, Typography, Paper, Chip, Alert } from '@mui/material';
 import AdminDataTable from '../../components/AdminDataTable';
-import AdminFormModal from '../../components/AdminFormModal';
-import { useCRUD } from '../../hooks/useCRUD';
+import CustomModal from '../../widgets/CustomModal';
+import CustomTextField from '../../widgets/CustomTextField';
+import CustomButton from '../../widgets/CustomButton';
+import type { RootState, AppDispatch } from '../../store/store';
+import {
+  searchProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+} from '../../store/slices/adminProjectsSlice';
 
-export interface Project {
+interface Project {
   id: string | number;
-  code: string;
+  code?: string;
   name: string;
-  description: string;
-  status: 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
-  startDate: string;
-  endDate?: string;
-  budget: number;
-  manager?: string;
 }
 
-// Mock API functions - Replace with actual API calls
-const mockProjectAPI = {
-  fetchAll: async (): Promise<Project[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          {
-            id: 1,
-            code: 'PRJ001',
-            name: 'Website Redesign',
-            description: 'Redesign the company website',
-            status: 'ACTIVE',
-            startDate: '2024-01-01',
-            budget: 50000,
-            manager: 'John Doe',
-          },
-          {
-            id: 2,
-            code: 'PRJ002',
-            name: 'Mobile App',
-            description: 'Develop mobile application',
-            status: 'ACTIVE',
-            startDate: '2024-02-01',
-            budget: 100000,
-            manager: 'Jane Smith',
-          },
-        ]);
-      }, 1000);
-    });
-  },
-
-  create: async (data: Partial<Project>): Promise<Project> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: Date.now(),
-          ...data,
-          status: 'ACTIVE',
-          startDate: new Date().toISOString().split('T')[0],
-        } as Project);
-      }, 500);
-    });
-  },
-
-  update: async (id: string | number, data: Partial<Project>): Promise<Project> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ id, ...data } as Project);
-      }, 500);
-    });
-  },
-
-  delete: async (_id: string | number): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 500);
-    });
-  },
-};
-
-const statusOptions = [
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'On Hold', value: 'ON_HOLD' },
-  { label: 'Completed', value: 'COMPLETED' },
-  { label: 'Cancelled', value: 'CANCELLED' },
-];
-
-const getStatusColor = (status: string) => {
+const getStatusColor = (status?: string) => {
   switch (status) {
     case 'ACTIVE': return 'success';
     case 'ON_HOLD': return 'warning';
     case 'COMPLETED': return 'info';
     case 'CANCELLED': return 'error';
-    default: return 'default';
+    default: return 'success';
   }
 };
 
-export const ProjectManagementPageV3: React.FC = () => {
-  const crud = useCRUD<Project>({
-    onFetch: mockProjectAPI.fetchAll,
-    onCreate: mockProjectAPI.create,
-    onUpdate: mockProjectAPI.update,
-    onDelete: mockProjectAPI.delete,
-    successMessage: {
-      create: 'Project created successfully',
-      update: 'Project updated successfully',
-      delete: 'Project deleted successfully',
-    },
-  });
+export const ProjectManagementPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: projects, totalItems, status, error } = useSelector(
+    (state: RootState) => state.adminProjects
+  );
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const loading = status === 'loading';
 
   useEffect(() => {
-    crud.fetchData();
-  }, []);
+    dispatch(searchProjects({ page: 1, size: 100 }));
+  }, [dispatch]);
+
+  const handleOpenCreate = () => {
+    setEditingProject(null);
+    setProjectName('');
+    setModalOpen(true);
+  };
+
+  const handleOpenEdit = (project: Project) => {
+    setEditingProject(project);
+    setProjectName(project.name);
+    setModalOpen(true);
+  };
+
+  const handleClose = () => {
+    setModalOpen(false);
+    setEditingProject(null);
+    setProjectName('');
+  };
+
+  const handleSave = async () => {
+    if (!projectName.trim()) {
+      toast.error('Project name is required');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (editingProject) {
+        await dispatch(
+          updateProject({
+            projectId: editingProject.id,
+            payload: { name: projectName.trim() },
+          })
+        ).unwrap();
+        toast.success('Project updated successfully');
+      } else {
+        await dispatch(
+          createProject({ name: projectName.trim() })
+        ).unwrap();
+        toast.success('Project created successfully');
+      }
+      handleClose();
+      dispatch(searchProjects({ page: 1, size: 100 }));
+    } catch (err: any) {
+      toast.error(err || 'Failed to save project');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (project: Project) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete project "${project.name}"? This action cannot be undone.`
+      )
+    ) {
+      try {
+        await dispatch(deleteProject(project.id)).unwrap();
+        toast.success('Project deleted successfully');
+        dispatch(searchProjects({ page: 1, size: 100 }));
+      } catch (err: any) {
+        toast.error(err || 'Failed to delete project');
+      }
+    }
+  };
 
   const columns = [
     {
@@ -117,10 +118,10 @@ export const ProjectManagementPageV3: React.FC = () => {
       header: 'Project Code',
       sortable: true,
       filterable: true,
-      width: '12%',
+      width: '20%',
       body: (row: Project) => (
         <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
-          {row.code}
+          {row.code || '—'}
         </Typography>
       ),
     },
@@ -129,7 +130,7 @@ export const ProjectManagementPageV3: React.FC = () => {
       header: 'Project Name',
       sortable: true,
       filterable: true,
-      width: '20%',
+      width: '50%',
       body: (row: Project) => (
         <Typography variant="caption" sx={{ fontWeight: 500 }}>
           {row.name}
@@ -137,183 +138,76 @@ export const ProjectManagementPageV3: React.FC = () => {
       ),
     },
     {
-      field: 'description',
-      header: 'Description',
-      sortable: false,
-      filterable: true,
-      width: '20%',
-      body: (row: Project) => (
-        <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
-          {row.description}
-        </Typography>
-      ),
-    },
-    {
       field: 'status',
       header: 'Status',
       sortable: true,
-      filterable: true,
-      width: '12%',
-      body: (row: Project) => (
+      width: '20%',
+      body: () => (
         <Chip
-          label={row.status}
+          label="ACTIVE"
           size="small"
-          color={getStatusColor(row.status) as any}
+          color={getStatusColor('ACTIVE') as any}
           sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }}
         />
       ),
     },
-    {
-      field: 'startDate',
-      header: 'Start Date',
-      sortable: true,
-      width: '12%',
-      body: (row: Project) => (
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {new Date(row.startDate).toLocaleDateString()}
-        </Typography>
-      ),
-    },
-    {
-      field: 'budget',
-      header: 'Budget',
-      sortable: true,
-      width: '12%',
-      body: (row: Project) => (
-        <Typography variant="caption" sx={{ fontWeight: 600 }}>
-          ${row.budget.toLocaleString()}
-        </Typography>
-      ),
-    },
-    {
-      field: 'manager',
-      header: 'Project Manager',
-      sortable: true,
-      filterable: true,
-      width: '12%',
-      body: (row: Project) => (
-        <Typography variant="caption">{row.manager || '-'}</Typography>
-      ),
-    },
   ];
-
-  const formFields = [
-    {
-      name: 'code',
-      label: 'Project Code',
-      type: 'text' as const,
-      required: true,
-      placeholder: 'e.g., PRJ001',
-      disabled: crud.isEditing,
-    },
-    {
-      name: 'name',
-      label: 'Project Name',
-      type: 'text' as const,
-      required: true,
-      placeholder: 'Enter project name',
-    },
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'textarea' as const,
-      placeholder: 'Enter project description',
-    },
-    {
-      name: 'status',
-      label: 'Status',
-      type: 'select' as const,
-      required: true,
-      options: statusOptions,
-    },
-    {
-      name: 'startDate',
-      label: 'Start Date',
-      type: 'date' as const,
-      required: true,
-    },
-    {
-      name: 'endDate',
-      label: 'End Date (Optional)',
-      type: 'date' as const,
-    },
-    {
-      name: 'budget',
-      label: 'Budget ($)',
-      type: 'number' as const,
-      required: true,
-      placeholder: '0.00',
-    },
-    {
-      name: 'manager',
-      label: 'Project Manager',
-      type: 'text' as const,
-      placeholder: 'Manager name',
-    },
-  ];
-
-  const handleEdit = (project: Project) => {
-    crud.openEditModal(project);
-  };
-
-  const handleDelete = (project: Project) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete project "${project.name}"? This action cannot be undone.`
-      )
-    ) {
-      crud.delete(project.id);
-    }
-  };
-
-  const handleSave = async () => {
-    const dataToSave = crud.formData;
-
-    if (!dataToSave.name?.trim() || !dataToSave.code?.trim()) {
-      return;
-    }
-
-    try {
-      await crud.save(dataToSave);
-    } catch (error) {
-      // Error handled by hook
-    }
-  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      {crud.error && (
+      {error && (
         <Alert severity="error" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-          {crud.error}
+          {error}
         </Alert>
       )}
 
       <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
-        <AdminDataTable
-          data={crud.data}
-          columns={columns}
+        <AdminDataTable<Project>
+          data={projects as Project[]}
+          columns={columns as any}
           title="Project Management"
-          loading={crud.loading}
-          totalRecords={crud.data.length}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAdd={crud.openCreateModal}
+          loading={loading}
+          totalRecords={totalItems}
+          onEdit={(row) => handleOpenEdit(row as Project)}
+          onDelete={(row) => handleDelete(row as Project)}
+          onAdd={handleOpenCreate}
         />
       </Paper>
 
-      <AdminFormModal
-        visible={crud.modalOpen}
-        title={crud.isEditing ? 'Edit Project' : 'Create New Project'}
-        fields={formFields}
-        data={crud.formData as any}
-        onDataChange={crud.updateFormData}
-        onSubmit={handleSave}
-        onHide={crud.closeModal}
-        loading={crud.loading}
-        submitLabel={crud.isEditing ? 'Update' : 'Create'}
-      />
+      <CustomModal
+        open={modalOpen}
+        onClose={handleClose}
+        title={editingProject ? 'Edit Project' : 'Create New Project'}
+        maxWidth="xs"
+        footer={
+          <div className="flex gap-2 justify-end">
+            <CustomButton variant="outlined" onClick={handleClose} disabled={saving}>
+              Cancel
+            </CustomButton>
+            <CustomButton onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : editingProject ? 'Update' : 'Create'}
+            </CustomButton>
+          </div>
+        }
+      >
+        <div className="pt-2">
+          <CustomTextField
+            label="Project Name"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder="Enter project name"
+            required
+            autoFocus
+          />
+          {editingProject && (
+            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
+              Project Code: {editingProject.code || 'Will be auto-generated'}
+            </Typography>
+          )}
+        </div>
+      </CustomModal>
     </Box>
   );
 };
 
-export default ProjectManagementPageV3;
+export default ProjectManagementPage;

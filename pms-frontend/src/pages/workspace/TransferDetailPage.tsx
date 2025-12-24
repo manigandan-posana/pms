@@ -136,24 +136,24 @@ const TransferDetailPage: React.FC = () => {
               <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase' }}>Transfer Information</Typography>
             </Stack>
             <Grid container spacing={1.5}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Code</Typography>
                 <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '0.75rem' }}>{record.code}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Date</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>{record.date || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>From Project</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.fromProjectName || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>To Project</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.toProjectName || '—'}</Typography>
               </Grid>
               {record.remarks && (
-                <Grid item xs={12} >
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Remarks</Typography>
                   <Typography variant="caption" sx={{ bgcolor: 'grey.50', p: 1, borderRadius: 0.5, display: 'block', border: 1, borderColor: 'divider' }}>
                     {record.remarks}

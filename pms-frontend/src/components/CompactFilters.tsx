@@ -2,18 +2,14 @@
 import React, { useState } from "react";
 import {
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Autocomplete,
   Button,
   Chip,
-  Box,
   Popover
 } from "@mui/material";
 import { FiFilter, FiX } from "react-icons/fi";
 import CustomSelect from "../widgets/CustomSelect";
+
 
 interface FilterOption {
   label: string;
@@ -119,7 +115,6 @@ export const CompactFilters: React.FC<CompactFiltersProps> = ({
                   value={values[filter.id] || ""}
                   options={filter.options}
                   onChange={(val) => onChange(filter.id, val)}
-                  placeholder={filter.placeholder}
                   size="small"
                 />
               )}

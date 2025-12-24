@@ -29,6 +29,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     helperText,
     error,
     size = "small",
+    multiple,
     sx,
     ...props
 }) => {
@@ -38,13 +39,37 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         }
     };
 
+    // For multiple select, value must always be an array
+    // For single select, validate the value exists in options
+    const getValidValue = () => {
+        if (multiple) {
+            // Always return an array for multiple select
+            if (Array.isArray(value)) {
+                return value;
+            }
+            return [];
+        }
+
+        // Single select logic
+        if (options.length === 0) {
+            return '';
+        }
+        if (options.some(opt => String(opt.value) === String(value))) {
+            return value;
+        }
+        return '';
+    };
+
+    const validValue = getValidValue();
+
     return (
         <FormControl fullWidth size={size} error={error} variant="outlined">
             {label && <InputLabel sx={{ fontSize: '0.75rem' }}>{label}</InputLabel>}
             <Select
                 label={label}
-                value={value}
+                value={validValue}
                 onChange={handleChange}
+                multiple={multiple}
                 sx={{
                     bgcolor: 'background.paper',
                     fontSize: '0.75rem',

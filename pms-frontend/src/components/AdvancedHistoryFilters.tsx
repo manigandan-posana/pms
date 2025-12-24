@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import CustomTextField from "../widgets/CustomTextField";
 import CustomDateInput from "../widgets/CustomDateInput";
-import CustomButton from "../widgets/CustomButton";
 import { FiCalendar, FiSearch, FiX } from "react-icons/fi";
 import { Stack, Box, IconButton } from "@mui/material";
 
@@ -20,7 +19,7 @@ interface AdvancedHistoryFiltersProps {
 }
 
 export const AdvancedHistoryFilters: React.FC<AdvancedHistoryFiltersProps> = ({
-  filterType,
+  filterType: _filterType,
   onFilterChange,
   isLoading = false,
   searchQuery,

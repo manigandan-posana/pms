@@ -6,7 +6,7 @@ import { useMemo } from 'react';
  * @param query - search query string
  * @param keys - optional list of keys to restrict searchable fields
  */
-export default function useGlobalFilter<T = any>(
+export default function useGlobalFilter<T extends object = Record<string, unknown>>(
   items: T[],
   query: string,
   keys?: Array<keyof T>

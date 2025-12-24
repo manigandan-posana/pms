@@ -25,7 +25,6 @@ import {
   MdSwapHoriz as TransferIcon,
   MdAssignment as ValidationIcon,
   MdLocalGasStation as FuelIcon,
-  MdDirectionsCar as CarIcon,
   MdAdd as AddIcon,
   MdOutbound as OutboundIcon
 } from "react-icons/md";
@@ -309,7 +308,7 @@ const UserDashboardPage: React.FC = () => {
 
       {/* Overview Metrics Grid */}
       <Grid container spacing={1.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <CompactMetricCard
             title="Total Inwards"
             value={metrics.totalInwards}
@@ -318,7 +317,7 @@ const UserDashboardPage: React.FC = () => {
             onClick={() => navigate('/workspace/inventory/inwards')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <CompactMetricCard
             title="Total Outwards"
             value={metrics.totalOutwards}
@@ -327,7 +326,7 @@ const UserDashboardPage: React.FC = () => {
             onClick={() => navigate('/workspace/inventory/outwards')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <CompactMetricCard
             title="Transfers"
             value={metrics.totalTransfers}
@@ -336,7 +335,7 @@ const UserDashboardPage: React.FC = () => {
             onClick={() => navigate('/workspace/inventory/transfers')}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <CompactMetricCard
             title="Fuel Cost"
             value={`₹${(metrics.totalFuelCost / 1000).toFixed(1)}k`}
@@ -345,7 +344,7 @@ const UserDashboardPage: React.FC = () => {
             color="#e11d48"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <CompactMetricCard
             title="Pending Actions"
             value={metrics.pendingValidations + metrics.openEntries}
@@ -360,7 +359,7 @@ const UserDashboardPage: React.FC = () => {
 
       <Grid container spacing={2}>
         {/* Charts Section */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
             <SectionHeading
               title="Inventory Activity"
@@ -385,7 +384,7 @@ const UserDashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
             <SectionHeading title="Transaction Mix" />
             <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
@@ -424,7 +423,7 @@ const UserDashboardPage: React.FC = () => {
         </Grid>
 
         {/* Top Suppliers & Receivers */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%', minHeight: 300 }}>
             <SectionHeading title="Top Suppliers" />
             {topEntities.suppliers.length > 0 ? (
@@ -446,7 +445,7 @@ const UserDashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%', minHeight: 300 }}>
             <SectionHeading title="Top Receivers" />
             {topEntities.receivers.length > 0 ? (
@@ -473,7 +472,7 @@ const UserDashboardPage: React.FC = () => {
           { title: "Recent Inwards", data: inwardArray, icon: <InventoryIcon />, path: '/workspace/inventory/inwards', type: 'inward' },
           { title: "Recent Outwards", data: outwardArray, icon: <OutboundIcon />, path: '/workspace/inventory/outwards', type: 'outward' },
         ].map((section, idx) => (
-          <Grid item xs={12} md={6} lg={6} key={idx}>
+          <Grid size={{ xs: 12, md: 6, lg: 6 }} key={idx}>
             <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
               <CardHeader
                 title={section.title}

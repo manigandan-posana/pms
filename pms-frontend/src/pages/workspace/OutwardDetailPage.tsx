@@ -289,21 +289,21 @@ const OutwardDetailPage: React.FC = () => {
               Record Information
             </Typography>
             <Grid container spacing={1.5}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Project</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.projectName || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Issue To</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.issueTo || '—'}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Date</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
                   {record.date ? new Date(record.date).toLocaleDateString() : '—'}
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Status</Typography>
                 <Chip
                   label={record.status || 'OPEN'}
@@ -313,7 +313,7 @@ const OutwardDetailPage: React.FC = () => {
                 />
               </Grid>
               {record.closeDate && (
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Close Date</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
                     {new Date(record.closeDate).toLocaleDateString()}

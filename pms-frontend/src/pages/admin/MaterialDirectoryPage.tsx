@@ -358,7 +358,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
           <Collapse in={filtersOpen}>
             <Box sx={{ pt: 1 }}>
               <Grid container spacing={1}>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <CustomSelect
                     label="Line Type"
                     multiple
@@ -367,7 +367,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
                     onChange={(val: any) => { setFilters(prev => ({ ...prev, lineTypes: val })); setPage(0); }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <CustomSelect
                     label="Category"
                     multiple
@@ -376,7 +376,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
                     onChange={(val: any) => { setFilters(prev => ({ ...prev, categories: val })); setPage(0); }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <CustomSelect
                     label="Unit"
                     multiple
@@ -385,7 +385,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
                     onChange={(val: any) => { setFilters(prev => ({ ...prev, units: val })); setPage(0); }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Stack direction="row" justifyContent="flex-end">
                     <CustomButton
                       variant="text"
@@ -432,16 +432,16 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
           )}
           <CustomTextField label="Material Name *" value={modalState.fields.name} onChange={(e) => handleFieldChange('name', e.target.value)} />
           <Grid container spacing={1.5}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CustomTextField label="Part No" value={modalState.fields.partNo} onChange={(e) => handleFieldChange('partNo', e.target.value)} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CustomTextField label="UOM" value={modalState.fields.unit} onChange={(e) => handleFieldChange('unit', e.target.value)} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CustomTextField label="Line Type" value={modalState.fields.lineType} onChange={(e) => handleFieldChange('lineType', e.target.value)} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CustomTextField label="Category" value={modalState.fields.category} onChange={(e) => handleFieldChange('category', e.target.value)} />
             </Grid>
           </Grid>

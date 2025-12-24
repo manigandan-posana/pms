@@ -132,6 +132,7 @@ const CustomTable = <T extends Record<string, any>>({
                                             </Typography>
                                             <Typography
                                                 variant="body2"
+                                                component="div"
                                                 sx={{
                                                     flex: 1,
                                                     fontSize: '0.8rem',

@@ -122,8 +122,8 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await dispatch(listProjects({ limit: 1000 })).unwrap();
-      const data = response?.content || response?.data?.content || [];
+      const response = await dispatch(listProjects({ page: 1, size: 1000 })).unwrap();
+      const data = response?.content || response || [];
       const list = Array.isArray(data) ? data : [];
       setProjects(list);
       if (!selectedAdminProjectId && list.length > 0) {

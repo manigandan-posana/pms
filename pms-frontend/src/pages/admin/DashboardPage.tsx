@@ -87,7 +87,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Stats Cards */}
       <Grid container spacing={1}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1 }}>
             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
               <Box>
@@ -105,7 +105,7 @@ const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1 }}>
             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
               <Box>
@@ -123,7 +123,7 @@ const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1 }}>
             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
               <Box>
@@ -141,7 +141,7 @@ const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1 }}>
             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
               <Box>
@@ -165,7 +165,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Charts */}
       <Grid container spacing={1}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1 }}>
               System Overview
@@ -176,13 +176,13 @@ const DashboardPage: React.FC = () => {
                 series={[{ data: [summary.totalProjects, summary.totalMaterials, summary.totalUsers], color: '#10b981' }]}
                 margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
                 height={250}
-                slotProps={{ legend: { hidden: true } }}
+                slotProps={{ legend: { hidden: true } as any }}
               />
             </Box>
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1 }}>
               Material Inventory
@@ -193,7 +193,7 @@ const DashboardPage: React.FC = () => {
                 series={[{ data: [summary.received, summary.utilized], color: '#3b82f6' }]}
                 margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
                 height={250}
-                slotProps={{ legend: { hidden: true } }}
+                slotProps={{ legend: { hidden: true } as any }}
               />
             </Box>
           </Paper>
@@ -202,7 +202,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Additional Info Cards */}
       <Grid container spacing={1}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.lighter' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1, color: 'primary.dark' }}>
               Inventory Summary
@@ -224,7 +224,7 @@ const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Paper sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.lighter' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1, color: 'success.dark' }}>
               Quick Stats
