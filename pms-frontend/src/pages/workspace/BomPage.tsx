@@ -5,6 +5,7 @@ import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomTextField from "../../widgets/CustomTextField";
 import { Get } from "../../utils/apiService";
+import { Box, Stack, Typography, Paper } from "@mui/material";
 
 
 // ---- Types ---- //
@@ -65,8 +66,12 @@ const BomPage: React.FC = () => {
     {
       field: 'code',
       header: 'Code',
-      body: (row) => row.code || "—",
-      style: { fontFamily: 'monospace' }
+      width: 100,
+      body: (row) => (
+        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+          {row.code || "—"}
+        </Typography>
+      )
     },
     { field: 'name', header: 'Material', body: (row) => row.name || "—" },
     { field: 'category', header: 'Category', body: (row) => row.category || "—" },
@@ -74,49 +79,74 @@ const BomPage: React.FC = () => {
       field: 'allocatedQty',
       header: 'Allocated',
       align: 'right',
-      body: (row) => (row.allocatedQty ?? row.requiredQty ?? row.qty ?? 0).toLocaleString()
+      width: 80,
+      body: (row) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {(row.allocatedQty ?? row.requiredQty ?? row.qty ?? 0).toLocaleString()}
+        </Typography>
+      )
     },
     {
       field: 'orderedQty',
       header: 'Ordered',
       align: 'right',
-      body: (row) => (row.orderedQty ?? 0).toLocaleString()
+      width: 80,
+      body: (row) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {(row.orderedQty ?? 0).toLocaleString()}
+        </Typography>
+      )
     },
     {
       field: 'receivedQty',
       header: 'Received',
       align: 'right',
-      body: (row) => (row.receivedQty ?? 0).toLocaleString()
+      width: 80,
+      body: (row) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {(row.receivedQty ?? 0).toLocaleString()}
+        </Typography>
+      )
     },
     {
       field: 'utilizedQty',
       header: 'Issued',
       align: 'right',
-      body: (row) => (row.utilizedQty ?? 0).toLocaleString()
+      width: 80,
+      body: (row) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {(row.utilizedQty ?? 0).toLocaleString()}
+        </Typography>
+      )
     },
     {
       field: 'balanceQty',
       header: 'In Stock',
       align: 'right',
-      body: (row) => (row.balanceQty ?? 0).toLocaleString()
+      width: 80,
+      body: (row) => (
+        <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main' }}>
+          {(row.balanceQty ?? 0).toLocaleString()}
+        </Typography>
+      )
     },
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="p-4 bg-white rounded-lg shadow-sm border border-slate-200">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="w-full max-w-xs">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Paper sx={{ p: 1, borderRadius: 1, boxShadow: 1 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" sx={{ mb: 1 }}>
+          <Box sx={{ width: { xs: '100%', sm: 300 } }}>
             <CustomTextField
               placeholder="Search material, code or category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-          </div>
-          <div className="text-xs text-slate-500 font-medium">
+          </Box>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
             {rows.length} items
-          </div>
-        </div>
+          </Typography>
+        </Stack>
 
         <CustomTable
           data={rows}
@@ -126,8 +156,8 @@ const BomPage: React.FC = () => {
           rowsPerPageOptions={[5, 10, 20, 50]}
           emptyMessage="No materials available for this project yet."
         />
-      </div>
-    </div>
+      </Paper>
+    </Box>
   );
 };
 

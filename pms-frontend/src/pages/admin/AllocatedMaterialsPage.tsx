@@ -1,15 +1,13 @@
-
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-
+import { Box, Stack, Typography, CircularProgress } from "@mui/material";
 import ProjectAllocationManager from "../../components/ProjectAllocationManager";
 import {
   clearAllocationError,
   loadAllocationData,
 } from "../../store/slices/adminAllocationsSlice";
 import type { RootState, AppDispatch } from "../../store/store";
-import CustomLoader from "../../widgets/CustomLoader";
 
 interface AllocatedMaterialsPageProps {
   onRequestReload?: () => void;
@@ -39,18 +37,25 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
   }, [dispatch, error]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 p-6 max-w-7xl mx-auto w-full gap-6">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {/* Header */}
+      <Box>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+          Allocated Materials
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+          View and manage existing project allocations
+        </Typography>
+      </Box>
 
-      {/* Navigation Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xs font-bold text-slate-800">Allocated Materials</h1>
-          <p className="text-slate-500">View and manage existing project allocations</p>
-        </div>
-      </div>
-
+      {/* Content */}
       {status === "loading" ? (
-        <CustomLoader message="Loading allocations..." />
+        <Stack spacing={1} alignItems="center" sx={{ py: 3 }}>
+          <CircularProgress size={32} />
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Loading allocations...
+          </Typography>
+        </Stack>
       ) : (
         <ProjectAllocationManager
           token={token}
@@ -61,7 +66,7 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
           showAllocationTable
         />
       )}
-    </div>
+    </Box>
   );
 };
 

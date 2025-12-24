@@ -14,6 +14,7 @@ const CustomTextField: React.FC<CustomInputProps> = ({
     size = "small",
     variant = "outlined",
     type,
+    sx,
     ...props
 }) => {
     return (
@@ -35,11 +36,26 @@ const CustomTextField: React.FC<CustomInputProps> = ({
                 endAdornment: endAdornment ? (
                     <InputAdornment position="end">{endAdornment}</InputAdornment>
                 ) : undefined,
-                style: {
-                    fontSize: '0.875rem',
-                    backgroundColor: '#fff',
-                    ...InputProps?.style
+                sx: {
+                    fontSize: '0.75rem',
+                    bgcolor: 'background.paper',
+                    '& input': {
+                        py: 0.75,
+                        fontSize: '0.75rem'
+                    },
+                    ...InputProps?.sx
                 }
+            }}
+            InputLabelProps={{
+                sx: {
+                    fontSize: '0.75rem'
+                }
+            }}
+            sx={{
+                '& .MuiOutlinedInput-root': {
+                    minHeight: 32
+                },
+                ...sx
             }}
             {...props}
         />

@@ -1,55 +1,81 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import { Box, Stack, Typography, Paper, Grid, Chip, CircularProgress } from "@mui/material";
+import { FiDownloadCloud, FiUploadCloud, FiRepeat, FiShoppingCart, FiPackage, FiActivity } from "react-icons/fi";
 import { getProjectActivity } from "../../store/slices/adminUsersSlice";
 import type { ProjectActivityDto, ProjectActivityEntryDto } from "../../types/backend";
-import { FiDownloadCloud, FiUploadCloud, FiRepeat, FiShoppingCart, FiPackage, FiActivity } from "react-icons/fi";
 import type { AppDispatch } from "../../store/store";
 
 interface ActivityPanelProps {
   title: string;
-  accentClass: string;
+  accentColor: string;
   emptyLabel: string;
   entries: ProjectActivityEntryDto[];
 }
 
-const ActivityPanel: React.FC<ActivityPanelProps> = ({ title, accentClass, emptyLabel, entries }) => {
+const ActivityPanel: React.FC<ActivityPanelProps> = ({ title, accentColor, emptyLabel, entries }) => {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2">
-        <div className={`text-[11px] font-semibold uppercase ${accentClass}`}>{title}</div>
-        <span className="text-[10px] text-slate-500">{entries.length ? `${entries.length} recent` : ""}</span>
-      </div>
-      <div className="divide-y divide-slate-100">
+    <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+      <Box sx={{ px: 1, py: 0.75, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Typography variant="caption" sx={{ fontWeight: 600, color: accentColor, textTransform: 'uppercase', fontSize: '0.65rem' }}>
+            {title}
+          </Typography>
+          {entries.length > 0 && (
+            <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+              {entries.length} recent
+            </Typography>
+          )}
+        </Stack>
+      </Box>
+      <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
         {entries.length === 0 && (
-          <div className="px-4 py-3 text-[11px] text-slate-500">{emptyLabel}</div>
+          <Box sx={{ px: 1, py: 1.5, textAlign: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+              {emptyLabel}
+            </Typography>
+          </Box>
         )}
         {entries.map((entry) => (
-          <div key={`${title}-${entry.id ?? entry.code ?? entry.subject ?? Math.random()}`} className="px-4 py-3 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-slate-800 truncate">{entry.code || "Not set"}</span>
-                {entry.status && (
-                  <span className="text-[10px] rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{entry.status}</span>
+          <Box
+            key={`${title}-${entry.id ?? entry.code ?? entry.subject ?? Math.random()}`}
+            sx={{ px: 1, py: 0.75, borderBottom: 1, borderColor: 'divider', '&:last-child': { borderBottom: 0 } }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Typography variant="caption" sx={{ fontWeight: 600, fontSize: '0.65rem', fontFamily: 'monospace' }} noWrap>
+                    {entry.code || "Not set"}
+                  </Typography>
+                  {entry.status && (
+                    <Chip label={entry.status} size="small" sx={{ height: 16, fontSize: '0.6rem' }} />
+                  )}
+                </Stack>
+                <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }} noWrap>
+                  {entry.subject || "No subject"}
+                </Typography>
+                {entry.direction && (
+                  <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }} noWrap>
+                    {entry.direction}
+                  </Typography>
                 )}
-              </div>
-              <div className="text-[10px] text-slate-600 truncate">
-                {entry.subject || "No subject"}
-              </div>
-              {entry.direction && (
-                <div className="text-[10px] text-slate-500 truncate">{entry.direction}</div>
-              )}
-            </div>
-            <div className="text-right text-[10px] text-slate-500 leading-tight">
-              <div>{entry.date || "-"}</div>
-              {typeof entry.lineCount === "number" && (
-                <div className="text-[10px] text-slate-500">{entry.lineCount} item(s)</div>
-              )}
-            </div>
-          </div>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+                  {entry.date || "-"}
+                </Typography>
+                {typeof entry.lineCount === "number" && (
+                  <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary', display: 'block' }}>
+                    {entry.lineCount} item(s)
+                  </Typography>
+                )}
+              </Box>
+            </Stack>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Paper>
   );
 };
 
@@ -87,100 +113,138 @@ const ProjectActivityPage: React.FC = () => {
   }, [activity]);
 
   const summaryCards = [
-    { label: "Inwards", value: aggregatedTotals.inwards, icon: FiDownloadCloud, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Outwards", value: aggregatedTotals.outwards, icon: FiUploadCloud, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Transfers", value: aggregatedTotals.transfers, icon: FiRepeat, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Procurements", value: aggregatedTotals.procurements, icon: FiShoppingCart, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Inwards", value: aggregatedTotals.inwards, icon: FiDownloadCloud, color: "#2e7d32", bgcolor: "success.lighter" },
+    { label: "Outwards", value: aggregatedTotals.outwards, icon: FiUploadCloud, color: "#1976d2", bgcolor: "primary.lighter" },
+    { label: "Transfers", value: aggregatedTotals.transfers, icon: FiRepeat, color: "#ed6c02", bgcolor: "warning.lighter" },
+    { label: "Procurements", value: aggregatedTotals.procurements, icon: FiShoppingCart, color: "#9c27b0", bgcolor: "secondary.lighter" },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-slate-900">
-          <FiActivity className="text-[var(--primary)]" />
-          <h1 className="text-xs font-bold">Project Movement Overview</h1>
-        </div>
-        <p className="text-[12px] text-slate-600 max-w-4xl">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {/* Header */}
+      <Box>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <FiActivity size={16} style={{ color: '#1976d2' }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+            Project Movement Overview
+          </Typography>
+        </Stack>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', display: 'block', mt: 0.25 }}>
           Get a project-wise view of every inward, outward, transfer, and procurement request with concise summaries and the latest activity snapshots.
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {loading && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm text-xs text-slate-600">Loading project activity…</div>
+        <Paper sx={{ p: 2, borderRadius: 1 }}>
+          <Stack spacing={1} alignItems="center">
+            <CircularProgress size={32} />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Loading project activity…
+            </Typography>
+          </Stack>
+        </Paper>
       )}
 
       {!loading && (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {summaryCards.map(({ label, value, icon: Icon, color, bg }) => (
-              <div key={label} className={`rounded-lg border border-slate-200 ${bg} p-4 shadow-sm flex items-center justify-between`}>
-                <div>
-                  <div className="text-[11px] font-medium text-slate-600 uppercase">{label}</div>
-                  <div className="text-xs font-bold text-slate-900">{value}</div>
-                </div>
-                <div className={`rounded-full p-3 ${bg} ${color}`}>
-                  <Icon size={22} />
-                </div>
-              </div>
+          {/* Summary Cards */}
+          <Grid container spacing={1}>
+            {summaryCards.map(({ label, value, icon: Icon, color, bgcolor }) => (
+              <Grid item xs={12} sm={6} md={3} key={label}>
+                <Paper sx={{ p: 1.5, borderRadius: 1, bgcolor }}>
+                  <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25, textTransform: 'uppercase', fontSize: '0.65rem' }}>
+                        {label}
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem' }}>
+                        {value}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 0.75, borderRadius: '50%', bgcolor }}>
+                      <Icon size={20} style={{ color }} />
+                    </Box>
+                  </Stack>
+                </Paper>
+              </Grid>
             ))}
-          </div>
+          </Grid>
 
-          <div className="space-y-4">
+          {/* Project Activity */}
+          <Stack spacing={1}>
             {activity.map((project) => (
-              <div key={project.projectId} className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-sm">
-                <div className="flex flex-col gap-1 border-b border-slate-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="text-xs font-semibold text-slate-900 flex items-center gap-2">
-                      <FiPackage className="text-[var(--primary)]" />
-                      {project.projectCode ? `${project.projectCode} - ${project.projectName}` : project.projectName}
-                    </div>
-                    <div className="text-[11px] text-slate-500">Latest material movements and approvals</div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-[10px]">
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 font-semibold">{project.inwardCount} Inwards</span>
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 font-semibold">{project.outwardCount} Outwards</span>
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700 font-semibold">{project.transferCount} Transfers</span>
-                    <span className="rounded-full bg-purple-50 px-3 py-1 text-purple-700 font-semibold">{project.procurementCount} Procurements</span>
-                  </div>
-                </div>
-                <div className="grid gap-3 p-5 lg:grid-cols-4 md:grid-cols-2">
-                  <ActivityPanel
-                    title="Inwards"
-                    accentClass="text-emerald-700"
-                    emptyLabel="No inward records yet"
-                    entries={project.recentInwards}
-                  />
-                  <ActivityPanel
-                    title="Outwards"
-                    accentClass="text-blue-700"
-                    emptyLabel="No outward records yet"
-                    entries={project.recentOutwards}
-                  />
-                  <ActivityPanel
-                    title="Transfers"
-                    accentClass="text-amber-700"
-                    emptyLabel="No transfer records yet"
-                    entries={project.recentTransfers}
-                  />
-                  <ActivityPanel
-                    title="Procurements"
-                    accentClass="text-purple-700"
-                    emptyLabel="No procurement requests yet"
-                    entries={project.recentProcurements}
-                  />
-                </div>
-              </div>
+              <Paper key={project.projectId} sx={{ borderRadius: 1, overflow: 'hidden' }}>
+                <Box sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }} justifyContent="space-between">
+                    <Box>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <FiPackage size={14} style={{ color: '#1976d2' }} />
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                          {project.projectCode ? `${project.projectCode} - ${project.projectName}` : project.projectName}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>
+                        Latest material movements and approvals
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                      <Chip label={`${project.inwardCount} Inwards`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'success.lighter', color: 'success.dark' }} />
+                      <Chip label={`${project.outwardCount} Outwards`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'primary.lighter', color: 'primary.dark' }} />
+                      <Chip label={`${project.transferCount} Transfers`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'warning.lighter', color: 'warning.dark' }} />
+                      <Chip label={`${project.procurementCount} Procurements`} size="small" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'secondary.lighter', color: 'secondary.dark' }} />
+                    </Stack>
+                  </Stack>
+                </Box>
+                <Box sx={{ p: 1 }}>
+                  <Grid container spacing={1}>
+                    <Grid item xs={12} sm={6} lg={3}>
+                      <ActivityPanel
+                        title="Inwards"
+                        accentColor="success.dark"
+                        emptyLabel="No inward records yet"
+                        entries={project.recentInwards}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} lg={3}>
+                      <ActivityPanel
+                        title="Outwards"
+                        accentColor="primary.dark"
+                        emptyLabel="No outward records yet"
+                        entries={project.recentOutwards}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} lg={3}>
+                      <ActivityPanel
+                        title="Transfers"
+                        accentColor="warning.dark"
+                        emptyLabel="No transfer records yet"
+                        entries={project.recentTransfers}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} lg={3}>
+                      <ActivityPanel
+                        title="Procurements"
+                        accentColor="secondary.dark"
+                        emptyLabel="No procurement requests yet"
+                        entries={project.recentProcurements}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Paper>
             ))}
 
             {activity.length === 0 && !loading && (
-              <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-xs text-slate-600">
-                No project movements have been recorded yet.
-              </div>
+              <Paper sx={{ p: 3, borderRadius: 1, textAlign: 'center' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  No project movements have been recorded yet.
+                </Typography>
+              </Paper>
             )}
-          </div>
+          </Stack>
         </>
       )}
-    </div>
+    </Box>
   );
 };
 

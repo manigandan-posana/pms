@@ -6,6 +6,7 @@ import { loginPath } from "../routes/route";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminTopBar from "../components/AdminTopBar";
 import { createLogoutHandler } from "../services/LogoutService";
+import { Box } from "@mui/material";
 
 // Helper to get page heading based on route
 const getAdminPageHeading = (pathname: string): string => {
@@ -39,7 +40,7 @@ const AdminDashboard: React.FC = () => {
   }, [instance, navigate, store]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
       <AdminSidebar
         onLogout={handleLogout}
         userName={name || email}
@@ -47,20 +48,27 @@ const AdminDashboard: React.FC = () => {
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
       />
-      <main
-        className="transition-all duration-300"
-        style={{ marginLeft: collapsed ? 72 : 240 }}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          transition: 'margin-left 0.3s',
+          ml: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh'
+        }}
       >
         <AdminTopBar
           userName={name || email}
           userRole={role}
           pageHeading={pageHeading}
         />
-        <div className="p-4">
+        <Box sx={{ p: 1, flexGrow: 1 }}>
           <Outlet />
-        </div>
-      </main>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

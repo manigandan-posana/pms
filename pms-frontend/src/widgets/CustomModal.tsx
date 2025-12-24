@@ -4,8 +4,11 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    IconButton,
+    Typography
 } from '@mui/material';
 import type { DialogProps } from '@mui/material';
+import { FiX } from 'react-icons/fi';
 
 interface CustomModalProps extends Omit<DialogProps, 'title'> {
     title: React.ReactNode;
@@ -29,31 +32,29 @@ const CustomModal: React.FC<CustomModalProps> = ({
             onClose={onClose}
             maxWidth={maxWidth}
             fullWidth={fullWidth}
+            PaperProps={{
+                sx: {
+                    borderRadius: 1
+                }
+            }}
             {...props}
         >
-            <DialogTitle style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px' }}>
-                <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, pb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
                     {title}
-                </span>
-                {/* We will assume no icon if the package is missing, or use a text X */}
-                <button
-                    onClick={() => onClose()}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '1.5rem',
-                        lineHeight: 1,
-                        color: '#666'
-                    }}
+                </Typography>
+                <IconButton
+                    onClick={onClose}
+                    size="small"
+                    sx={{ color: 'text.secondary' }}
                 >
-                    &times;
-                </button>
+                    <FiX size={16} />
+                </IconButton>
             </DialogTitle>
-            <DialogContent dividers style={{ padding: '24px' }}>
+            <DialogContent dividers sx={{ p: 1.5 }}>
                 {children}
             </DialogContent>
-            {footer && <DialogActions style={{ padding: '16px 24px' }}>{footer}</DialogActions>}
+            {footer && <DialogActions sx={{ p: 1, gap: 0.5 }}>{footer}</DialogActions>}
         </Dialog>
     );
 };

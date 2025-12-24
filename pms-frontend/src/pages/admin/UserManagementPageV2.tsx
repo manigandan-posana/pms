@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
+import { Box, Stack, Typography, Paper, Chip, Alert } from "@mui/material";
 import {
   createUser,
   deleteUser,
@@ -12,11 +13,7 @@ import type { RootState, AppDispatch } from "../../store/store";
 import AdminDataTable from "../../components/AdminDataTable";
 import AdminFormModal from "../../components/AdminFormModal";
 
-// Types
-export type UserRole =
-  | "ADMIN"
-  | "USER";
-
+export type UserRole = "ADMIN" | "USER";
 export type AccessType = "ALL" | "PROJECTS";
 
 interface User {
@@ -29,7 +26,6 @@ interface User {
   [key: string]: any;
 }
 
-// Constants
 const roleOptions = [
   { label: "Admin", value: "ADMIN" },
   { label: "User", value: "USER" },
@@ -60,7 +56,6 @@ export const UserManagementPage: React.FC = () => {
 
   const loading = status === "loading";
 
-  // Load users on mount
   useEffect(() => {
     if (token) {
       dispatch(searchUsers({ search: "", page: 1, size: 50 }));
@@ -68,7 +63,6 @@ export const UserManagementPage: React.FC = () => {
     }
   }, [token, dispatch]);
 
-  // Handle form field changes
   const handleFormChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
@@ -76,7 +70,6 @@ export const UserManagementPage: React.FC = () => {
     }));
   };
 
-  // Handle add user
   const handleAddUser = () => {
     setEditingUser(null);
     setFormData({
@@ -89,7 +82,6 @@ export const UserManagementPage: React.FC = () => {
     setModalVisible(true);
   };
 
-  // Handle edit user
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setFormData({
@@ -102,7 +94,6 @@ export const UserManagementPage: React.FC = () => {
     setModalVisible(true);
   };
 
-  // Handle delete user
   const handleDeleteUser = async (user: User) => {
     if (
       window.confirm(
@@ -111,9 +102,7 @@ export const UserManagementPage: React.FC = () => {
     ) {
       if (token) {
         try {
-          await dispatch(
-            deleteUser(String(user.id))
-          ).unwrap();
+          await dispatch(deleteUser(String(user.id))).unwrap();
           toast.success("User deleted successfully");
           dispatch(searchUsers({ search: "", page: 1, size: 50 }));
         } catch (err: any) {
@@ -123,7 +112,6 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
-  // Handle save user
   const handleSaveUser = async () => {
     if (!formData.name.trim()) {
       toast.error("Please enter user name");
@@ -185,7 +173,6 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
-  // Table columns
   const columns = [
     {
       field: "name",
@@ -207,7 +194,14 @@ export const UserManagementPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: "18%",
-      body: (row: User) => <span className="font-medium">{row.role}</span>,
+      body: (row: User) => (
+        <Chip
+          label={row.role}
+          size="small"
+          color={row.role === "ADMIN" ? "error" : "primary"}
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }}
+        />
+      ),
     },
     {
       field: "accessType",
@@ -215,9 +209,15 @@ export const UserManagementPage: React.FC = () => {
       sortable: true,
       width: "15%",
       body: (row: User) => (
-        <span className={row.accessType === "ALL" ? "text-green-600" : "text-blue-600"}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: row.accessType === "ALL" ? "success.main" : "info.main",
+            fontWeight: 500
+          }}
+        >
           {row.accessType === "ALL" ? "All Projects" : "Specific"}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -226,7 +226,9 @@ export const UserManagementPage: React.FC = () => {
       sortable: false,
       width: "12%",
       body: (row: User) => (
-        <span className="text-gray-600">{(row.projects || []).length}</span>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {(row.projects || []).length}
+        </Typography>
       ),
     },
   ];
@@ -270,23 +272,25 @@ export const UserManagementPage: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-xs border border-red-200">
+        <Alert severity="error" sx={{ fontSize: '0.75rem', py: 0.5 }}>
           {error}
-        </div>
+        </Alert>
       )}
 
-      <AdminDataTable<User>
-        data={users}
-        columns={columns as any}
-        title="User Management"
-        loading={loading}
-        totalRecords={totalItems}
-        onEdit={(row) => handleEditUser(row as User)}
-        onDelete={(row) => handleDeleteUser(row as User)}
-        onAdd={handleAddUser}
-      />
+      <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+        <AdminDataTable<User>
+          data={users}
+          columns={columns as any}
+          title="User Management"
+          loading={loading}
+          totalRecords={totalItems}
+          onEdit={(row) => handleEditUser(row as User)}
+          onDelete={(row) => handleDeleteUser(row as User)}
+          onAdd={handleAddUser}
+        />
+      </Paper>
 
       <AdminFormModal
         visible={modalVisible}
@@ -299,7 +303,7 @@ export const UserManagementPage: React.FC = () => {
         loading={loading}
         submitLabel={editingUser ? "Update" : "Create"}
       />
-    </div>
+    </Box>
   );
 };
 

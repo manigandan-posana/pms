@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
-import { getAnalytics } from "../../store/slices/adminUsersSlice";
+import { Box, Stack, Typography, Paper, Grid, CircularProgress } from "@mui/material";
 import { FiBox, FiFile, FiUsers, FiTrendingUp } from "react-icons/fi";
+import { getAnalytics } from "../../store/slices/adminUsersSlice";
 import type { AppDispatch } from "../../store/store";
 import { BarChart } from "@mui/x-charts/BarChart";
 
@@ -62,168 +62,191 @@ const DashboardPage: React.FC = () => {
 
   if (loadingAnalytics) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-xs text-slate-600">Loading analytics...</div>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+        <Stack spacing={1} alignItems="center">
+          <CircularProgress size={32} />
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Loading analytics...
+          </Typography>
+        </Stack>
+      </Box>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {/* Page Header */}
-      <div>
-        <h1 className="text-xs font-bold text-slate-900">Admin Dashboard</h1>
-        <p className="text-xs text-slate-600 mt-1">
+      <Box>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+          Admin Dashboard
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
           Overview of inventory, projects, and user statistics
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Stats Cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs font-medium text-slate-500 uppercase">
-                Total Projects
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-1">
-                {summary.totalProjects}
-              </div>
-            </div>
-            <div className="rounded-full bg-blue-100 p-3">
-              <FiFile className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
+      <Grid container spacing={1}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25, textTransform: 'uppercase' }}>
+                  Total Projects
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem' }}>
+                  {summary.totalProjects}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 0.75, bgcolor: 'primary.lighter', borderRadius: '50%' }}>
+                <FiFile size={20} style={{ color: '#1976d2' }} />
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs font-medium text-slate-500 uppercase">
-                Total Materials
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-1">
-                {summary.totalMaterials}
-              </div>
-            </div>
-            <div className="rounded-full bg-green-100 p-3">
-              <FiBox className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25, textTransform: 'uppercase' }}>
+                  Total Materials
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem' }}>
+                  {summary.totalMaterials}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 0.75, bgcolor: 'success.lighter', borderRadius: '50%' }}>
+                <FiBox size={20} style={{ color: '#2e7d32' }} />
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs font-medium text-slate-500 uppercase">
-                Total Users
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-1">
-                {summary.totalUsers}
-              </div>
-            </div>
-            <div className="rounded-full bg-purple-100 p-3">
-              <FiUsers className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25, textTransform: 'uppercase' }}>
+                  Total Users
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem' }}>
+                  {summary.totalUsers}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 0.75, bgcolor: 'secondary.lighter', borderRadius: '50%' }}>
+                <FiUsers size={20} style={{ color: '#9c27b0' }} />
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs font-medium text-slate-500 uppercase">
-                Utilization
-              </div>
-              <div className="text-xs font-bold text-slate-900 mt-1">
-                {utilizationPercentage}%
-              </div>
-              <div className="text-xs text-slate-500 mt-1">
-                {summary.utilized} / {summary.received}
-              </div>
-            </div>
-            <div className="rounded-full bg-orange-100 p-3">
-              <FiTrendingUp className="h-6 w-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25, textTransform: 'uppercase' }}>
+                  Utilization
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem' }}>
+                  {utilizationPercentage}%
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                  {summary.utilized} / {summary.received}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 0.75, bgcolor: 'warning.lighter', borderRadius: '50%' }}>
+                <FiTrendingUp size={20} style={{ color: '#ed6c02' }} />
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
 
       {/* Charts */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm flex flex-col">
-          <h2 className="text-xs font-semibold text-slate-900 mb-3">
-            System Overview
-          </h2>
-          <div className="flex-1" style={{ width: '100%', minHeight: 250 }}>
-            <BarChart
-              xAxis={[{ scaleType: 'band', data: ['Projects', 'Materials', 'Users'] }]}
-              series={[{ data: [summary.totalProjects, summary.totalMaterials, summary.totalUsers], color: '#10b981' }]}
-              margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
-              height={250}
-              slotProps={{ legend: { hidden: true } }}
-            />
-          </div>
-        </div>
+      <Grid container spacing={1}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1 }}>
+              System Overview
+            </Typography>
+            <Box sx={{ width: '100%', minHeight: 250 }}>
+              <BarChart
+                xAxis={[{ scaleType: 'band', data: ['Projects', 'Materials', 'Users'] }]}
+                series={[{ data: [summary.totalProjects, summary.totalMaterials, summary.totalUsers], color: '#10b981' }]}
+                margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
+                height={250}
+                slotProps={{ legend: { hidden: true } }}
+              />
+            </Box>
+          </Paper>
+        </Grid>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm flex flex-col">
-          <h2 className="text-xs font-semibold text-slate-900 mb-3">
-            Material Inventory
-          </h2>
-          <div className="flex-1" style={{ width: '100%', minHeight: 250 }}>
-            <BarChart
-              xAxis={[{ scaleType: 'band', data: ['Received', 'Utilized'] }]}
-              series={[{ data: [summary.received, summary.utilized], color: '#3b82f6' }]}
-              margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
-              height={250}
-              slotProps={{ legend: { hidden: true } }}
-            />
-          </div>
-        </div>
-      </div>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1 }}>
+              Material Inventory
+            </Typography>
+            <Box sx={{ width: '100%', minHeight: 250 }}>
+              <BarChart
+                xAxis={[{ scaleType: 'band', data: ['Received', 'Utilized'] }]}
+                series={[{ data: [summary.received, summary.utilized], color: '#3b82f6' }]}
+                margin={{ top: 10, bottom: 30, left: 40, right: 10 }}
+                height={250}
+                slotProps={{ legend: { hidden: true } }}
+              />
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
 
       {/* Additional Info Cards */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-blue-50 p-4">
-          <h3 className="text-xs font-semibold text-blue-900 mb-2">
-            Inventory Summary
-          </h3>
-          <div className="space-y-2 text-xs text-blue-800">
-            <div className="flex justify-between">
-              <span>Materials Received:</span>
-              <span className="font-semibold">{summary.received}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Materials Utilized:</span>
-              <span className="font-semibold">{summary.utilized}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Available Stock:</span>
-              <span className="font-semibold">{summary.received - summary.utilized}</span>
-            </div>
-          </div>
-        </div>
+      <Grid container spacing={1}>
+        <Grid item xs={12} sm={6}>
+          <Paper sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.lighter' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1, color: 'primary.dark' }}>
+              Inventory Summary
+            </Typography>
+            <Stack spacing={0.75} sx={{ fontSize: '0.75rem', color: 'primary.dark' }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">Materials Received:</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>{summary.received}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">Materials Utilized:</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>{summary.utilized}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">Available Stock:</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>{summary.received - summary.utilized}</Typography>
+              </Stack>
+            </Stack>
+          </Paper>
+        </Grid>
 
-        <div className="rounded-lg border border-slate-200 bg-green-50 p-4">
-          <h3 className="text-xs font-semibold text-green-900 mb-2">
-            Quick Stats
-          </h3>
-          <div className="space-y-2 text-xs text-green-800">
-            <div className="flex justify-between">
-              <span>Active Projects:</span>
-              <span className="font-semibold">{summary.totalProjects}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Material Types:</span>
-              <span className="font-semibold">{summary.totalMaterials}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>System Users:</span>
-              <span className="font-semibold">{summary.totalUsers}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Grid item xs={12} sm={6}>
+          <Paper sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.lighter' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', mb: 1, color: 'success.dark' }}>
+              Quick Stats
+            </Typography>
+            <Stack spacing={0.75} sx={{ fontSize: '0.75rem', color: 'success.dark' }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">Active Projects:</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>{summary.totalProjects}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">Material Types:</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>{summary.totalMaterials}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">System Users:</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>{summary.totalUsers}</Typography>
+              </Stack>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

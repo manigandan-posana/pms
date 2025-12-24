@@ -6,16 +6,23 @@ interface CustomButtonProps extends ButtonProps {
   label?: string;
 }
 
-const CustomButton: React.FC<CustomButtonProps> = ({ label, children, ...props }) => {
+const CustomButton: React.FC<CustomButtonProps> = ({ label, children, sx, ...props }) => {
   return (
     <Button
       variant="contained"
       size="small"
-      style={{
+      sx={{
         textTransform: 'none',
         fontWeight: 500,
         boxShadow: 'none',
-        ...props.style
+        fontSize: '0.75rem',
+        py: 0.5,
+        px: 1.5,
+        minHeight: 28,
+        '&:hover': {
+          boxShadow: 1
+        },
+        ...sx
       }}
       {...props}
     >

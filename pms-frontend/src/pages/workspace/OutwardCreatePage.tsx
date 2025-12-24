@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { Box, Stack, Typography, Paper, Grid, Chip } from "@mui/material";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
 
 import CustomButton from "../../widgets/CustomButton";
@@ -82,7 +83,6 @@ export interface OutwardUiState {
   modalValues: OutwardModalValues;
 }
 
-
 // -------- Issue Quantity Modal -------- //
 
 interface IssueModalProps {
@@ -107,28 +107,28 @@ const IssueModal: React.FC<IssueModalProps> = ({
       open={Boolean(line)}
       onClose={onClose}
       footer={
-        <div className="flex justify-end gap-2">
+        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
           <CustomButton variant="text" onClick={onClose} size="small">Cancel</CustomButton>
           <CustomButton onClick={onSave} size="small" startIcon={<FiSave />}>Save</CustomButton>
-        </div>
+        </Stack>
       }
     >
-      <div className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
-        <span className="font-semibold">{line.unit}</span>
-        {" \u00b7 "}
-        In stock: <span className="font-semibold text-slate-700">{line.inStockQty ?? line.balanceQty ?? line.allocatedQty ?? line.qty ?? 0}</span>
-      </div>
-      <div className="grid gap-2">
-        <CustomTextField
-          label="Issue Qty *"
-          type="number"
-          value={values.issueQty}
-          onChange={(e) => onChange({ issueQty: e.target.value })}
-        />
-      </div>
-      <p className="mt-2 text-xs text-slate-400">
+      <Box sx={{ mb: 1.5, p: 1, bgcolor: 'grey.50', borderRadius: 1, border: 1, borderColor: 'divider' }}>
+        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+          <Box component="span" sx={{ fontWeight: 600 }}>{line.unit}</Box>
+          {" · "}
+          In stock: <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>{line.inStockQty ?? line.balanceQty ?? line.allocatedQty ?? line.qty ?? 0}</Box>
+        </Typography>
+      </Box>
+      <CustomTextField
+        label="Issue Qty *"
+        type="number"
+        value={values.issueQty}
+        onChange={(e) => onChange({ issueQty: e.target.value })}
+      />
+      <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary', fontSize: '0.65rem' }}>
         Save to include this material in outward.
-      </p>
+      </Typography>
     </CustomModal>
   );
 };
@@ -144,7 +144,6 @@ const OutwardCreatePage: React.FC = () => {
     WorkspaceStateSlice
   >((state) => state.workspace as unknown as WorkspaceStateSlice);
 
-
   const outwardUi = useSelector<RootState, OutwardUiState>(
     (state) => state.workspaceUi.outward as unknown as OutwardUiState
   );
@@ -153,6 +152,7 @@ const OutwardCreatePage: React.FC = () => {
     projectId,
     issueTo,
     date,
+    status,
     selectedLines,
     saving,
     modalLine,
@@ -171,7 +171,7 @@ const OutwardCreatePage: React.FC = () => {
     }
   }, [status, dispatch]);
 
-  // Default project selection - select first project if none selected
+  // Default project selection
   React.useEffect(() => {
     if (!projectId && assignedProjects.length > 0) {
       dispatch(
@@ -210,7 +210,6 @@ const OutwardCreatePage: React.FC = () => {
     loadMaterials();
   }, [projectId, searchQuery]);
 
-  // Build table rows with selection state
   const tableRows = useMemo(() => {
     return availableMaterials.map((m) => {
       const sel = selectedLines[m.materialId];
@@ -228,12 +227,11 @@ const OutwardCreatePage: React.FC = () => {
   );
 
   const handleCheckboxClick = (e: React.MouseEvent, line: AvailableMaterial): void => {
-    e.stopPropagation(); // Prevent opening modal
+    e.stopPropagation();
     const materialKey = String(line.materialId);
     const existing = selectedLines[materialKey];
 
     if (existing) {
-      // Deselect by setting quantity to 0
       dispatch(
         setOutwardSelectedLine({
           materialId: materialKey,
@@ -241,7 +239,6 @@ const OutwardCreatePage: React.FC = () => {
         })
       );
     } else {
-      // Select by opening modal
       openModalForLine(line);
     }
   };
@@ -323,161 +320,179 @@ const OutwardCreatePage: React.FC = () => {
       width: "50px",
       align: "center",
       body: (row) => (
-        <div
-          className="flex items-center justify-center cursor-pointer p-2"
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', p: 0.5 }}
           onClick={(e) => handleCheckboxClick(e, row)}
         >
           {row._selected ? (
-            <FiCheckCircle className="text-emerald-600 text-xs" />
+            <FiCheckCircle size={16} style={{ color: '#10b981' }} />
           ) : (
-            <FiCircle className="text-slate-300 text-xs" />
+            <FiCircle size={16} style={{ color: '#cbd5e1' }} />
           )}
-        </div>
+        </Box>
       )
     },
-    { field: "code", header: "Code", sortable: true, width: "120px", body: (row) => <span className="font-mono font-semibold text-slate-700">{row.code || "—"}</span> },
-    { field: "name", header: "Material", sortable: true, body: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
-    { field: "unit", header: "Unit", width: "80px", body: (row) => <span className="text-slate-500">{row.unit || "—"}</span> },
+    { field: "code", header: "Code", sortable: true, width: "120px", body: (row) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.code || "—"}</Typography> },
+    { field: "name", header: "Material", sortable: true, body: (row) => <Typography variant="caption" sx={{ fontWeight: 500 }}>{row.name}</Typography> },
+    { field: "unit", header: "Unit", width: "80px", body: (row) => <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.unit || "—"}</Typography> },
     {
       field: "inStockQty",
       header: "In Stock",
       align: "right",
       width: "100px",
-      body: (row) => <span className="font-medium text-slate-600">{row.inStockQty ?? 0}</span>
+      body: (row) => <Typography variant="caption" sx={{ fontWeight: 500 }}>{row.inStockQty ?? 0}</Typography>
     },
     {
       field: "_issueQty",
       header: "Issue Qty",
       align: "right",
       width: "100px",
-      body: (row) => <span className="font-bold text-emerald-600">{row._issueQty || "—"}</span>
+      body: (row) => <Typography variant="caption" sx={{ fontWeight: 600, color: 'success.main' }}>{row._issueQty || "—"}</Typography>
     },
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Inventory Navigation Tabs */}
-      <div className="px-6 pt-6">
-      </div>
-
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <CustomButton
-            variant="text"
-            onClick={() => navigate('/workspace/inventory/outwards')}
-            className="text-slate-500 hover:text-slate-700"
-            size="small"
-          >
-            <FiArrowLeft size={20} />
-          </CustomButton>
-          <div>
-            <h1 className="text-xs font-bold text-slate-800">New Outward Detail</h1>
-            <p className="text-slate-500 text-xs">Issue materials from stock</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-xs text-slate-500 mr-2">
-            {selectedLineCount} items selected
-          </div>
-          <CustomButton
-            onClick={handleSaveOutward}
-            disabled={saving || selectedLineCount === 0}
-            loading={saving}
-            startIcon={<FiSave />}
-            className="px-6"
-          >
-            Create Outward
-          </CustomButton>
-        </div>
-      </div>
+      <Paper sx={{ borderBottom: 1, borderColor: 'divider', px: 1.5, py: 1 }}>
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CustomButton
+              variant="text"
+              onClick={() => navigate('/workspace/inventory/outwards')}
+              size="small"
+            >
+              <FiArrowLeft size={18} />
+            </CustomButton>
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                New Outward Entry
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                Issue materials from stock
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Chip label={`${selectedLineCount} items`} size="small" sx={{ height: 20, fontSize: '0.65rem' }} />
+            <CustomButton
+              onClick={handleSaveOutward}
+              disabled={saving || selectedLineCount === 0}
+              loading={saving}
+              startIcon={<FiSave />}
+            >
+              Create Outward
+            </CustomButton>
+          </Stack>
+        </Stack>
+      </Paper>
 
-      <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
-        {/* Project and Details Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h2 className="text-xs font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Issue Details</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <CustomSelect
-              label="Project *"
-              value={projectId}
-              options={assignedProjects.map((p) => ({
-                label: `${p.code} \u2014 ${p.name}`,
-                value: String(p.id),
-              }))}
-              onChange={(value) =>
-                dispatch(
-                  setOutwardField({
-                    field: "projectId",
-                    value: String(value),
-                  })
-                )
-              }
-            />
-            <CustomTextField
-              label="Issue To *"
-              value={issueTo}
-              onChange={(e) =>
-                dispatch(
-                  setOutwardField({
-                    field: "issueTo",
-                    value: e.target.value,
-                  })
-                )
-              }
-            />
-            <CustomTextField
-              label="Issue Date"
-              type="date"
-              value={date}
-              onChange={(e) =>
-                dispatch(
-                  setOutwardField({
-                    field: "date",
-                    value: e.target.value,
-                  })
-                )
-              }
-              InputLabelProps={{ shrink: true }}
-            />
-            <div className="col-span-full flex items-center gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <label className="text-xs font-medium text-slate-700">Status:</label>
-              <span className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-200">OPEN</span>
-              <span className="text-xs text-slate-500 italic">New outwards are always created as OPEN and can be closed later</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Material Table */}
-        {projectId && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-xs font-bold text-slate-800">Select Issue Materials</h2>
-              <div className="w-60">
-                <CustomTextField
-                  placeholder="Search materials..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setPage(0);
-                    setSearchQuery(e.target.value);
-                  }}
-                  size="small"
+      {/* Form Content */}
+      <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+        <Stack spacing={1}>
+          {/* Issue Details Card */}
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+              Issue Details
+            </Typography>
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6} md={3}>
+                <CustomSelect
+                  label="Project *"
+                  value={projectId}
+                  options={assignedProjects.map((p) => ({
+                    label: `${p.code} — ${p.name}`,
+                    value: String(p.id),
+                  }))}
+                  onChange={(value) =>
+                    dispatch(
+                      setOutwardField({
+                        field: "projectId",
+                        value: String(value),
+                      })
+                    )
+                  }
                 />
-              </div>
-            </div>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <CustomTextField
+                  label="Issue To *"
+                  value={issueTo}
+                  onChange={(e) =>
+                    dispatch(
+                      setOutwardField({
+                        field: "issueTo",
+                        value: e.target.value,
+                      })
+                    )
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <CustomTextField
+                  label="Issue Date"
+                  type="date"
+                  value={date}
+                  onChange={(e) =>
+                    dispatch(
+                      setOutwardField({
+                        field: "date",
+                        value: e.target.value,
+                      })
+                    )
+                  }
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ p: 1, bgcolor: 'info.lighter', borderRadius: 1, border: 1, borderColor: 'info.light' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'info.dark', display: 'block' }}>
+                    Status: <Chip label="OPEN" size="small" color="info" sx={{ height: 18, fontSize: '0.6rem', ml: 0.5 }} />
+                  </Typography>
+                  <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'info.dark', fontStyle: 'italic', display: 'block', mt: 0.25 }}>
+                    New outwards are created as OPEN
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
 
-            <CustomTable
-              data={tableRows}
-              columns={columns}
-              pagination
-              rows={rows}
-              page={page}
-              onPageChange={(p, r) => { setPage(p); setRows(r); }}
-              onRowClick={(row) => openModalForLine(row)}
-              emptyMessage="No available materials found in this project."
-            />
-          </div>
-        )}
-      </div>
+          {/* Materials Table Card */}
+          {projectId && (
+            <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+              <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+                <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                    Select Materials to Issue
+                  </Typography>
+                  <Box sx={{ width: 240 }}>
+                    <CustomTextField
+                      placeholder="Search materials..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setPage(0);
+                        setSearchQuery(e.target.value);
+                      }}
+                      size="small"
+                    />
+                  </Box>
+                </Stack>
+              </Box>
+
+              <CustomTable
+                data={tableRows}
+                columns={columns}
+                pagination
+                rows={rows}
+                page={page}
+                onPageChange={(p, r) => { setPage(p); setRows(r); }}
+                onRowClick={(row) => openModalForLine(row)}
+                emptyMessage="No available materials found in this project."
+              />
+            </Paper>
+          )}
+        </Stack>
+      </Box>
 
       {/* Issue Quantity Modal */}
       <IssueModal
@@ -487,7 +502,7 @@ const OutwardCreatePage: React.FC = () => {
         onSave={handleModalSave}
         onClose={handleModalClose}
       />
-    </div>
+    </Box>
   );
 };
 

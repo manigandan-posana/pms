@@ -2,7 +2,19 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FiPlus, FiTrash2, FiCheck, FiSlash, FiLock, FiUnlock } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiCheck, FiSlash, FiLock, FiUnlock, FiTruck } from "react-icons/fi";
+import {
+  Box,
+  Paper,
+  Typography,
+  Grid,
+  Stack,
+  Chip,
+  Button,
+  IconButton,
+  Divider,
+} from "@mui/material";
+
 import {
   loadVehicleData,
   createVehicle,
@@ -11,7 +23,6 @@ import {
   createFuelEntry,
   closeFuelEntry,
   refillFuelEntry,
-
   createSupplier,
   deleteSupplier,
   createDailyLog,
@@ -439,18 +450,11 @@ const VehicleManagementPage: React.FC = () => {
     }
 
     const openingKm = Number(refillForm.openingKm);
-
-    // Attempt validation logic similar to Create if possible, but backend handles most.
-    // Client-side validation:
-    // Check if entered KM < last recorded KM (Daily Log or Fuel Entry).
-
-    // Get last closing daily log KM
     const vehicleDailyLogs = dailyLogs
       .filter((log) => log.vehicleId === Number(refillForm.vehicleId) && log.status === "CLOSED" && log.closingKm != null)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const lastDailyLogKm = vehicleDailyLogs.length > 0 ? vehicleDailyLogs[0].closingKm! : null;
 
-    // Get last closed fuel entry KM
     const vehicleFuelEntries = fuelEntries
       .filter((entry) => entry.vehicleId === Number(refillForm.vehicleId) && entry.status === "CLOSED" && entry.closingKm != null)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -458,7 +462,6 @@ const VehicleManagementPage: React.FC = () => {
 
     const maxClosedKm = Math.max(lastDailyLogKm || 0, lastFuelEntryKm || 0);
 
-    // Also check current OPEN fuel entry Opening KM (cannot be less than start of current trip)
     const openEntry = fuelEntries.find(e => e.vehicleId === Number(refillForm.vehicleId) && e.status === "OPEN");
     if (openEntry && openingKm < openEntry.openingKm) {
       toast.error(`Refill KM cannot be less than current Open Entry KM (${openEntry.openingKm})`);
@@ -514,12 +517,10 @@ const VehicleManagementPage: React.FC = () => {
     }
 
     const km = Number(createOpeningKm);
-    // Enforce: opening km must be >= last closing km of previous daily log
     if (lastClosingKm != null && km < lastClosingKm) {
       toast.error(`Opening km must be greater than or equal to the last daily log closing km (${lastClosingKm.toFixed(1)} km)`);
       return;
     }
-    // Enforce: opening km must be >= last closing km of previous fuel entry
     if (openFuelEntry && km < openFuelEntry.openingKm) {
       toast.error(`Opening km must be greater than or equal to the last fuel entry closing km (${openFuelEntry.openingKm.toFixed(1)} km)`);
       return;
@@ -645,38 +646,32 @@ const VehicleManagementPage: React.FC = () => {
     { label: "Planned", value: "PLANNED" },
   ];
 
-  if (!selectedProjectId) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <div className="text-center p-8 bg-slate-50 rounded-xl border border-slate-200">
-          <h3 className="text-xs font-medium text-slate-700 mb-2">Select a Project</h3>
-          <p className="text-slate-500">Please select a project to manage vehicles</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Define Columns
   const vehicleColumns: ColumnDef<Vehicle>[] = [
-    { field: "vehicleName", header: "Vehicle Name", sortable: true, style: { minWidth: "120px" }, body: (row) => <span className="font-medium text-slate-700">{row.vehicleName}</span> },
+    { field: "vehicleName", header: "Vehicle Name", sortable: true, style: { minWidth: "120px" }, body: (row) => <Typography variant="body2" fontWeight={600} color="text.primary">{row.vehicleName}</Typography> },
     { field: "vehicleNumber", header: "Vehicle Number", sortable: true, style: { minWidth: "100px" } },
     { field: "vehicleType", header: "Type", sortable: true, style: { minWidth: "90px" } },
     { field: "fuelType", header: "Fuel Type", sortable: true, style: { minWidth: "80px" } },
     {
       field: "status", header: "Status", sortable: true,
       body: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : row.status === 'INACTIVE' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-          {row.status}
-        </span>
+        <Chip
+          label={row.status}
+          size="small"
+          sx={{
+            height: 20,
+            fontSize: '10px',
+            bgcolor: row.status === 'ACTIVE' ? 'success.light' : 'grey',
+            color: row.status === 'ACTIVE' ? 'success.dark' : 'white',
+          }}
+        />
       )
     },
     {
       field: "runningKm", header: "Running Km",
       body: (row) => {
-        // Sum of all daily log distances for this vehicle
         const runningKm = dailyLogs.filter(log => log.vehicleId === row.id && log.status === 'CLOSED')
           .reduce((sum, log) => sum + (log.distance || 0), 0);
-        return <span>{runningKm.toFixed(1)} km</span>;
+        return <Typography variant="caption">{runningKm.toFixed(1)} km</Typography>;
       }
     },
     {
@@ -684,7 +679,7 @@ const VehicleManagementPage: React.FC = () => {
       body: (row) => {
         const vehicleEntries = fuelEntries.filter(e => e.vehicleId === row.id);
         const totalLitres = vehicleEntries.reduce((sum, e) => sum + (e.litres || 0), 0);
-        return <span className="text-slate-700">{totalLitres.toFixed(2)} L</span>;
+        return <Typography variant="caption" color="text.secondary">{totalLitres.toFixed(2)} L</Typography>;
       }
     },
     {
@@ -692,7 +687,7 @@ const VehicleManagementPage: React.FC = () => {
       body: (row) => {
         const vehicleEntries = fuelEntries.filter(e => e.vehicleId === row.id);
         const totalCost = vehicleEntries.reduce((sum, e) => sum + (e.totalCost || 0), 0);
-        return <span className="font-medium text-green-600">₹{totalCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>;
+        return <Typography variant="body2" fontWeight={600} color="success.main">₹{totalCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</Typography>;
       }
     },
     {
@@ -702,13 +697,13 @@ const VehicleManagementPage: React.FC = () => {
         const totalKm = vehicleEntries.reduce((sum, e) => sum + (e.distance || 0), 0);
         const totalLitres = fuelEntries.filter(e => e.vehicleId === row.id).reduce((sum, e) => sum + (e.litres || 0), 0);
         const avgMileage = totalLitres > 0 ? totalKm / totalLitres : 0;
-        return <span>{avgMileage.toFixed(2)} km/l</span>;
+        return <Typography variant="caption">{avgMileage.toFixed(2)} km/l</Typography>;
       }
     },
     {
       field: "rentCost", header: "Rent Cost",
       body: (row) => {
-        if (!row.rentPrice) return <span className="text-slate-400">—</span>;
+        if (!row.rentPrice) return <Typography variant="caption" color="text.secondary">—</Typography>;
 
         const startDate = row.startDate ? new Date(row.startDate) : new Date();
         const endDate = row.endDate ? new Date(row.endDate) : new Date();
@@ -724,7 +719,7 @@ const VehicleManagementPage: React.FC = () => {
           const hours = daysDiff * 24;
           totalRentCost = row.rentPrice * hours;
         }
-        return <span className="font-medium text-orange-600">₹{totalRentCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>;
+        return <Typography variant="body2" fontWeight={600} color="warning.main">₹{totalRentCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</Typography>;
       }
     },
     {
@@ -732,11 +727,10 @@ const VehicleManagementPage: React.FC = () => {
       body: (row) => {
         const isActive = row.status === 'ACTIVE';
         return (
-          <div className="flex justify-end gap-2">
-            <CustomButton
-              variant="text"
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <IconButton
               size="small"
-              className={`!p-1 ${isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}
+              sx={{ color: isActive ? 'warning.main' : 'success.main' }}
               title={isActive ? "Mark Inactive" : "Mark Active"}
               onClick={async (e) => {
                 e.stopPropagation();
@@ -754,16 +748,15 @@ const VehicleManagementPage: React.FC = () => {
               }}
             >
               {isActive ? <FiSlash size={16} /> : <FiCheck size={16} />}
-            </CustomButton>
-            <CustomButton
-              variant="text"
+            </IconButton>
+            <IconButton
               size="small"
-              className="!p-1 text-red-600 hover:bg-red-50"
+              color="error"
               onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(row.id); }}
             >
               <FiTrash2 size={16} />
-            </CustomButton>
-          </div>
+            </IconButton>
+          </Stack>
         )
       }
     }
@@ -771,8 +764,8 @@ const VehicleManagementPage: React.FC = () => {
 
   const fuelColumns: ColumnDef<FuelEntry>[] = [
     { field: "date", header: "Date", sortable: true, body: (row) => new Date(row.date).toLocaleDateString() },
-    { field: "vehicleName", header: "Vehicle", sortable: true, body: (row) => <span className="font-semibold">{row.vehicleName}</span> },
-    { field: "supplierName", header: "Supplier", sortable: true, body: (row) => <span className="text-slate-500">{row.supplierName}</span> },
+    { field: "vehicleName", header: "Vehicle", sortable: true, body: (row) => <Typography variant="body2" fontWeight={600}>{row.vehicleName}</Typography> },
+    { field: "supplierName", header: "Supplier", sortable: true, body: (row) => <Typography variant="caption" color="text.secondary">{row.supplierName}</Typography> },
     { field: "pricePerLitre", header: "Unit Price", sortable: true, body: (row) => row.pricePerLitre != null ? `₹${row.pricePerLitre.toFixed(2)}` : "—" },
     { field: "litres", header: "Quantity", sortable: true, body: (row) => row.litres != null ? `${row.litres.toFixed(2)} L` : "—" },
     { field: "totalCost", header: "Fuel Cost", sortable: true, body: (row) => (row.pricePerLitre != null && row.litres != null) ? `₹${(row.pricePerLitre * row.litres).toFixed(2)}` : "—" },
@@ -782,21 +775,20 @@ const VehicleManagementPage: React.FC = () => {
     { field: "mileage", header: "Mileage", sortable: true, body: (row) => (row.status === "CLOSED" && row.mileage != null) ? row.mileage.toFixed(2) : "—" },
     {
       field: "status", header: "Status", align: "center", body: (row) => (
-        <div className="flex justify-center">
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           {row.status === "OPEN" ? (
-            <CustomButton
-              variant="text"
+            <IconButton
               size="small"
-              className="text-amber-500 hover:text-amber-600"
+              color="warning"
               title="Open - Click to close entry"
               onClick={() => { setSelectedFuelEntry(row); setShowCloseFuelDialog(true); }}
             >
               <FiUnlock size={18} />
-            </CustomButton>
+            </IconButton>
           ) : (
-            <FiLock size={18} className="text-green-500" title="Closed" />
+            <FiLock size={18} style={{ color: '#10b981' }} title="Closed" />
           )}
-        </div>
+        </Box>
       )
     }
   ];
@@ -808,9 +800,9 @@ const VehicleManagementPage: React.FC = () => {
     { field: "address", header: "Address", sortable: true },
     {
       field: "actions", header: "Actions", align: "right", body: (row) => (
-        <CustomButton variant="text" size="small" className="text-red-500" onClick={() => handleDeleteSupplier(row.id)}>
-          <FiTrash2 />
-        </CustomButton>
+        <IconButton size="small" color="error" onClick={() => handleDeleteSupplier(row.id)}>
+          <FiTrash2 size={16} />
+        </IconButton>
       )
     }
   ];
@@ -824,270 +816,359 @@ const VehicleManagementPage: React.FC = () => {
       field: "distance", header: "Distance", sortable: true, body: (row) => {
         if (row.closingKm != null && row.openingKm != null) {
           const diff = row.closingKm - row.openingKm;
-          return <span className="font-bold text-green-600">{diff.toFixed(1)} km</span>;
+          return <Typography variant="body2" fontWeight={700} color="success.main">{diff.toFixed(1)} km</Typography>;
         }
         return row.distance != null ? `${row.distance.toFixed(1)} km` : "—";
       }
     },
     {
       field: "status", header: "Status", align: "center", sortable: true, body: (row) => (
-        <div className="flex justify-center">
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           {row.status === 'OPEN' ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-              Open
-            </span>
+            <Chip
+              label="OPEN"
+              size="small"
+              sx={{ bgcolor: 'warning.light', color: 'warning.dark', fontWeight: 700, fontSize: '0.65rem' }}
+            />
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-600 border border-green-100 uppercase tracking-wider">
-              <FiCheck className="text-[12px]" />
-              Closed
-            </span>
+            <Chip
+              icon={<FiCheck />}
+              label="CLOSED"
+              size="small"
+              sx={{ bgcolor: 'success.light', color: 'success.dark', fontWeight: 700, fontSize: '0.65rem' }}
+            />
           )}
-        </div>
+        </Box>
       )
     },
     {
       field: "actions", header: "Actions", align: "right", body: (row) => (
-        <div className="flex justify-end pr-2">
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           {row.status === "OPEN" ? (
-            <CustomButton
+            <Button
               size="small"
               variant="outlined"
               color="warning"
               onClick={() => { setSelectedDailyLog(row); setShowCloseDailyLogDialog(true); }}
-              style={{
-                fontSize: '11px',
-                padding: '4px 12px',
-                borderRadius: '6px',
-                height: '28px',
-                borderColor: '#f59e0b',
-                color: '#f59e0b',
-                fontWeight: 700
-              }}
-              startIcon={<FiLock size={12} />}
+              startIcon={<FiLock size={14} />}
+              sx={{ fontSize: '0.7rem', py: 0.5, minWidth: 0 }}
             >
-              Close Log
-            </CustomButton>
+              Close
+            </Button>
           ) : (
-            <span className="text-[10px] text-slate-400 font-medium px-3 italic">Completed</span>
+            <Typography variant="caption" color="text.secondary" fontStyle="italic">Completed</Typography>
           )}
-        </div >
+        </Box>
       )
     }
   ];
 
-
-
+  if (!selectedProjectId) {
+    return (
+      <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
+          <FiTruck size={48} style={{ margin: '0 auto 16px', color: '#94a3b8' }} />
+          <Typography variant="body1" color="text.secondary">Select a project to manage vehicles</Typography>
+        </Paper>
+      </Box>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6">
-      <CustomTabs
-        tabs={[
-          {
-            label: "Vehicles",
-            content: (
-              <>
-                <div className="mb-4">
-                  <CustomButton startIcon={<FiPlus />} onClick={() => setShowVehicleDialog(true)}>Add Vehicle</CustomButton>
-                </div>
-                <CustomTable data={vehicles} columns={vehicleColumns} loading={loading} pagination rows={10} onRowClick={(row) => navigate(`/workspace/vehicles/${row.id}`)} />
-              </>
-            )
-          },
-          {
-            label: "Fuel Management",
-            content: (
-              <div className="space-y-4">
-                {/* Top Controls */}
-                <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
-                  <div className="flex gap-6 items-center">
-                    <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
-                      {['current', 'history'].map(mode => (
-                        <button
-                          key={mode}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${fuelViewMode === mode ? 'bg-white shadow text-green-600' : 'text-slate-500 hover:text-slate-700'}`}
-                          onClick={() => { setFuelViewMode(mode as any); setFuelVehicleFilter(null); setActiveFuelType('DIESEL'); }}
-                        >
-                          {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                    <div className="flex gap-2">
-                      {['DIESEL', 'PETROL', 'ELECTRIC'].map(type => (
-                        <button
-                          key={type}
-                          className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeFuelType === type ? 'border-green-600 text-green-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                          onClick={() => { setActiveFuelType(type as any); setFuelVehicleFilter(null); }}
-                        >
-                          {type.charAt(0) + type.slice(1).toLowerCase()}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'grey.50' }}>
+      {/* Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
+        }}
+      >
+        <Box>
+          <Typography variant="subtitle1" fontWeight={700} color="text.primary">Vehicle Management</Typography>
+          <Typography variant="caption" color="text.secondary">Manage fleet, fuel, and daily logs</Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <CustomButton startIcon={<FiPlus />} onClick={() => setShowVehicleDialog(true)} size="small">
+            Add Vehicle
+          </CustomButton>
+          <CustomButton variant="outlined" startIcon={<FiPlus />} onClick={() => setShowSupplierDialog(true)} size="small">
+            Add Supplier
+          </CustomButton>
+        </Stack>
+      </Paper>
 
-                  {/* Summary */}
-                  <div className="flex gap-3">
-                    {[
-                      { label: "Total Qty", value: `${fuelSummaryMetrics.totalQuantity.toFixed(2)} L` },
-                      { label: "Total Cost", value: `₹${fuelSummaryMetrics.totalCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` },
-                      { label: "Total Distance", value: `${fuelSummaryMetrics.totalDistance.toFixed(2)} km` }
-                    ].map((metric, i) => (
-                      <div key={i} className="px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg">
-                        <div className="text-xs text-slate-500 uppercase tracking-wider">{metric.label}</div>
-                        <div className="text-xs font-bold text-slate-800">{metric.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+      {/* Content Area */}
+      <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
+        <Box sx={{ maxWidth: '100%', mx: 'auto' }}>
 
-                {/* Filters (History Only) */}
-                {fuelViewMode === 'history' && (
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <CustomTextField placeholder="Search vehicle / supplier" value={fuelSearchQuery} onChange={(e) => setFuelSearchQuery(e.target.value)} size="small" />
-                    <CustomSelect
-                      label="Vehicle"
-                      value={fuelVehicleFilter || ""}
-                      onChange={(v) => setFuelVehicleFilter(v ? Number(v) : null)}
-                      options={[{ label: "All Vehicles", value: "" }, ...vehicles.map(v => ({ label: v.vehicleName, value: v.id }))]}
-                      size="small"
-                    />
-                    <CustomSelect
-                      label="Supplier"
-                      value={fuelSupplierFilter || ""}
-                      onChange={(v) => setFuelSupplierFilter(v ? Number(v) : null)}
-                      options={[{ label: "All Suppliers", value: "" }, ...suppliers.map(s => ({ label: s.supplierName, value: s.id }))]}
-                      size="small"
-                    />
-                    <CustomDateInput value={fuelDateFrom} onChange={(e) => setFuelDateFrom(e.value as Date)} label="From Date" size="small" />
-                    <CustomDateInput value={fuelDateTo} onChange={(e) => setFuelDateTo(e.value as Date)} label="To Date" size="small" />
-                  </div>
-                )}
+          <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <CustomTabs
+                tabs={[
+                  {
+                    label: "Vehicles",
+                    content: (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <CustomButton startIcon={<FiPlus />} onClick={() => setShowVehicleDialog(true)} size="small">Add Vehicle</CustomButton>
+                        </Box>
+                        <CustomTable data={vehicles} columns={vehicleColumns} loading={loading} pagination rows={10} onRowClick={(row) => navigate(`/workspace/vehicles/${row.id}`)} />
+                      </Box>
+                    )
+                  },
+                  {
+                    label: "Fuel Management",
+                    content: (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {/* Summary Metrics */}
+                        <Grid container spacing={2}>
+                          {[
+                            { label: "Total Qty", value: `${fuelSummaryMetrics.totalQuantity.toFixed(2)} L` },
+                            { label: "Total Cost", value: `₹${fuelSummaryMetrics.totalCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` },
+                            { label: "Total Distance", value: `${fuelSummaryMetrics.totalDistance.toFixed(2)} km` }
+                          ].map((metric, i) => (
+                            <Grid item xs={12} sm={4} key={i}>
+                              <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'grey.50' }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>{metric.label}</Typography>
+                                <Typography variant="subtitle2" fontWeight={700}>{metric.value}</Typography>
+                              </Paper>
+                            </Grid>
+                          ))}
+                        </Grid>
 
-                {fuelViewMode === 'current' && (
-                  <div className="mb-2">
-                    <div className="flex gap-2">
-                      <CustomButton
-                        startIcon={<FiPlus />}
-                        onClick={() => { resetRefillForm(); setShowRefillDialog(true); }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
-                      >
-                        Refill
-                      </CustomButton>
-                      <CustomButton startIcon={<FiPlus />} onClick={() => setShowFuelDialog(true)}>Add Fuel Entry</CustomButton>
-                    </div>
-                  </div>
-                )}
+                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
+                          <Stack direction="row" spacing={1} bgcolor="grey.100" p={0.5} borderRadius={1}>
+                            {['current', 'history'].map((mode) => (
+                              <Button
+                                key={mode}
+                                size="small"
+                                variant={fuelViewMode === mode ? 'contained' : 'text'}
+                                color="primary"
+                                onClick={() => { setFuelViewMode(mode as any); setFuelVehicleFilter(null); setActiveFuelType('DIESEL'); }}
+                                sx={{ textTransform: 'capitalize', bgcolor: fuelViewMode === mode ? 'background.paper' : 'transparent', color: fuelViewMode === mode ? 'primary.main' : 'text.secondary', boxShadow: fuelViewMode === mode ? 1 : 0 }}
+                              >
+                                {mode}
+                              </Button>
+                            ))}
+                          </Stack>
 
-                <CustomTable data={filteredFuelEntries} columns={fuelColumns} loading={loading} pagination rows={20} />
-              </div>
-            )
-          },
-          {
-            label: "Suppliers",
-            content: (
-              <>
-                <div className="mb-4">
-                  <CustomButton startIcon={<FiPlus />} onClick={() => setShowSupplierDialog(true)}>Add Supplier</CustomButton>
-                </div>
-                <CustomTable data={suppliers} columns={supplierColumns} loading={loading} pagination rows={10} />
-              </>
-            )
-          },
-          {
-            label: "Daily Logs",
-            content: (
-              <>
-                <div className="mb-4">
-                  <CustomButton startIcon={<FiPlus />} onClick={() => { resetCreateForm(); setShowDailyLogDialog(true); }}>Create Daily Log</CustomButton>
-                </div>
-                <CustomTable data={projectLogs} columns={dailyLogColumns} loading={loading} pagination rows={10} />
-              </>
-            )
-          }
-        ]}
-      />
+                          <Stack direction="row" spacing={1}>
+                            {['DIESEL', 'PETROL', 'ELECTRIC'].map((type) => (
+                              <Button
+                                key={type}
+                                size="small"
+                                onClick={() => { setActiveFuelType(type as any); setFuelVehicleFilter(null); }}
+                                sx={{
+                                  textTransform: 'capitalize',
+                                  borderBottom: 2,
+                                  borderColor: activeFuelType === type ? 'primary.main' : 'transparent',
+                                  borderRadius: 0,
+                                  color: activeFuelType === type ? 'primary.main' : 'text.secondary',
+                                  pt: 1, pb: 0.5
+                                }}
+                              >
+                                {type.toLowerCase()}
+                              </Button>
+                            ))}
+                          </Stack>
+                        </Stack>
+
+                        {fuelViewMode === 'history' && (
+                          <Grid container spacing={2} sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 2 }}>
+                            <Grid item xs={12} md={3}>
+                              <CustomTextField placeholder="Search..." value={fuelSearchQuery} onChange={(e) => setFuelSearchQuery(e.target.value)} />
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                              <CustomSelect
+                                label="Vehicle"
+                                value={fuelVehicleFilter || ""}
+                                onChange={(v) => setFuelVehicleFilter(v ? Number(v) : null)}
+                                options={[{ label: "All Vehicles", value: "" }, ...vehicles.map(v => ({ label: v.vehicleName, value: v.id }))]}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                              <CustomSelect
+                                label="Supplier"
+                                value={fuelSupplierFilter || ""}
+                                onChange={(v) => setFuelSupplierFilter(v ? Number(v) : null)}
+                                options={[{ label: "All Suppliers", value: "" }, ...suppliers.map(s => ({ label: s.supplierName, value: s.id }))]}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={2.5}>
+                              <CustomDateInput value={fuelDateFrom} onChange={(e) => setFuelDateFrom(e.value as Date)} label="From Date" />
+                            </Grid>
+                            <Grid item xs={12} md={2.5}>
+                              <CustomDateInput value={fuelDateTo} onChange={(e) => setFuelDateTo(e.value as Date)} label="To Date" />
+                            </Grid>
+                          </Grid>
+                        )}
+
+                        {fuelViewMode === 'current' && (
+                          <Stack direction="row" spacing={2} justifyContent="flex-end">
+                            <CustomButton
+                              startIcon={<FiPlus />}
+                              onClick={() => { resetRefillForm(); setShowRefillDialog(true); }}
+                              sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
+                            >
+                              Refill
+                            </CustomButton>
+                            <CustomButton startIcon={<FiPlus />} onClick={() => setShowFuelDialog(true)}>Add Fuel Entry</CustomButton>
+                          </Stack>
+                        )}
+
+                        <CustomTable data={filteredFuelEntries} columns={fuelColumns} loading={loading} pagination rows={20} />
+                      </Box>
+                    )
+                  },
+                  {
+                    label: "Suppliers",
+                    content: (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <CustomButton startIcon={<FiPlus />} onClick={() => setShowSupplierDialog(true)} size="small">Add Supplier</CustomButton>
+                        </Box>
+                        <CustomTable data={suppliers} columns={supplierColumns} loading={loading} pagination rows={10} />
+                      </Box>
+                    )
+                  },
+                  {
+                    label: "Daily Logs",
+                    content: (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <CustomButton startIcon={<FiPlus />} onClick={() => { resetCreateForm(); setShowDailyLogDialog(true); }} size="small">Create Daily Log</CustomButton>
+                        </Box>
+                        <CustomTable data={projectLogs} columns={dailyLogColumns} loading={loading} pagination rows={10} />
+                      </Box>
+                    )
+                  }
+                ]}
+              />
+            </Box>
+          </Paper>
+
+        </Box>
+      </Box>
 
       {/* Vehicle Modal */}
       <CustomModal open={showVehicleDialog} onClose={() => setShowVehicleDialog(false)} title="Add Vehicle"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" color="inherit" onClick={() => setShowVehicleDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddVehicle}>Save</CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <CustomTextField label="Vehicle Name" required value={vehicleForm.vehicleName} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleName: e.target.value })} />
-          <CustomTextField label="Vehicle Number" required value={vehicleForm.vehicleNumber} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleNumber: e.target.value })} />
-          <CustomSelect label="Vehicle Type" required value={vehicleForm.vehicleType} onChange={(v) => setVehicleForm({ ...vehicleForm, vehicleType: v as VehicleType })} options={vehicleTypeOptions} />
-          <CustomSelect label="Fuel Type" required value={vehicleForm.fuelType} onChange={(v) => setVehicleForm({ ...vehicleForm, fuelType: v as FuelType })} options={fuelTypeOptions} />
-          <CustomSelect label="Status" required value={vehicleForm.status} onChange={(v) => setVehicleForm({ ...vehicleForm, status: v as VehicleStatus })} options={statusOptions} />
-          <CustomDateInput label="Start Date" required value={vehicleForm.startDate} onChange={(e) => setVehicleForm({ ...vehicleForm, startDate: e.value as Date })} />
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <CustomTextField label="Vehicle Name" required value={vehicleForm.vehicleName} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleName: e.target.value })} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomTextField label="Vehicle Number" required value={vehicleForm.vehicleNumber} onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleNumber: e.target.value })} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomSelect label="Vehicle Type" required value={vehicleForm.vehicleType} onChange={(v) => setVehicleForm({ ...vehicleForm, vehicleType: v as VehicleType })} options={vehicleTypeOptions} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomSelect label="Fuel Type" required value={vehicleForm.fuelType} onChange={(v) => setVehicleForm({ ...vehicleForm, fuelType: v as FuelType })} options={fuelTypeOptions} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomSelect label="Status" required value={vehicleForm.status} onChange={(v) => setVehicleForm({ ...vehicleForm, status: v as VehicleStatus })} options={statusOptions} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomDateInput label="Start Date" required value={vehicleForm.startDate} onChange={(e) => setVehicleForm({ ...vehicleForm, startDate: e.value as Date })} />
+          </Grid>
           {vehicleForm.vehicleType !== "OWN_VEHICLE" && (
             <>
-              <CustomTextField label="Rent Price" type="number" value={vehicleForm.rentPrice || ""} onChange={(e) => setVehicleForm({ ...vehicleForm, rentPrice: parseFloat(e.target.value) || null })} />
-              <CustomSelect label="Rent Period" value={vehicleForm.rentPeriod} onChange={(v) => setVehicleForm({ ...vehicleForm, rentPeriod: v as any })} options={[{ label: "Monthly", value: "MONTHLY" }, { label: "Daily", value: "DAILY" }, { label: "Hourly", value: "HOURLY" }]} />
+              <Grid item xs={12} md={6}>
+                <CustomTextField label="Rent Price" type="number" value={vehicleForm.rentPrice || ""} onChange={(e) => setVehicleForm({ ...vehicleForm, rentPrice: parseFloat(e.target.value) || null })} />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <CustomSelect label="Rent Period" value={vehicleForm.rentPeriod} onChange={(v) => setVehicleForm({ ...vehicleForm, rentPeriod: v as any })} options={[{ label: "Monthly", value: "MONTHLY" }, { label: "Daily", value: "DAILY" }, { label: "Hourly", value: "HOURLY" }]} />
+              </Grid>
             </>
           )}
-        </div>
+        </Grid>
       </CustomModal>
 
       {/* Supplier Modal */}
       <CustomModal open={showSupplierDialog} onClose={() => setShowSupplierDialog(false)} title="Add Supplier"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" color="inherit" onClick={() => setShowSupplierDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddSupplier}>Save</CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div className="md:col-span-2">
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
             <CustomTextField label="Supplier Name" required value={supplierForm.supplierName} onChange={(e) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })} />
-          </div>
-          <CustomTextField label="Contact Person" value={supplierForm.contactPerson} onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
-          <CustomTextField label="Phone Number" value={supplierForm.phoneNumber} onChange={(e) => setSupplierForm({ ...supplierForm, phoneNumber: e.target.value })} />
-          <div className="md:col-span-2">
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomTextField label="Contact Person" value={supplierForm.contactPerson} onChange={(e) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomTextField label="Phone Number" value={supplierForm.phoneNumber} onChange={(e) => setSupplierForm({ ...supplierForm, phoneNumber: e.target.value })} />
+          </Grid>
+          <Grid item xs={12}>
             <CustomTextField label="Address" value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} />
-          </div>
-        </div>
+          </Grid>
+        </Grid>
       </CustomModal>
 
       {/* Fuel Entry Modal */}
       <CustomModal open={showFuelDialog} onClose={() => setShowFuelDialog(false)} title="Add Fuel Entry"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" color="inherit" onClick={() => setShowFuelDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddFuelEntry}>Save</CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div className="md:col-span-2">
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
             <CustomDateInput label="Date" required value={fuelForm.date} onChange={(e) => setFuelForm({ ...fuelForm, date: e.value as Date })} />
-          </div>
-          <CustomSelect label="Vehicle" required value={fuelForm.vehicleId} onChange={(v) => setFuelForm({ ...fuelForm, vehicleId: v })} options={vehicles.map(v => ({ label: `${v.vehicleName} (${v.vehicleNumber})`, value: v.id }))} />
-          <CustomSelect label="Supplier" required value={fuelForm.supplierId} onChange={(v) => setFuelForm({ ...fuelForm, supplierId: v })} options={suppliers.map(s => ({ label: s.supplierName, value: s.id }))} />
-          <CustomTextField label="Quantity" required type="number" value={fuelForm.litres} onChange={(e) => setFuelForm({ ...fuelForm, litres: e.target.value })} />
-          <CustomTextField label="Opening KM" required type="number" value={fuelForm.openingKm} onChange={(e) => setFuelForm({ ...fuelForm, openingKm: e.target.value })} />
-          <CustomTextField label="Unit Price" required type="number" value={fuelForm.pricePerLitre} onChange={(e) => setFuelForm({ ...fuelForm, pricePerLitre: e.target.value })} />
-        </div>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomSelect label="Vehicle" required value={fuelForm.vehicleId} onChange={(v) => setFuelForm({ ...fuelForm, vehicleId: v })} options={vehicles.map(v => ({ label: `${v.vehicleName} (${v.vehicleNumber})`, value: v.id }))} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomSelect label="Supplier" required value={fuelForm.supplierId} onChange={(v) => setFuelForm({ ...fuelForm, supplierId: v })} options={suppliers.map(s => ({ label: s.supplierName, value: s.id }))} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <CustomTextField label="Quantity" required type="number" value={fuelForm.litres} onChange={(e) => setFuelForm({ ...fuelForm, litres: e.target.value })} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <CustomTextField label="Opening KM" required type="number" value={fuelForm.openingKm} onChange={(e) => setFuelForm({ ...fuelForm, openingKm: e.target.value })} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <CustomTextField label="Unit Price" required type="number" value={fuelForm.pricePerLitre} onChange={(e) => setFuelForm({ ...fuelForm, pricePerLitre: e.target.value })} />
+          </Grid>
+        </Grid>
       </CustomModal>
 
       {/* Close Fuel Entry Modal */}
       <CustomModal open={showCloseFuelDialog} onClose={() => setShowCloseFuelDialog(false)} title="Close Fuel Entry"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" color="inherit" onClick={() => setShowCloseFuelDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleCloseFuelEntry}>Close Entry</CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="space-y-4 pt-2 flex flex-col gap-2">
+        <Stack spacing={3} pt={1}>
           <CustomTextField label="Opening KM" disabled value={selectedFuelEntry?.openingKm} />
           <CustomTextField label="Closing KM" required type="number" value={closingKm} onChange={(e) => setClosingKm(e.target.value)} />
-        </div>
+        </Stack>
       </CustomModal>
 
       {/* Refill Dialog */}
@@ -1097,7 +1178,7 @@ const VehicleManagementPage: React.FC = () => {
         title="Refill Vehicle"
         maxWidth="sm"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" onClick={() => setShowRefillDialog(false)}>
               Cancel
             </CustomButton>
@@ -1109,10 +1190,10 @@ const VehicleManagementPage: React.FC = () => {
             >
               Confirm Refill
             </CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="flex flex-col gap-4">
+        <Stack spacing={2}>
           <CustomDateInput
             label="Date"
             value={refillForm.date}
@@ -1153,19 +1234,19 @@ const VehicleManagementPage: React.FC = () => {
             value={refillForm.pricePerLitre}
             onChange={(e) => setRefillForm({ ...refillForm, pricePerLitre: e.target.value })}
           />
-        </div>
+        </Stack>
       </CustomModal>
 
       {/* Daily Log Create Modal */}
       <CustomModal open={showDailyLogDialog} onClose={() => setShowDailyLogDialog(false)} title="Create Daily Log"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" color="inherit" onClick={() => setShowDailyLogDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleAddDailyLog} disabled={!isCreateFormValid}>Create</CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="space-y-4 pt-2">
+        <Stack spacing={2} pt={1}>
           <CustomDateInput label="Date" disabled value={createDate} onChange={() => { }} />
           <CustomSelect
             label="Vehicle"
@@ -1175,7 +1256,7 @@ const VehicleManagementPage: React.FC = () => {
             options={availableVehicles.map(v => ({ label: `${v.vehicleName} (${v.vehicleNumber})`, value: v.id }))}
           />
 
-          <div>
+          <Box>
             <CustomTextField
               label="Opening Km"
               required
@@ -1186,35 +1267,36 @@ const VehicleManagementPage: React.FC = () => {
               helperText={createFormErrors.openingKm}
             />
             {createVehicleId && lastClosingKm != null && createOpeningKm && Number(createOpeningKm) >= lastClosingKm && (
-              <p className="text-xs text-green-600 mt-1 font-medium flex items-center">
-                <FiCheck className="mr-1" /> Difference: {(Number(createOpeningKm) - lastClosingKm).toFixed(1)} km
-              </p>
+              <Typography variant="caption" color="success.main" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
+                <FiCheck style={{ marginRight: 4 }} /> Difference: {(Number(createOpeningKm) - lastClosingKm).toFixed(1)} km
+              </Typography>
             )}
             {createVehicleId && lastClosingKm != null && !createOpeningKm && (
-              <p className="text-xs text-slate-500 mt-1">Last Closing Km: {lastClosingKm.toFixed(1)} km</p>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>Last Closing Km: {lastClosingKm.toFixed(1)} km</Typography>
             )}
-          </div>
-        </div>
+          </Box>
+        </Stack>
       </CustomModal>
 
       {/* Daily Log Close Modal */}
       <CustomModal open={showCloseDailyLogDialog} onClose={() => setShowCloseDailyLogDialog(false)} title="Close Daily Log"
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
             <CustomButton variant="outlined" color="inherit" onClick={() => setShowCloseDailyLogDialog(false)}>Cancel</CustomButton>
             <CustomButton onClick={handleCloseDailyLog} disabled={!isCloseFormValid}>Close Log</CustomButton>
-          </div>
+          </Stack>
         }
       >
-        <div className="space-y-4 pt-2">
+        <Stack spacing={3} pt={1}>
           {selectedDailyLog && (
             <>
-              <div className="bg-slate-50 p-3 rounded">
-                <p className="text-xs text-slate-500">Vehicle</p>
-                <p className="font-medium">{selectedDailyLog.vehicleName}</p>
-                <p className="text-xs text-slate-500 mt-2">Opening Km</p>
-                <p className="font-medium">{selectedDailyLog.openingKm}</p>
-              </div>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                <Typography variant="caption" color="text.secondary">Vehicle</Typography>
+                <Typography variant="body2" fontWeight={600}>{selectedDailyLog.vehicleName}</Typography>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="caption" color="text.secondary">Opening Km</Typography>
+                <Typography variant="body2" fontWeight={600}>{selectedDailyLog.openingKm}</Typography>
+              </Paper>
               <CustomTextField
                 label="Closing Km"
                 required
@@ -1226,9 +1308,9 @@ const VehicleManagementPage: React.FC = () => {
               />
             </>
           )}
-        </div>
+        </Stack>
       </CustomModal>
-    </div>
+    </Box>
   );
 };
 

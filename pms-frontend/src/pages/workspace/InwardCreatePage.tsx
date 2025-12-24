@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Get } from "../../utils/apiService";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
+import { Box, Stack, Typography, Paper, Grid, Chip } from "@mui/material";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -108,44 +109,53 @@ const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, type, onCha
       open={Boolean(line)}
       onClose={onClose}
       footer={
-        <div className="flex justify-end gap-2">
-          <CustomButton variant="text" onClick={onClose}>Cancel</CustomButton>
-          <CustomButton onClick={onSave} startIcon={<FiSave />}>Save</CustomButton>
-        </div>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <CustomButton variant="text" onClick={onClose} size="small">Cancel</CustomButton>
+          <CustomButton onClick={onSave} startIcon={<FiSave />} size="small">Save</CustomButton>
+        </Stack>
       }
     >
-      <div className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
-        <span className="font-semibold text-slate-700">{line.unit}</span>
-        {" \u00b7 "}
-        Allocated: <span className="font-semibold text-slate-700">{line.allocatedQty ?? (line as any).qty ?? 0}</span>
+      <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="body2" color="text.secondary">
+          <Box component="span" fontWeight={600}>{line.unit}</Box>
+          {" \u00b7 "}
+          Allocated: <Box component="span" fontWeight={600} color="text.primary">{line.allocatedQty ?? (line as any).qty ?? 0}</Box>
+          {!isReturn && (
+            <>
+              {" \u00b7 "}
+              Ordered: <Box component="span" fontWeight={600} color="text.primary">{(line as any).orderedQty ?? 0}</Box>
+            </>
+          )}
+          {" \u00b7 "}
+          {isReturn ? "Returned: " : "Received: "}
+          <Box component="span" fontWeight={600} color="text.primary">{(line as any).receivedQty ?? 0}</Box>
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
         {!isReturn && (
-          <>
-            {" \u00b7 "}
-            Ordered: <span className="font-semibold text-slate-700">{(line as any).orderedQty ?? 0}</span>
-          </>
+          <Grid item xs={12} sm={6}>
+            <CustomTextField
+              label="Ordered Qty"
+              type="number"
+              value={values.orderedQty}
+              onChange={(e) => onChange({ ...values, orderedQty: e.target.value })}
+            />
+          </Grid>
         )}
-        {" \u00b7 "}
-        {isReturn ? "Returned: " : "Received: "}
-        <span className="font-semibold text-slate-700">{(line as any).receivedQty ?? 0}</span>
-      </div>
-      <div className={`grid gap-4 ${isReturn ? '' : 'md:grid-cols-2'}`}>
-        {!isReturn && (
+        <Grid item xs={12} sm={isReturn ? 12 : 6}>
           <CustomTextField
-            label="Ordered Qty"
+            label={isReturn ? "Returned Qty *" : "Received Qty *"}
             type="number"
-            value={values.orderedQty}
-            onChange={(e) => onChange({ ...values, orderedQty: e.target.value })}
+            value={values.receivedQty}
+            onChange={(e) => onChange({ ...values, receivedQty: e.target.value })}
+            required
+            autoFocus
           />
-        )}
-        <CustomTextField
-          label={isReturn ? "Returned Qty *" : "Received Qty *"}
-          type="number"
-          value={values.receivedQty}
-          onChange={(e) => onChange({ ...values, receivedQty: e.target.value })}
-          required
-        />
-      </div>
-      <p className="mt-3 text-xs text-slate-400">Save to include this material. Leave empty to deselect.</p>
+        </Grid>
+      </Grid>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+        Save to include this material. Leave empty to deselect.
+      </Typography>
     </CustomModal>
   );
 };
@@ -340,21 +350,43 @@ const InwardCreatePage: React.FC = () => {
         width: "50px",
         align: "center",
         body: (row) => (
-          <div
-            className="flex items-center justify-center cursor-pointer p-2"
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              p: 1
+            }}
             onClick={(e) => handleCheckboxClick(e, row)}
           >
             {row._selected ? (
-              <FiCheckCircle className="text-emerald-600 text-xs" />
+              <FiCheckCircle className="text-emerald-600" size={18} />
             ) : (
-              <FiCircle className="text-slate-300 text-xs" />
+              <FiCircle className="text-slate-300" size={18} />
             )}
-          </div>
+          </Box>
         )
       },
-      { field: "code", header: "Code", sortable: true, width: "120px", body: (row) => <span className="font-mono font-semibold text-slate-700">{row.code || "—"}</span> },
-      { field: "name", header: "Material", sortable: true, body: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
-      { field: "unit", header: "Unit", width: "80px", body: (row) => <span className="text-slate-500">{row.unit || "—"}</span> },
+      {
+        field: "code",
+        header: "Code",
+        sortable: true,
+        width: "120px",
+        body: (row) => <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.primary' }}>{row.code || "—"}</Typography>
+      },
+      {
+        field: "name",
+        header: "Material",
+        sortable: true,
+        body: (row) => <Typography variant="body2" fontWeight={500}>{row.name}</Typography>
+      },
+      {
+        field: "unit",
+        header: "Unit",
+        width: "80px",
+        body: (row) => <Typography variant="caption" color="text.secondary">{row.unit || "—"}</Typography>
+      },
     ];
 
     if (!isReturn) {
@@ -363,7 +395,7 @@ const InwardCreatePage: React.FC = () => {
         header: "Ordered",
         align: "right",
         width: "100px",
-        body: (row) => <span className="font-medium text-slate-600">{row._orderedQty || "—"}</span>
+        body: (row) => <Typography variant="body2" color="text.secondary" fontWeight={500}>{row._orderedQty || "—"}</Typography>
       });
     }
 
@@ -371,8 +403,16 @@ const InwardCreatePage: React.FC = () => {
       field: "_receivedQty",
       header: isReturn ? "Returned Qty" : "Received",
       align: "right",
-      width: "100px",
-      body: (row) => <span className="font-bold text-emerald-600">{row._receivedQty || "—"}</span>
+      width: "120px",
+      body: (row) => (
+        <Typography
+          variant="body2"
+          fontWeight={700}
+          color="primary.main"
+        >
+          {row._receivedQty || "—"}
+        </Typography>
+      )
     });
 
     return cols;
@@ -431,162 +471,201 @@ const InwardCreatePage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Inventory Navigation Tabs */}
-      <div className="px-6 pt-6">
-      </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
 
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
-        <div className="flex items-center gap-4">
+      <Paper
+        elevation={0}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
+        }}
+      >
+        <Stack direction="row" spacing={2} alignItems="center">
           <CustomButton
             variant="text"
             onClick={() => navigate('/workspace/inventory/inwards')}
-            className="text-slate-500 hover:text-slate-700"
-            size="small"
+            sx={{ minWidth: 40, p: 1, color: 'text.secondary' }}
           >
             <FiArrowLeft size={20} />
           </CustomButton>
-          <div>
-            <h1 className="text-xs font-bold text-slate-800">Create Inward Entry</h1>
-            <p className="text-slate-500 text-xs">Record new material arrival</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-xs text-slate-500 mr-2">
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+              Create Inward Entry
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Record new material arrival
+            </Typography>
+          </Box>
+        </Stack>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Typography variant="caption" color="text.secondary">
             {selectedLineCount} items selected
-          </div>
+          </Typography>
           <CustomButton
             onClick={handleSubmit}
             disabled={saving || selectedLineCount === 0}
             loading={saving}
             startIcon={<FiSave />}
-            className="px-6"
+            sx={{ px: 3 }}
           >
             Save Inward
           </CustomButton>
-        </div>
-      </div>
+        </Stack>
+      </Paper>
 
-      <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
-        {/* Form Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h2 className="text-xs font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Entry Details</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <CustomSelect
-              label="Project *"
-              value={projectId}
-              options={assignedProjects.map((p) => ({ label: `${p.code} — ${p.name}`, value: String(p.id) }))}
-              onChange={(value) => dispatch(setInwardField({ field: 'projectId', value: String(value) }))}
-            />
-
-            <CustomSelect
-              label="Type *"
-              value={type || "SUPPLY"}
-              options={[
-                { label: "Supply", value: "SUPPLY" },
-                { label: "Return", value: "RETURN" },
-              ]}
-              onChange={(value) => {
-                dispatch(setInwardField({ field: 'type', value: String(value) }));
-                // Reset outwardId when type changes
-                if (value !== 'RETURN') {
-                  dispatch(setInwardField({ field: 'outwardId', value: "" }));
-                }
-              }}
-            />
-
-            {type === "RETURN" ? (
-              <>
+      <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+        <Box sx={{ maxWidth: '100%', mx: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Form Section */}
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 2, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
+              Entry Details
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
                 <CustomSelect
-                  label="Outward Record *"
-                  value={outwardId || ""}
-                  options={outwardRecords.map((r) => ({
-                    label: `${r.code} — ${r.date} — ${r.issueTo || 'Unknown'}`,
-                    value: String(r.id)
-                  }))}
-                  onChange={(value) => dispatch(setInwardField({ field: 'outwardId', value: String(value) }))}
+                  label="Project *"
+                  value={projectId}
+                  options={assignedProjects.map((p) => ({ label: `${p.code} — ${p.name}`, value: String(p.id) }))}
+                  onChange={(value) => dispatch(setInwardField({ field: 'projectId', value: String(value) }))}
                 />
-                <CustomTextField
-                  label="Return Date *"
-                  type="date"
-                  value={invoiceDate}
-                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <CustomTextField
-                  label="Return By *"
-                  value={supplierName}
-                  onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
-                />
-              </>
-            ) : (
-              <>
-                <CustomTextField
-                  label="Invoice No."
-                  value={invoiceNo}
-                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
-                />
-                <CustomTextField
-                  label="Invoice Date"
-                  type="date"
-                  value={invoiceDate}
-                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <CustomTextField
-                  label="Delivery Date"
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => dispatch(setInwardField({ field: 'deliveryDate', value: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <CustomTextField
-                  label="Vehicle No."
-                  value={vehicleNo}
-                  onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
-                />
-                <CustomTextField
-                  label="Supplier Name"
-                  value={supplierName}
-                  onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
-                />
-              </>
-            )}
+              </Grid>
 
-            <div className="lg:col-span-3">
-              <CustomTextField
-                label="Remarks"
-                value={remarks}
-                onChange={(e) => dispatch(setInwardField({ field: 'remarks', value: e.target.value }))}
-                multiline
-                rows={2}
+              <Grid item xs={12} md={4}>
+                <CustomSelect
+                  label="Type *"
+                  value={type || "SUPPLY"}
+                  options={[
+                    { label: "Supply", value: "SUPPLY" },
+                    { label: "Return", value: "RETURN" },
+                  ]}
+                  onChange={(value) => {
+                    dispatch(setInwardField({ field: 'type', value: String(value) }));
+                    // Reset outwardId when type changes
+                    if (value !== 'RETURN') {
+                      dispatch(setInwardField({ field: 'outwardId', value: "" }));
+                    }
+                  }}
+                />
+              </Grid>
+
+              {type === "RETURN" ? (
+                <>
+                  <Grid item xs={12} md={4}>
+                    <CustomSelect
+                      label="Outward Record *"
+                      value={outwardId || ""}
+                      options={outwardRecords.map((r) => ({
+                        label: `${r.code} — ${r.date} — ${r.issueTo || 'Unknown'}`,
+                        value: String(r.id)
+                      }))}
+                      onChange={(value) => dispatch(setInwardField({ field: 'outwardId', value: String(value) }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Return Date *"
+                      type="date"
+                      value={invoiceDate}
+                      onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Return By *"
+                      value={supplierName}
+                      onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
+                    />
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Invoice No."
+                      value={invoiceNo}
+                      onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Invoice Date"
+                      type="date"
+                      value={invoiceDate}
+                      onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Delivery Date"
+                      type="date"
+                      value={deliveryDate}
+                      onChange={(e) => dispatch(setInwardField({ field: 'deliveryDate', value: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Vehicle No."
+                      value={vehicleNo}
+                      onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <CustomTextField
+                      label="Supplier Name"
+                      value={supplierName}
+                      onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              <Grid item xs={12} >
+                <CustomTextField
+                  label="Remarks"
+                  value={remarks}
+                  onChange={(e) => dispatch(setInwardField({ field: 'remarks', value: e.target.value }))}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {/* Materials Section */}
+          {projectId && (
+            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+                <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                  Allocated Materials
+                </Typography>
+              </Box>
+
+              <CustomTable
+                data={tableRows}
+                columns={columns}
+                pagination
+                rows={rows}
+                page={page}
+                onPageChange={(p, r) => { setPage(p); setRows(r); }}
+                onRowClick={(row) => openModalForLine(row)}
+                emptyMessage="No allocated materials found for this project."
               />
-            </div>
-          </div>
-        </div>
-
-        {/* Materials Section */}
-        {projectId && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-xs font-bold text-slate-800">Allocated Materials</h2>
-              {/* Search could be added here if needed */}
-            </div>
-
-            <CustomTable
-              data={tableRows}
-              columns={columns}
-              pagination
-              rows={rows}
-              page={page}
-              onPageChange={(p, r) => { setPage(p); setRows(r); }}
-              onRowClick={(row) => openModalForLine(row)}
-              emptyMessage="No allocated materials found for this project."
-            />
-          </div>
-        )}
-      </div>
+            </Paper>
+          )}
+        </Box>
+      </Box>
 
       {/* Quantity Modal */}
       <QuantityModal
@@ -597,7 +676,7 @@ const InwardCreatePage: React.FC = () => {
         onSave={saveModalLine}
         onClose={() => dispatch(setInwardModalLine(null))}
       />
-    </div>
+    </Box >
   );
 };
 

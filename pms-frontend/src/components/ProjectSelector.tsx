@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../store/store";
 import { setSelectedProject } from "../store/slices/workspaceSlice";
 import CustomSelect from "../widgets/CustomSelect";
+import { Box } from "@mui/material";
 
 const ProjectSelector: React.FC = () => {
   const dispatch = useDispatch();
@@ -31,7 +32,7 @@ const ProjectSelector: React.FC = () => {
   }));
 
   return (
-    <div className="flex items-center gap-2">
+    <Box>
       <CustomSelect
         value={selectedProjectId || ''}
         options={projectOptions}
@@ -39,23 +40,22 @@ const ProjectSelector: React.FC = () => {
         label="Select Project"
         size="small"
         sx={{
-          minWidth: 200,
+          minWidth: 160,
           '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            backgroundColor: '#f8fafc',
-            '& fieldset': { borderColor: '#e2e8f0' },
-            '&:hover fieldset': { borderColor: '#cbd5e1' },
-            '&.Mui-focused fieldset': { borderColor: '#0a7326' },
+            bgcolor: 'grey.50',
+            '& fieldset': { borderColor: 'divider' },
+            '&:hover fieldset': { borderColor: 'grey.400' },
+            '&.Mui-focused fieldset': { borderColor: 'primary.main' },
           },
-          '& .MuiInputLabel-root.Mui-focused': { color: '#0a7326' },
+          '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' },
           '& .MuiSelect-select': {
-            py: 1,
+            py: 0.75,
             fontWeight: 500,
-            color: '#334155'
+            fontSize: '0.75rem'
           }
         }}
       />
-    </div>
+    </Box>
   );
 };
 

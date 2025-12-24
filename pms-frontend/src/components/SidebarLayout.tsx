@@ -30,8 +30,8 @@ import {
 import AdminTopBar from "./AdminTopBar";
 
 // Constants
-const DRAWER_WIDTH = 240;
-const COLLAPSED_WIDTH = 72;
+const DRAWER_WIDTH = 200;
+const COLLAPSED_WIDTH = 56;
 
 export interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -59,8 +59,9 @@ const openedMixin = (theme: Theme): CSSObject => ({
   }),
   overflowX: 'hidden',
   backgroundColor: '#ffffff',
-  borderRight: '1px solid #e2e8f0', // slate-200
-  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+  borderRight: '1px solid',
+  borderColor: 'divider',
+  boxShadow: '2px 0 8px 0 rgba(0,0,0,0.02)',
 });
 
 const closedMixin = (theme: Theme): CSSObject => ({
@@ -71,17 +72,17 @@ const closedMixin = (theme: Theme): CSSObject => ({
   overflowX: 'hidden',
   width: COLLAPSED_WIDTH,
   backgroundColor: '#ffffff',
-  borderRight: '1px solid #e2e8f0',
-  boxShadow: '4px 0 24px 0 rgba(0,0,0,0.02)',
+  borderRight: '1px solid',
+  borderColor: 'divider',
+  boxShadow: '2px 0 8px 0 rgba(0,0,0,0.02)',
 });
 
 const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: theme.spacing(0, 2),
-  minHeight: 64,
-  ...theme.mixins.toolbar,
+  padding: theme.spacing(0, 1),
+  minHeight: 48,
 }));
 
 const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'open' })(
@@ -101,23 +102,21 @@ const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'ope
   }),
 );
 
-// Styled components for better performance than inline SX
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const StyledListItemButton = styled(ListItemButton, {
   shouldForwardProp: (prop) => prop !== 'active' && prop !== 'open',
 })<{ active?: boolean; open?: boolean; component?: React.ElementType; to?: string }>(({ theme, active, open }) => ({
-  minHeight: 48,
+  minHeight: 36,
   justifyContent: open ? 'initial' : 'center',
-  paddingLeft: theme.spacing(2.5),
-  paddingRight: theme.spacing(2.5),
-  borderRadius: theme.spacing(1),
+  px: 1.5,
+  py: 0.5,
+  borderRadius: theme.spacing(0.75),
   backgroundColor: active ? 'rgba(10, 115, 38, 0.08)' : 'transparent',
-  color: active ? '#0a7326' : '#475569',
+  color: active ? '#0a7326' : theme.palette.text.secondary,
   transition: 'all 0.2s',
-  marginBottom: 4,
+  mb: 0.25,
   '&:hover': {
-    backgroundColor: active ? 'rgba(10, 115, 38, 0.12)' : '#f8fafc',
-    color: active ? '#0a7326' : '#1e293b',
+    backgroundColor: active ? 'rgba(10, 115, 38, 0.12)' : theme.palette.action.hover,
+    color: active ? '#0a7326' : theme.palette.text.primary,
   },
 }));
 
@@ -125,10 +124,10 @@ const StyledListItemIcon = styled(ListItemIcon, {
   shouldForwardProp: (prop) => prop !== 'active' && prop !== 'open',
 })<{ active?: boolean; open?: boolean }>(({ theme, open }) => ({
   minWidth: 0,
-  marginRight: open ? theme.spacing(2) : 'auto',
+  marginRight: open ? theme.spacing(1.5) : 'auto',
   justifyContent: 'center',
   color: 'inherit',
-  fontSize: 20,
+  fontSize: 16,
 }));
 
 // Memoized Sidebar Item Component to prevent unnecessary re-renders
@@ -144,14 +143,13 @@ const SidebarItem = React.memo(({ item, open, isActive }: { item: NavItem; open:
           open={open}
         >
           <StyledListItemIcon active={isActive} open={open}>
-            <Icon size={20} />
+            <Icon size={16} />
           </StyledListItemIcon>
           <ListItemText
             primary={item.label}
             primaryTypographyProps={{
-              fontSize: '0.875rem',
+              fontSize: '0.75rem',
               fontWeight: isActive ? 600 : 500,
-              fontFamily: '"Google Sans", "Roboto", sans-serif'
             }}
             sx={{ opacity: open ? 1 : 0 }}
           />
@@ -179,7 +177,6 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   const open = !collapsed;
 
   const navItems: NavItem[] = useMemo(() => {
-    // Always show Dashboard for all users
     return [
       { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
@@ -192,26 +189,26 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
       <StyledDrawer variant="permanent" open={open}>
         <DrawerHeader>
           {open && (
             <Box
               component={NavLink}
               to="/"
-              sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 0.5 }}
             >
-              <img src="/posana-logo.svg" alt="Logo" style={{ height: 28, width: 'auto' }} />
+              <img src="/posana-logo.svg" alt="Logo" style={{ height: 24, width: 'auto' }} />
             </Box>
           )}
-          <IconButton onClick={handleToggle} size="small" sx={{ color: 'text.secondary', ml: open ? 0 : 'auto', mr: open ? 0 : 'auto' }}>
-            {open ? <FaChevronLeft size={16} /> : <FaChevronRight size={16} />}
+          <IconButton onClick={handleToggle} size="small" sx={{ color: 'text.secondary' }}>
+            {open ? <FaChevronLeft size={12} /> : <FaChevronRight size={12} />}
           </IconButton>
         </DrawerHeader>
 
-        <Divider sx={{ borderColor: '#f1f5f9' }} />
+        <Divider />
 
-        <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
+        <List sx={{ px: 1, py: 1, flexGrow: 1 }}>
           {navItems.map((item) => (
             <SidebarItem
               key={item.id}
@@ -222,18 +219,18 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           ))}
         </List>
 
-        <Box sx={{ p: 1.5, borderTop: '1px solid #f1f5f9' }}>
+        <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
           {onOpenAdmin && !isAdmin && (
-            <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
+            <ListItem disablePadding sx={{ display: 'block', mb: 0.25 }}>
               <Tooltip title={!open ? "Admin" : ""} placement="right">
                 <StyledListItemButton
                   onClick={onOpenAdmin}
                   open={open}
                 >
                   <StyledListItemIcon open={open}>
-                    <FiSettings size={18} />
+                    <FiSettings size={16} />
                   </StyledListItemIcon>
-                  <ListItemText primary="Admin" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
+                  <ListItemText primary="Admin" primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
                 </StyledListItemButton>
               </Tooltip>
             </ListItem>
@@ -246,14 +243,14 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
                   onClick={onLogout}
                   open={open}
                   sx={{
-                    color: '#ef4444',
-                    '&:hover': { backgroundColor: '#fef2f2', color: '#ef4444' }, // Override default hover
+                    color: 'error.main',
+                    '&:hover': { bgcolor: 'error.lighter', color: 'error.main' },
                   }}
                 >
                   <StyledListItemIcon open={open}>
-                    <FaSignOutAlt size={18} />
+                    <FaSignOutAlt size={16} />
                   </StyledListItemIcon>
-                  <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
+                  <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 500 }} sx={{ opacity: open ? 1 : 0 }} />
                 </StyledListItemButton>
               </Tooltip>
             </ListItem>
@@ -262,9 +259,16 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
       </StyledDrawer>
 
       {/* Main content */}
-      <main
-        className="transition-[margin-left] duration-300"
-        style={{ marginLeft: collapsed ? 72 : 240 }}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          transition: 'margin-left 0.3s',
+          ml: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh'
+        }}
       >
         <AdminTopBar
           userName={_userName}
@@ -272,11 +276,11 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
           pageHeading={pageHeading}
           showProjectSelector={showProjectSelector}
         />
-        <div className="p-4">
+        <Box sx={{ p: 1, flexGrow: 1 }}>
           {children}
-        </div>
-      </main>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 export default SidebarLayout;

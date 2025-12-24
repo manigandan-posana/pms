@@ -2,6 +2,7 @@ import React, { Suspense, useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import CustomTabs from "../../widgets/CustomTabs";
 import GlobalLoader from "../../components/GlobalLoader";
+import { Box } from "@mui/material";
 
 const BomPage = React.lazy(() => import("./BomPage"));
 const InwardPage = React.lazy(() => import("./InwardPage"));
@@ -88,13 +89,13 @@ const InventoryPage: React.FC = () => {
   );
 
   return (
-    <div className="inventory-page">
+    <Box>
       <CustomTabs
         tabs={tabs}
         activeIndex={activeIndex}
         onTabChange={handleTabChange}
       />
-    </div>
+    </Box>
   );
 };
 

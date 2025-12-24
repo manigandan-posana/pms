@@ -10,6 +10,7 @@ import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import { FiPlus } from "react-icons/fi";
+import { Box, Stack, Typography } from "@mui/material";
 
 // ---- Domain types ---------------------------------------------------------
 
@@ -121,11 +122,11 @@ const TransferPage: React.FC = () => {
     {
       field: 'code',
       header: 'Code',
-      width: 150,
+      width: 120,
       body: (row) => (
-        <span className="font-mono font-semibold text-slate-700">
+        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.primary' }}>
           {row.code || "—"}
-        </span>
+        </Typography>
       )
     },
     { field: 'fromProject', header: 'From Project', body: (row) => row.fromProjectName || row.fromProject || "—" },
@@ -133,73 +134,74 @@ const TransferPage: React.FC = () => {
     {
       field: 'date',
       header: 'Date',
-      width: 120,
+      width: 100,
       body: (row) => row.date ? new Date(row.date).toLocaleDateString() : "—"
     },
     {
       field: 'items',
       header: 'Items',
-      width: 100,
+      width: 80,
       align: 'right',
       body: (row) => {
         const itemCount = row.items ?? (row as any).itemCount ?? (row as any).numberOfItems ?? (row as any).totalItems ?? 0;
-        return <span className="font-semibold text-slate-600">{itemCount}</span>;
+        return <Typography variant="caption" sx={{ fontWeight: 600 }}>{itemCount}</Typography>;
       }
     }
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <div className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xs font-bold text-slate-800">Transfer History</h1>
-            <p className="text-slate-500">Manage and view material transfers</p>
-          </div>
-          <CustomButton
-            startIcon={<FiPlus />}
-            onClick={() => navigate('/workspace/transfer/create')}
-            className="shadow-sm"
-          >
-            Create Transfer
-          </CustomButton>
-        </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'text.primary' }}>
+            Transfer History
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+            Manage and view material transfers
+          </Typography>
+        </Box>
+        <CustomButton
+          startIcon={<FiPlus size={14} />}
+          onClick={() => navigate('/workspace/transfer/create')}
+        >
+          Create Transfer
+        </CustomButton>
+      </Stack>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <AdvancedHistoryFilters
-              filterType="transfer"
-              onFilterChange={(filters) => {
-                setHistoryFilters(filters);
-                setHistoryPage(0);
-              }}
-              searchQuery={searchQuery}
-              onSearchChange={(value) => {
-                setSearchQuery(value);
-              }}
-              isLoading={loadingHistory}
-            />
-          </div>
-
-          <CustomTable
-            data={historyRecords}
-            columns={columns}
-            loading={loadingHistory}
-            pagination
-            rows={historyPageSize}
-            page={historyPage}
-            totalRecords={historyTotalRecords}
-            onPageChange={(p, rows) => {
-              setHistoryPage(p);
-              setHistoryPageSize(rows);
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1, overflow: 'hidden' }}>
+        <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+          <AdvancedHistoryFilters
+            filterType="transfer"
+            onFilterChange={(filters) => {
+              setHistoryFilters(filters);
+              setHistoryPage(0);
             }}
-            rowsPerPageOptions={[5, 10, 20]}
-            onRowClick={handleRowClick}
-            emptyMessage="No history records found"
+            searchQuery={searchQuery}
+            onSearchChange={(value) => {
+              setSearchQuery(value);
+            }}
+            isLoading={loadingHistory}
           />
-        </div>
-      </div>
-    </div>
+        </Box>
+
+        <CustomTable
+          data={historyRecords}
+          columns={columns}
+          loading={loadingHistory}
+          pagination
+          rows={historyPageSize}
+          page={historyPage}
+          totalRecords={historyTotalRecords}
+          onPageChange={(p, rows) => {
+            setHistoryPage(p);
+            setHistoryPageSize(rows);
+          }}
+          rowsPerPageOptions={[5, 10, 20]}
+          onRowClick={handleRowClick}
+          emptyMessage="No history records found"
+        />
+      </Box>
+    </Box>
   );
 };
 

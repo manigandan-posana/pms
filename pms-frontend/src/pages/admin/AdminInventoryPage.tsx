@@ -2,6 +2,7 @@ import React, { Suspense, useMemo, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import CustomTabs from "../../widgets/CustomTabs";
 import GlobalLoader from "../../components/GlobalLoader";
+import { Box } from "@mui/material";
 
 const MaterialDirectoryPage = React.lazy(() => import("./MaterialDirectoryPage"));
 const MaterialAllocationsPage = React.lazy(() => import("./MaterialAllocationsPage"));
@@ -78,13 +79,13 @@ const AdminInventoryPage: React.FC = () => {
   );
 
   return (
-    <div className="admin-inventory-page">
+    <Box>
       <CustomTabs
         tabs={tabs}
         activeIndex={activeIndex}
         onTabChange={handleTabChange}
       />
-    </div>
+    </Box>
   );
 };
 

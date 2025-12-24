@@ -6,10 +6,10 @@ import { getOutwardById, updateOutward, closeOutward } from "../../store/slices/
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiSave, FiLock, FiInfo, FiSearch } from "react-icons/fi";
 import type { RootState } from "../../store/store";
-
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import CustomTextField from "../../widgets/CustomTextField";
+import { Box, Stack, Typography, Paper, Grid, Chip, CircularProgress, Alert, TextField } from "@mui/material";
 
 // -------- Types -------- //
 
@@ -50,8 +50,6 @@ const OutwardDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingLines, setEditingLines] = useState<Record<number, { issueQty: number }>>({});
-
-  // Pagination and search state
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Load outward detail
@@ -148,28 +146,28 @@ const OutwardDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="text-slate-500 flex flex-col items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-          Loading details...
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'grey.50' }}>
+        <Stack spacing={1} alignItems="center">
+          <CircularProgress size={32} />
+          <Typography variant="caption" color="text.secondary">Loading details...</Typography>
+        </Stack>
+      </Box>
     );
   }
 
   if (!record) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-          <p className="text-slate-500 mb-4">No record found</p>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'grey.50' }}>
+        <Paper sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>No record found</Typography>
           <CustomButton
             onClick={() => navigate('/workspace/inventory/outwards')}
-            startIcon={<FiArrowLeft />}
+            startIcon={<FiArrowLeft size={14} />}
           >
             Back to Outwards
           </CustomButton>
-        </div>
-      </div>
+        </Paper>
+      </Box>
     );
   }
 
@@ -177,35 +175,34 @@ const OutwardDetailPage: React.FC = () => {
     {
       field: 'code',
       header: 'Material Code',
-      width: '150px',
-      body: (row) => <span className="font-mono text-slate-700 font-semibold">{row.code || '—'}</span>
+      width: 120,
+      body: (row) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.code || '—'}</Typography>
     },
     {
       field: 'name',
       header: 'Material Name',
-      body: (row) => <span className="text-slate-800">{row.name || '—'}</span>
+      body: (row) => row.name || '—'
     },
     {
       field: 'unit',
       header: 'Unit',
-      width: '80px',
-      body: (row) => <span className="text-slate-500">{row.unit || '—'}</span>
+      width: 60,
+      body: (row) => row.unit || '—'
     },
     {
       field: 'issueQty',
       header: 'Issue Qty',
-      width: '150px',
+      width: 120,
       align: 'right',
       body: (row) => {
         const currentValue = editingLines[row.id]?.issueQty ?? row.issueQty ?? 0;
         if (record.status === 'CLOSED') {
-          return <span className="font-mono font-bold text-slate-700">{currentValue}</span>;
+          return <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{currentValue}</Typography>;
         }
         return (
-          <input
+          <TextField
             type="number"
-            min="0"
-            step="any"
+            size="small"
             value={currentValue}
             onChange={(e) => {
               const val = parseFloat(e.target.value) || 0;
@@ -216,134 +213,142 @@ const OutwardDetailPage: React.FC = () => {
                 }
               }));
             }}
-            className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-right"
+            sx={{
+              '& .MuiInputBase-input': { fontSize: '0.75rem', py: 0.5, px: 0.75, textAlign: 'right' },
+              '& .MuiOutlinedInput-root': { minHeight: 28 }
+            }}
           />
         );
       }
     },
   ];
 
-
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
-      {/* Inventory Navigation Tabs */}
-      <div className="px-6 pt-6">
-      </div>
-      
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <Paper sx={{ borderBottom: 1, borderColor: 'divider', px: 1.5, py: 1, position: 'sticky', top: 0, zIndex: 10 }}>
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={1} alignItems="center">
             <CustomButton
               variant="text"
               onClick={() => navigate('/workspace/inventory/outwards')}
-              className="!p-2 text-slate-500 hover:bg-slate-100 rounded-full"
+              sx={{ minWidth: 'auto', p: 0.5 }}
             >
-              <FiArrowLeft size={20} />
+              <FiArrowLeft size={16} />
             </CustomButton>
-            <div>
-              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                Outward Details
-                <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-xs text-blue-600">{record.code}</span>
-              </h1>
-            </div>
-          </div>
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                  Outward Details
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>|</Typography>
+                <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'primary.main', fontWeight: 600 }}>
+                  {record.code}
+                </Typography>
+              </Stack>
+            </Box>
+          </Stack>
 
-          <div className="flex items-center gap-3">
+          <Stack direction="row" spacing={0.5}>
             {record.status === 'CLOSED' ? (
-              <span className="flex items-center gap-2 bg-slate-100 text-slate-600 px-4 py-2 rounded-lg border border-slate-200 font-medium cursor-not-allowed">
-                <FiLock /> Closed
-              </span>
+              <Chip
+                icon={<FiLock size={14} />}
+                label="Closed"
+                size="small"
+                sx={{ height: 24, fontSize: '0.7rem', fontWeight: 600, bgcolor: 'grey.200', color: 'text.secondary' }}
+              />
             ) : (
               <>
                 <CustomButton
                   variant="outlined"
                   onClick={handleSaveChanges}
-                  loading={saving}
-                  startIcon={<FiSave />}
+                  disabled={saving}
+                  startIcon={<FiSave size={14} />}
                 >
                   Save Changes
                 </CustomButton>
                 <CustomButton
                   onClick={handleClose}
-                  loading={saving}
-                  startIcon={<FiLock />}
-                  variant="contained"
-                  className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+                  disabled={saving}
+                  startIcon={<FiLock size={14} />}
+                  color="error"
                 >
                   Close Record
                 </CustomButton>
               </>
             )}
-          </div>
-        </div>
-      </div>
+          </Stack>
+        </Stack>
+      </Paper>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-
+      <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+        <Stack spacing={1}>
           {/* Info Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Record Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Project</span>
-                <span className="font-semibold text-slate-800">{record.projectName || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Issue To</span>
-                <span className="font-semibold text-slate-800">{record.issueTo || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Date</span>
-                <span className="font-medium text-slate-800">
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+              Record Information
+            </Typography>
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Project</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.projectName || '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Issue To</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.issueTo || '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Date</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
                   {record.date ? new Date(record.date).toLocaleDateString() : '—'}
-                </span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Status</span>
-                <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase inline-block ${record.status === 'CLOSED' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-600'}`}>
-                  {record.status || 'OPEN'}
-                </span>
-              </div>
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Status</Typography>
+                <Chip
+                  label={record.status || 'OPEN'}
+                  size="small"
+                  color={record.status === 'CLOSED' ? 'default' : 'primary'}
+                  sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }}
+                />
+              </Grid>
               {record.closeDate && (
-                <div>
-                  <span className="text-xs text-slate-500 block mb-1">Close Date</span>
-                  <span className="font-medium text-slate-800">
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Close Date</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
                     {new Date(record.closeDate).toLocaleDateString()}
-                  </span>
-                </div>
+                  </Typography>
+                </Grid>
               )}
-            </div>
-          </div>
+            </Grid>
+          </Paper>
 
           {/* Materials Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[400px]">
-            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                Materials
-                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-semibold">
-                  {filteredLines.length}
-                </span>
-              </h3>
+          <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Materials</Typography>
+                <Chip label={filteredLines.length} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
+              </Stack>
 
-              <div className="w-full sm:w-72">
+              <Box sx={{ width: { xs: '100%', sm: 240 } }}>
                 <CustomTextField
                   placeholder="Search materials..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  startAdornment={<FiSearch className="text-slate-400" />}
+                  startAdornment={<FiSearch size={14} style={{ color: '#9ca3af' }} />}
                   size="small"
                 />
-              </div>
-            </div>
+              </Box>
+            </Stack>
 
             {record.status === 'CLOSED' && (
-              <div className="bg-slate-50 border-b border-slate-100 px-4 py-2 flex items-center gap-2 text-xs text-slate-600">
-                <FiInfo className="flex-shrink-0" />
-                This record is closed. Quantities cannot be edited.
-              </div>
+              <Alert severity="info" sx={{ borderRadius: 0, fontSize: '0.7rem', py: 0.5 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <FiInfo size={12} />
+                  <Typography variant="caption">This record is closed. Quantities cannot be edited.</Typography>
+                </Stack>
+              </Alert>
             )}
 
             <CustomTable
@@ -353,11 +358,10 @@ const OutwardDetailPage: React.FC = () => {
               rows={10}
               emptyMessage="No materials found in this record."
             />
-          </div>
-
-        </div>
-      </div>
-    </div>
+          </Paper>
+        </Stack>
+      </Box>
+    </Box>
   );
 };
 

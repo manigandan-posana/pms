@@ -24,6 +24,7 @@ import CustomButton from "../../widgets/CustomButton";
 import CustomModal from "../../widgets/CustomModal";
 import CustomTextField from "../../widgets/CustomTextField";
 import CustomSelect from "../../widgets/CustomSelect";
+import { Box, Stack, Typography, Paper, Chip, IconButton, Collapse, Grid } from "@mui/material";
 
 // ---- Types ----
 
@@ -146,7 +147,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
           search,
           category: filters.categories,
           unit: filters.units,
-          partNo: [], // partNumbers filtering not fully implemented in UI state map
+          partNo: [],
         },
       })
     );
@@ -236,7 +237,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     try {
       await dispatch(deleteMaterial(String(materialId))).unwrap();
       toast.success("Material removed");
-      refreshMaterials(); // No await on purpose to feel faster
+      refreshMaterials();
       onRequestReload?.();
     } catch (err: unknown) {
       toast.error("Unable to delete material");
@@ -293,163 +294,160 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
   };
 
   const columns: ColumnDef<Material>[] = [
-    { field: 'code', header: 'Code', width: '100px', body: (r) => <span className="font-mono font-bold text-slate-700 whitespace-nowrap">{r.code || '—'}</span> },
-    { field: 'name', header: 'Material', body: (r) => <span className="font-medium text-slate-800">{r.name || '—'}</span> },
-    { field: 'partNo', header: 'Part No', width: '120px', body: (r) => <span className="text-slate-600 text-xs">{r.partNo || '—'}</span> },
-    { field: 'lineType', header: 'Line Type', width: '100px', body: (r) => <span className="text-slate-600">{r.lineType || '—'}</span> },
-    { field: 'unit', header: 'UOM', width: '80px', body: (r) => <span className="text-slate-500">{r.unit || '—'}</span> },
-    { field: 'category', header: 'Category', width: '120px', body: (r) => <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">{r.category || '—'}</span> },
+    { field: 'code', header: 'Code', width: 100, body: (r) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{r.code || '—'}</Typography> },
+    { field: 'name', header: 'Material', body: (r) => <Typography variant="caption" sx={{ fontWeight: 500 }}>{r.name || '—'}</Typography> },
+    { field: 'partNo', header: 'Part No', width: 100, body: (r) => r.partNo || '—' },
+    { field: 'lineType', header: 'Line Type', width: 90, body: (r) => r.lineType || '—' },
+    { field: 'unit', header: 'UOM', width: 60, body: (r) => r.unit || '—' },
+    { field: 'category', header: 'Category', width: 100, body: (r) => <Chip label={r.category || '—'} size="small" sx={{ height: 18, fontSize: '0.65rem' }} /> },
     {
       field: 'id',
       header: 'Actions',
       align: 'right',
-      width: '100px',
+      width: 80,
       body: (r) => (
-        <div className="flex justify-end gap-1">
-          <CustomButton variant="text" size="small" onClick={() => openEditMaterial(r)} className="text-blue-500 hover:bg-blue-50 p-1 min-w-0" title="Edit"><FiEdit2 /></CustomButton>
-          <CustomButton variant="text" size="small" onClick={() => handleDelete(r.id)} className="text-red-500 hover:bg-red-50 p-1 min-w-0" title="Delete"><FiTrash2 /></CustomButton>
-        </div>
+        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+          <IconButton size="small" onClick={() => openEditMaterial(r)} sx={{ color: 'primary.main' }} title="Edit">
+            <FiEdit2 size={14} />
+          </IconButton>
+          <IconButton size="small" onClick={() => handleDelete(r.id)} sx={{ color: 'error.main' }} title="Delete">
+            <FiTrash2 size={14} />
+          </IconButton>
+        </Stack>
       )
     }
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportChange} />
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleImportChange} />
 
-      <div className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex flex-col gap-4 sticky top-0 bg-slate-50 z-10 pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xs font-bold text-slate-800">Material Directory</h1>
-              <p className="text-slate-500">Manage all materials and master data</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleExportClick}
-                disabled={exporting}
-                title="Export data"
-                className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
-                style={{ color: '#000000', padding: '8px' }}
-                type="button"
-              >
-                {exporting ? <i className="pi pi-spin pi-spinner" /> : <FiDownload size={16} />}
-              </button>
-              <button
-                onClick={handleImportClick}
-                disabled={importing}
-                title="Import data"
-                className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
-                style={{ color: '#000000', padding: '8px' }}
-                type="button"
-              >
-                {importing ? <i className="pi pi-spin pi-spinner" /> : <FiUpload size={16} />}
-              </button>
-              <CustomButton onClick={openCreateMaterial} startIcon={<FiPlus />}>Add Material</CustomButton>
-            </div>
-          </div>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Material Directory</Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>Manage all materials and master data</Typography>
+        </Box>
+        <Stack direction="row" spacing={0.5}>
+          <IconButton size="small" onClick={handleExportClick} disabled={exporting} title="Export data">
+            <FiDownload size={14} />
+          </IconButton>
+          <IconButton size="small" onClick={handleImportClick} disabled={importing} title="Import data">
+            <FiUpload size={14} />
+          </IconButton>
+          <CustomButton startIcon={<FiPlus size={14} />} onClick={openCreateMaterial}>Add Material</CustomButton>
+        </Stack>
+      </Stack>
 
-          <div className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-            <div className="flex-1 min-w-[200px]">
+      <Paper sx={{ borderRadius: 1, boxShadow: 1, overflow: 'hidden' }}>
+        <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Box sx={{ flex: 1 }}>
               <CustomTextField
                 placeholder="Search materials..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 size="small"
-                InputProps={{ startAdornment: <FiSearch className="text-slate-400 mr-2" /> }}
+                startAdornment={<FiSearch size={14} style={{ color: '#9ca3af' }} />}
               />
-            </div>
-            <button
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              title={filtersOpen ? "Close Filters" : "Filters"}
-              className="p-button p-button-text p-button-sm p-component inline-flex items-center justify-center"
-              style={{ color: '#666666', padding: '8px' }}
-              type="button"
-            >
-              {filtersOpen ? <FiX size={16} /> : <FiFilter size={16} />}
-            </button>
-          </div>
+            </Box>
+            <IconButton size="small" onClick={() => setFiltersOpen(!filtersOpen)} title={filtersOpen ? "Close Filters" : "Filters"}>
+              {filtersOpen ? <FiX size={14} /> : <FiFilter size={14} />}
+            </IconButton>
+          </Stack>
 
-          {filtersOpen && (
-            <div className="grid gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm md:grid-cols-3 animate-in fade-in slide-in-from-top-2 duration-200">
-              <CustomSelect
-                label="Line Type"
-                multiple
-                value={filters.lineTypes}
-                options={availableFilters.lineTypes.map(l => ({ label: l || "Unspecified", value: l }))}
-                onChange={(val: any) => { setFilters(prev => ({ ...prev, lineTypes: val })); setPage(0); }}
-              />
-              <CustomSelect
-                label="Category"
-                multiple
-                value={filters.categories}
-                options={availableFilters.categories.map(c => ({ label: c || "Uncategorized", value: c }))}
-                onChange={(val: any) => { setFilters(prev => ({ ...prev, categories: val })); setPage(0); }}
-              />
-              <CustomSelect
-                label="Unit"
-                multiple
-                value={filters.units}
-                options={availableFilters.units.map(u => ({ label: u || "None", value: u }))}
-                onChange={(val: any) => { setFilters(prev => ({ ...prev, units: val })); setPage(0); }}
-              />
-              <div className="md:col-span-3 flex justify-end">
-                <CustomButton
-                  variant="text"
-                  size="small"
-                  onClick={() => { setFilters({ categories: [], units: [], lineTypes: [] }); setPage(0); }}
-                  sx={{ color: '#666666' }}
-                >
-                  Reset Filters
-                </CustomButton>
-              </div>
-            </div>
-          )}
-        </div>
+          <Collapse in={filtersOpen}>
+            <Box sx={{ pt: 1 }}>
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={4}>
+                  <CustomSelect
+                    label="Line Type"
+                    multiple
+                    value={filters.lineTypes}
+                    options={availableFilters.lineTypes.map(l => ({ label: l || "Unspecified", value: l }))}
+                    onChange={(val: any) => { setFilters(prev => ({ ...prev, lineTypes: val })); setPage(0); }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <CustomSelect
+                    label="Category"
+                    multiple
+                    value={filters.categories}
+                    options={availableFilters.categories.map(c => ({ label: c || "Uncategorized", value: c }))}
+                    onChange={(val: any) => { setFilters(prev => ({ ...prev, categories: val })); setPage(0); }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <CustomSelect
+                    label="Unit"
+                    multiple
+                    value={filters.units}
+                    options={availableFilters.units.map(u => ({ label: u || "None", value: u }))}
+                    onChange={(val: any) => { setFilters(prev => ({ ...prev, units: val })); setPage(0); }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Stack direction="row" justifyContent="flex-end">
+                    <CustomButton
+                      variant="text"
+                      size="small"
+                      onClick={() => { setFilters({ categories: [], units: [], lineTypes: [] }); setPage(0); }}
+                    >
+                      Reset Filters
+                    </CustomButton>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Box>
+          </Collapse>
+        </Box>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col overflow-hidden">
-          <CustomTable
-            data={materials}
-            columns={columns}
-            loading={loading}
-            pagination
-            rows={pageSize}
-            page={page}
-            totalRecords={totalItems}
-            onPageChange={(p, rows) => { setPage(p); setPageSize(rows); }}
-            rowsPerPageOptions={[10, 20, 50]}
-            emptyMessage="No materials found"
-          />
-        </div>
-      </div>
+        <CustomTable
+          data={materials}
+          columns={columns}
+          loading={loading}
+          pagination
+          rows={pageSize}
+          page={page}
+          totalRecords={totalItems}
+          onPageChange={(p, rows) => { setPage(p); setPageSize(rows); }}
+          rowsPerPageOptions={[10, 20, 50]}
+          emptyMessage="No materials found"
+        />
+      </Paper >
 
       <CustomModal
         open={modalState.open}
         title={modalState.mode === "edit" ? "Edit Material" : "Add Material"}
         onClose={closeModal}
         footer={
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
             <CustomButton variant="text" onClick={closeModal}>Cancel</CustomButton>
-            <CustomButton onClick={handleSubmit} loading={modalState.saving} disabled={modalState.saving}>{modalState.saving ? 'Saving...' : 'Save'}</CustomButton>
-          </div>
+            <CustomButton onClick={handleSubmit} disabled={modalState.saving}>{modalState.saving ? 'Saving...' : 'Save'}</CustomButton>
+          </Stack>
         }
       >
-        <div className="grid gap-4 py-2">
+        <Stack spacing={1.5}>
           {modalState.mode === 'edit' && (
             <CustomTextField label="Code" value={modalState.fields.code} disabled />
           )}
           <CustomTextField label="Material Name *" value={modalState.fields.name} onChange={(e) => handleFieldChange('name', e.target.value)} />
-          <div className="grid grid-cols-2 gap-4">
-            <CustomTextField label="Part No" value={modalState.fields.partNo} onChange={(e) => handleFieldChange('partNo', e.target.value)} />
-            <CustomTextField label="UOM" value={modalState.fields.unit} onChange={(e) => handleFieldChange('unit', e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <CustomTextField label="Line Type" value={modalState.fields.lineType} onChange={(e) => handleFieldChange('lineType', e.target.value)} />
-            <CustomTextField label="Category" value={modalState.fields.category} onChange={(e) => handleFieldChange('category', e.target.value)} />
-          </div>
-        </div>
+          <Grid container spacing={1.5}>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField label="Part No" value={modalState.fields.partNo} onChange={(e) => handleFieldChange('partNo', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField label="UOM" value={modalState.fields.unit} onChange={(e) => handleFieldChange('unit', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField label="Line Type" value={modalState.fields.lineType} onChange={(e) => handleFieldChange('lineType', e.target.value)} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField label="Category" value={modalState.fields.category} onChange={(e) => handleFieldChange('category', e.target.value)} />
+            </Grid>
+          </Grid>
+        </Stack>
       </CustomModal>
-    </div>
+    </Box >
   );
 };
 

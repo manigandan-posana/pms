@@ -24,8 +24,8 @@ import {
 } from "react-icons/fa";
 
 // Constants
-const DRAWER_WIDTH = 240;
-const COLLAPSED_WIDTH = 72; // Slightly wider for better icon centering
+const DRAWER_WIDTH = 200;
+const COLLAPSED_WIDTH = 56;
 
 export interface AdminSidebarProps {
   onLogout: () => void;
@@ -54,8 +54,9 @@ const openedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.enteringScreen,
   }),
   overflowX: 'hidden',
-  backgroundColor: '#ffffff', // White sidebar
-  borderRight: '1px solid #e0e0e0',
+  backgroundColor: '#ffffff',
+  borderRight: '1px solid',
+  borderColor: 'divider',
   boxShadow: '2px 0 8px 0 rgba(0,0,0,0.05)',
 });
 
@@ -66,8 +67,9 @@ const closedMixin = (theme: Theme): CSSObject => ({
   }),
   overflowX: 'hidden',
   width: COLLAPSED_WIDTH,
-  backgroundColor: '#ffffff', // White sidebar
-  borderRight: '1px solid #e0e0e0',
+  backgroundColor: '#ffffff',
+  borderRight: '1px solid',
+  borderColor: 'divider',
   boxShadow: '2px 0 8px 0 rgba(0,0,0,0.05)',
 });
 
@@ -75,9 +77,8 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: theme.spacing(0, 2),
-  minHeight: 64, // Standard toolbar height
-  ...theme.mixins.toolbar,
+  padding: theme.spacing(0, 1),
+  minHeight: 48,
 }));
 
 const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'open' })(
@@ -124,38 +125,39 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <Box
             component={NavLink}
             to="/admin/inventory"
-            sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 1 }}
+            sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 0.5 }}
           >
-            <img src="/posana-logo.svg" alt="Logo" style={{ height: 28, width: 'auto' }} />
+            <img src="/posana-logo.svg" alt="Logo" style={{ height: 24, width: 'auto' }} />
           </Box>
         )}
-        <IconButton onClick={handleToggle} size="small" sx={{ color: '#666666', ml: open ? 0 : 'auto', mr: open ? 0 : 'auto' }}>
-          {open ? <FaChevronLeft size={16} /> : <FaChevronRight size={16} />}
+        <IconButton onClick={handleToggle} size="small" sx={{ color: 'text.secondary' }}>
+          {open ? <FaChevronLeft size={12} /> : <FaChevronRight size={12} />}
         </IconButton>
       </DrawerHeader>
 
-      <Divider sx={{ borderColor: '#e0e0e0' }} />
+      <Divider />
 
-      <List sx={{ px: 1.5, py: 2, flexGrow: 1 }}>
+      <List sx={{ px: 1, py: 1, flexGrow: 1 }}>
         {ADMIN_MENU.map(({ label, to, icon: Icon }) => {
           const isActive = location.pathname.startsWith(to);
 
           return (
-            <ListItem key={to} disablePadding sx={{ display: 'block', mb: 0.5 }}>
+            <ListItem key={to} disablePadding sx={{ display: 'block', mb: 0.25 }}>
               <Tooltip title={!open ? label : ""} placement="right">
                 <ListItemButton
                   component={NavLink}
                   to={to}
                   sx={{
-                    minHeight: 48,
+                    minHeight: 36,
                     justifyContent: open ? 'initial' : 'center',
-                    px: 2.5,
-                    borderRadius: 2,
-                    backgroundColor: isActive ? '#e8f5e9' : 'transparent',
-                    color: isActive ? '#0a7326' : '#333333',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 0.75,
+                    bgcolor: isActive ? 'rgba(10, 115, 38, 0.08)' : 'transparent',
+                    color: isActive ? 'primary.main' : 'text.secondary',
                     '&:hover': {
-                      backgroundColor: isActive ? '#e8f5e9' : '#f5f5f5',
-                      color: isActive ? '#0a7326' : '#333333',
+                      bgcolor: isActive ? 'rgba(10, 115, 38, 0.12)' : 'action.hover',
+                      color: isActive ? 'primary.main' : 'text.primary',
                     },
                     transition: 'all 0.2s',
                   }}
@@ -163,21 +165,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   <ListItemIcon
                     sx={{
                       minWidth: 0,
-                      mr: open ? 2 : 'auto',
+                      mr: open ? 1.5 : 'auto',
                       justifyContent: 'center',
-                      color: isActive ? '#0a7326' : '#666666',
-                      fontSize: 20
+                      color: 'inherit',
+                      fontSize: 16
                     }}
                   >
-                    <Icon size={20} />
+                    <Icon size={16} />
                   </ListItemIcon>
                   <ListItemText
                     primary={label}
                     primaryTypographyProps={{
-                      fontSize: '14px',
+                      fontSize: '0.75rem',
                       fontWeight: isActive ? 600 : 500,
-                      fontFamily: '"Google Sans", "Roboto", sans-serif',
-                      color: isActive ? '#0a7326' : '#333333'
                     }}
                     sx={{ opacity: open ? 1 : 0 }}
                   />
@@ -188,35 +188,36 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         })}
       </List>
 
-      <Box sx={{ p: 1.5, borderTop: '1px solid #e0e0e0' }}>
+      <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
         <ListItem disablePadding sx={{ display: 'block' }}>
           <Tooltip title={!open ? "Logout" : ""} placement="right">
             <ListItemButton
               onClick={onLogout}
               sx={{
-                minHeight: 48,
+                minHeight: 36,
                 justifyContent: open ? 'initial' : 'center',
-                px: 2.5,
-                borderRadius: 2,
-                color: '#d32f2f',
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 0.75,
+                color: 'error.main',
                 '&:hover': {
-                  backgroundColor: '#ffebee',
+                  bgcolor: 'error.lighter',
                 },
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: 0,
-                  mr: open ? 2 : 'auto',
+                  mr: open ? 1.5 : 'auto',
                   justifyContent: 'center',
-                  color: '#d32f2f',
+                  color: 'inherit',
                 }}
               >
-                <FaSignOutAlt size={18} />
+                <FaSignOutAlt size={16} />
               </ListItemIcon>
               <ListItemText
                 primary="Logout"
-                primaryTypographyProps={{ fontSize: '14px', fontWeight: 500, color: '#d32f2f' }}
+                primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 500 }}
                 sx={{ opacity: open ? 1 : 0 }}
               />
             </ListItemButton>

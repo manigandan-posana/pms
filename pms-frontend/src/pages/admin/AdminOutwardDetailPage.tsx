@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import toast from "react-hot-toast";
-import { FiArrowLeft, FiPackage, FiSearch } from "react-icons/fi";
-import type { RootState } from "../../store/store";
 import { useAppDispatch } from "../../store/hooks";
-import { getOutwardById } from "../../store/slices/inventorySlice";
-
+import { getOutwardById, updateOutward, closeOutward } from "../../store/slices/inventorySlice";
+import toast from "react-hot-toast";
+import { FiArrowLeft, FiSave, FiLock, FiInfo, FiSearch } from "react-icons/fi";
+import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import CustomTextField from "../../widgets/CustomTextField";
+import { Box, Stack, Typography, Paper, Grid, Chip, CircularProgress, Alert, TextField } from "@mui/material";
 
 interface OutwardLine {
   id: number;
+  materialId?: string | null;
   code?: string | null;
   name?: string | null;
   unit?: string | null;
@@ -24,23 +25,27 @@ interface OutwardDetail {
   code: string;
   projectName?: string;
   issueTo?: string;
-  jobNo?: string;
   date?: string;
-  remarks?: string;
   status?: string;
-  validated?: boolean;
-  items?: number;
+  closeDate?: string;
+  validated: boolean;
   lines: OutwardLine[];
+}
+
+interface AuthStateSlice {
+  token: string | null;
 }
 
 const AdminOutwardDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { token } = useSelector((state: RootState) => state.auth);
+  const { token } = useSelector<RootState, AuthStateSlice>((state) => state.auth as AuthStateSlice);
   const dispatch = useAppDispatch();
 
   const [record, setRecord] = useState<OutwardDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingLines, setEditingLines] = useState<Record<number, { issueQty: number }>>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
@@ -52,29 +57,32 @@ const AdminOutwardDetailPage: React.FC = () => {
   const loadOutwardDetail = async () => {
     if (!id || !token) return;
 
-    const numericId = Number(id);
-    if (Number.isNaN(numericId)) {
-      toast.error('Invalid outward id');
-      navigate('/admin/project-details');
-      return;
-    }
-
     setLoading(true);
     try {
-      const data = await dispatch(getOutwardById({ id: numericId, search: searchQuery.trim() || undefined })).unwrap();
+      const data = await dispatch(getOutwardById({ id: Number(id), search: searchQuery.trim() || undefined })).unwrap();
 
       if (!data) {
         toast.error('No record data received');
-        navigate('/admin/project-details');
+        navigate('/admin/outward');
         return;
       }
 
       setRecord(data);
+
+      const initialEdits: Record<number, { issueQty: number }> = {};
+      if (data.lines && Array.isArray(data.lines)) {
+        data.lines.forEach((line: OutwardLine) => {
+          initialEdits[line.id] = {
+            issueQty: line.issueQty || 0,
+          };
+        });
+      }
+      setEditingLines(initialEdits);
     } catch (error: any) {
       console.error('Failed to load outward detail:', error);
       const errorMsg = error?.response?.data?.error || error?.message || 'Failed to load outward details';
       toast.error(errorMsg);
-      navigate('/admin/project-details');
+      navigate('/admin/outward');
     } finally {
       setLoading(false);
     }
@@ -82,148 +90,197 @@ const AdminOutwardDetailPage: React.FC = () => {
 
   const filteredLines = record?.lines ?? [];
 
+  const handleSaveChanges = async () => {
+    if (!record || record.validated) return;
+
+    setSaving(true);
+    try {
+      const lines = Object.entries(editingLines).map(([lineId, values]) => ({
+        id: Number(lineId),
+        issueQty: values.issueQty,
+      }));
+
+      await dispatch(updateOutward({ id: record.id, payload: { lines } })).unwrap();
+      toast.success('Quantities updated successfully');
+      navigate('/admin/outward');
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      toast.error('Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClose = async () => {
+    if (!record || record.status === 'CLOSED') return;
+
+    setSaving(true);
+    try {
+      const lines = Object.entries(editingLines).map(([lineId, values]) => ({
+        id: Number(lineId),
+        issueQty: values.issueQty,
+      }));
+
+      await dispatch(updateOutward({ id: record.id, payload: { lines } })).unwrap();
+      await dispatch(closeOutward(record.id)).unwrap();
+      toast.success('Quantities saved and outward closed successfully');
+      navigate('/admin/outward');
+    } catch (error) {
+      console.error('Failed to close:', error);
+      toast.error('Failed to close record');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="text-slate-500 flex flex-col items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mb-2"></div>
-          Loading outward details...
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'grey.50' }}>
+        <Stack spacing={1} alignItems="center">
+          <CircularProgress size={32} />
+          <Typography variant="caption" color="text.secondary">Loading details...</Typography>
+        </Stack>
+      </Box>
     );
   }
 
   if (!record) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-          <p className="text-slate-500 mb-4">No record found</p>
-          <CustomButton
-            onClick={() => navigate('/admin/project-details')}
-            startIcon={<FiArrowLeft />}
-          >
-            Back to Projects
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'grey.50' }}>
+        <Paper sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>No record found</Typography>
+          <CustomButton onClick={() => navigate('/admin/outward')} startIcon={<FiArrowLeft size={14} />}>
+            Back to Outwards
           </CustomButton>
-        </div>
-      </div>
+        </Paper>
+      </Box>
     );
   }
 
   const columns: ColumnDef<OutwardLine>[] = [
-    {
-      field: 'code',
-      header: 'Code',
-      width: '120px',
-      sortable: true,
-      body: (row) => <span className="font-mono text-xs font-semibold text-slate-700">{row.code}</span>
-    },
-    { field: 'name', header: 'Material Name', sortable: true },
-    { field: 'unit', header: 'Unit', sortable: true, width: '80px', align: 'center' },
+    { field: 'code', header: 'Material Code', width: 120, body: (row) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.code || '—'}</Typography> },
+    { field: 'name', header: 'Material Name', body: (row) => row.name || '—' },
+    { field: 'unit', header: 'Unit', width: 60, body: (row) => row.unit || '—' },
     {
       field: 'issueQty',
-      header: 'Issued Qty',
-      sortable: true,
-      width: '120px',
+      header: 'Issue Qty',
+      width: 120,
       align: 'right',
-      body: (row) => <span className="font-bold text-red-600">{row.issueQty}</span>
-    }
+      body: (row) => {
+        const currentValue = editingLines[row.id]?.issueQty ?? row.issueQty ?? 0;
+        if (record.status === 'CLOSED') {
+          return <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{currentValue}</Typography>;
+        }
+        return (
+          <TextField
+            type="number"
+            size="small"
+            value={currentValue}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value) || 0;
+              setEditingLines(prev => ({
+                ...prev,
+                [row.id]: {
+                  issueQty: val,
+                }
+              }));
+            }}
+            sx={{
+              '& .MuiInputBase-input': { fontSize: '0.75rem', py: 0.5, px: 0.75, textAlign: 'right' },
+              '& .MuiOutlinedInput-root': { minHeight: 28 }
+            }}
+          />
+        );
+      }
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <CustomButton
-              variant="text"
-              onClick={() => navigate('/admin/project-details')}
-              className="!p-2 text-slate-500 hover:bg-slate-100 rounded-full"
-            >
-              <FiArrowLeft size={20} />
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'grey.50' }}>
+      <Paper sx={{ borderBottom: 1, borderColor: 'divider', px: 1.5, py: 1, position: 'sticky', top: 0, zIndex: 10 }}>
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CustomButton variant="text" onClick={() => navigate('/admin/outward')} sx={{ minWidth: 'auto', p: 0.5 }}>
+              <FiArrowLeft size={16} />
             </CustomButton>
-            <div>
-              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                Outward Details
-                <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-xs text-red-600">{record.code}</span>
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${record.status === 'CLOSED' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>
-              {record.status || 'Open'}
-            </span>
-          </div>
-        </div>
-      </div>
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Outward Details</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>|</Typography>
+                <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'primary.main', fontWeight: 600 }}>{record.code}</Typography>
+              </Stack>
+            </Box>
+          </Stack>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+          <Stack direction="row" spacing={0.5}>
+            {record.status === 'CLOSED' ? (
+              <Chip icon={<FiLock size={14} />} label="Closed" size="small" sx={{ height: 24, fontSize: '0.7rem', fontWeight: 600, bgcolor: 'grey.200', color: 'text.secondary' }} />
+            ) : (
+              <>
+                <CustomButton variant="outlined" onClick={handleSaveChanges} disabled={saving} startIcon={<FiSave size={14} />}>Save Changes</CustomButton>
+                <CustomButton onClick={handleClose} disabled={saving} startIcon={<FiLock size={14} />} color="error">Close Record</CustomButton>
+              </>
+            )}
+          </Stack>
+        </Stack>
+      </Paper>
 
-          {/* Info Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 text-xs">
-              <div>
-                <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Project</span>
-                <span className="font-semibold text-slate-800">{record.projectName || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Date</span>
-                <span className="font-semibold text-slate-800">{record.date || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Issue To</span>
-                <span className="font-semibold text-slate-800">{record.issueTo || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Job No</span>
-                <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-800">{record.jobNo || '—'}</span>
-              </div>
-              {record.remarks && (
-                <div className="col-span-2 md:col-span-4 lg:col-span-6 mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-xs text-slate-500 uppercase tracking-widest block mb-1">Remarks</span>
-                  <p className="text-slate-700 italic">{record.remarks}</p>
-                </div>
+      <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+        <Stack spacing={1}>
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', mb: 1, display: 'block' }}>Record Information</Typography>
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Project</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.projectName || '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Issue To</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.issueTo || '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Date</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>{record.date ? new Date(record.date).toLocaleDateString() : '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Status</Typography>
+                <Chip label={record.status || 'OPEN'} size="small" color={record.status === 'CLOSED' ? 'default' : 'primary'} sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }} />
+              </Grid>
+              {record.closeDate && (
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Close Date</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>{new Date(record.closeDate).toLocaleDateString()}</Typography>
+                </Grid>
               )}
-            </div>
-          </div>
+            </Grid>
+          </Paper>
 
-          {/* Materials Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[400px]">
-            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-50 text-red-600 rounded-lg">
-                  <FiPackage size={18} />
-                </div>
-                <h3 className="font-bold text-slate-800">
-                  Materials <span className="ml-2 text-slate-400 font-normal">({record.lines.length})</span>
-                </h3>
-              </div>
+          <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Materials</Typography>
+                <Chip label={filteredLines.length} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
+              </Stack>
 
-              <div className="w-full sm:w-72">
-                <CustomTextField
-                  placeholder="Search materials..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  startAdornment={<FiSearch className="text-slate-400" />}
-                  size="small"
-                />
-              </div>
-            </div>
+              <Box sx={{ width: { xs: '100%', sm: 240 } }}>
+                <CustomTextField placeholder="Search materials..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} startAdornment={<FiSearch size={14} style={{ color: '#9ca3af' }} />} size="small" />
+              </Box>
+            </Stack>
 
-            <CustomTable
-              data={filteredLines}
-              columns={columns}
-              pagination
-              rows={10}
-              emptyMessage="No materials found in this record."
-            />
-          </div>
+            {record.status === 'CLOSED' && (
+              <Alert severity="info" sx={{ borderRadius: 0, fontSize: '0.7rem', py: 0.5 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <FiInfo size={12} />
+                  <Typography variant="caption">This record is closed. Quantities cannot be edited.</Typography>
+                </Stack>
+              </Alert>
+            )}
 
-        </div>
-      </div>
-    </div>
+            <CustomTable data={filteredLines} columns={columns} pagination rows={10} emptyMessage="No materials found in this record." />
+          </Paper>
+        </Stack>
+      </Box>
+    </Box>
   );
 };
 

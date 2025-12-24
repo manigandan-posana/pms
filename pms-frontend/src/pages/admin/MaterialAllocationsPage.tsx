@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-
+import { Box, Stack, Typography, Paper, CircularProgress } from "@mui/material";
 import ProjectAllocationManager from "../../components/ProjectAllocationManager";
 import {
   clearAllocationError,
@@ -37,20 +37,27 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
   }, [dispatch, error]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 p-6 max-w-7xl mx-auto w-full gap-6">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {/* Header */}
+      <Box>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+          Allocation Manager
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+          Assign materials to projects in bulk
+        </Typography>
+      </Box>
 
-      {/* Navigation Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xs font-bold text-slate-800">Allocation Manager</h1>
-          <p className="text-slate-500">Assign materials to projects in bulk</p>
-        </div>
-      </div>
-
+      {/* Content */}
       {status === "loading" ? (
-        <div className="flex items-center justify-center p-20 bg-white rounded-xl border border-slate-200">
-          <span className="text-slate-500">Loading allocation data...</span>
-        </div>
+        <Paper sx={{ p: 3, borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Stack spacing={1} alignItems="center">
+            <CircularProgress size={32} />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Loading allocation data...
+            </Typography>
+          </Stack>
+        </Paper>
       ) : (
         <ProjectAllocationManager
           token={token}
@@ -61,7 +68,7 @@ const MaterialAllocationsPage: React.FC<MaterialAllocationsPageProps> = ({
           showMultiAllocator={true}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

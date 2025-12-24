@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
     Table,
@@ -10,7 +9,14 @@ import {
     Paper,
     TablePagination,
     Typography,
-    Skeleton
+    Skeleton,
+    Card,
+    CardContent,
+    Stack,
+    Box,
+    Divider,
+    useMediaQuery,
+    useTheme
 } from "@mui/material";
 
 export interface ColumnDef<T = any> {
@@ -30,10 +36,10 @@ interface CustomTableProps<T = any> {
     rows?: number;
     rowsPerPageOptions?: number[];
     onPageChange?: (page: number, rowsPerPage: number) => void;
-    totalRecords?: number; // For server-side pagination
+    totalRecords?: number;
     loading?: boolean;
     emptyMessage?: string;
-    page?: number; // Controlled page index (0-based)
+    page?: number;
     onRowClick?: (row: T) => void;
     title?: React.ReactNode;
 }
@@ -54,6 +60,8 @@ const CustomTable = <T extends Record<string, any>>({
 }: CustomTableProps<T>) => {
     const [internalPage, setInternalPage] = useState(0);
     const [internalRowsPerPage, setInternalRowsPerPage] = useState(rows);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const page = controlledPage !== undefined ? controlledPage : internalPage;
     const rowsPerPage = internalRowsPerPage;
@@ -82,94 +90,183 @@ const CustomTable = <T extends Record<string, any>>({
         ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
         : data;
 
-    return (
-        <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-            {title && (
-                <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    {title}
-                </div>
+    // Mobile Card View
+    const renderMobileCards = () => (
+        <Stack spacing={1} sx={{ p: 1 }}>
+            {loading ? (
+                Array.from({ length: Math.min(rowsPerPage || 5, 5) }).map((_, index) => (
+                    <Card key={`skeleton-${index}`} variant="outlined" sx={{ borderRadius: 1 }}>
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                            <Skeleton animation="wave" height={20} width="60%" sx={{ mb: 0.5 }} />
+                            <Skeleton animation="wave" height={16} width="80%" />
+                        </CardContent>
+                    </Card>
+                ))
+            ) : slicedData.length > 0 ? (
+                slicedData.map((row, rowIndex) => (
+                    <Card
+                        key={rowIndex}
+                        variant="outlined"
+                        onClick={() => onRowClick && onRowClick(row)}
+                        sx={{
+                            borderRadius: 1,
+                            cursor: onRowClick ? 'pointer' : 'default',
+                            '&:hover': onRowClick ? { bgcolor: 'action.hover' } : {}
+                        }}
+                    >
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                            <Stack spacing={0.5}>
+                                {columns.map((col, colIndex) => (
+                                    <Box key={`${rowIndex}-${col.field}`}>
+                                        <Stack direction="row" spacing={1} alignItems="flex-start">
+                                            <Typography
+                                                variant="caption"
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    color: 'text.secondary',
+                                                    minWidth: 80,
+                                                    fontSize: '0.7rem'
+                                                }}
+                                            >
+                                                {col.header}:
+                                            </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    flex: 1,
+                                                    fontSize: '0.8rem',
+                                                    color: 'text.primary'
+                                                }}
+                                            >
+                                                {col.body ? col.body(row) : row[col.field] || '—'}
+                                            </Typography>
+                                        </Stack>
+                                        {colIndex < columns.length - 1 && <Divider sx={{ my: 0.5 }} />}
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </CardContent>
+                    </Card>
+                ))
+            ) : (
+                <Card variant="outlined" sx={{ borderRadius: 1 }}>
+                    <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                            {emptyMessage}
+                        </Typography>
+                    </CardContent>
+                </Card>
             )}
-            <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
-                <Table stickyHeader size="small">
-                    <TableHead>
-                        <TableRow>
-                            {columns.map((col) => (
-                                <TableCell
-                                    key={col.field}
-                                    align={col.align || 'left'}
-                                    style={{
-                                        fontWeight: 600,
-                                        backgroundColor: '#f5f5f5',
-                                        color: '#666666',
-                                        fontSize: '14px',
-                                        padding: '12px 16px',
-                                        borderBottom: '1px solid #e0e0e0',
-                                        ...col.style
-                                    }}
-                                    width={col.width}
-                                >
-                                    {col.header}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            Array.from({ length: Math.min(rowsPerPage || 5, 5) }).map((_, index) => (
-                                <TableRow key={`skeleton-${index}`}>
-                                    {columns.map((col, colIndex) => (
-                                        <TableCell key={`skeleton-cell-${colIndex}`} style={{ padding: '16px', fontSize: '12px' }}>
-                                            <Skeleton animation="wave" height={20} width="80%" />
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : slicedData.length > 0 ? (
-                            slicedData.map((row, rowIndex) => (
-                                <TableRow
-                                    hover
-                                    role="checkbox"
-                                    tabIndex={-1}
-                                    key={rowIndex}
-                                    onClick={() => onRowClick && onRowClick(row)}
-                                    style={{ cursor: onRowClick ? 'pointer' : 'default' }}
-                                >
-                                    {columns.map((col) => (
-                                        <TableCell
-                                            key={`${rowIndex}-${col.field}`}
-                                            align={col.align || 'left'}
-                                            style={{
-                                                fontSize: '12px',
-                                                padding: '12px 16px',
-                                                borderBottom: '1px solid #e0e0e0',
-                                                color: '#333333'
-                                            }}
-                                        >
-                                            {col.body ? col.body(row) : row[col.field]}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    align="center"
-                                    style={{
-                                        padding: '2rem',
-                                        fontSize: '12px',
-                                        color: '#999999'
-                                    }}
-                                >
-                                    <Typography variant="body2" color="textSecondary" style={{ fontSize: '12px' }}>
-                                        {emptyMessage}
-                                    </Typography>
-                                </TableCell>
+        </Stack>
+    );
+
+    // Desktop Table View
+    const renderDesktopTable = () => (
+        <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+            <Table stickyHeader size="small">
+                <TableHead>
+                    <TableRow>
+                        {columns.map((col) => (
+                            <TableCell
+                                key={col.field}
+                                align={col.align || 'left'}
+                                sx={{
+                                    fontWeight: 600,
+                                    bgcolor: 'grey.50',
+                                    color: 'text.secondary',
+                                    fontSize: '0.75rem',
+                                    py: 0.75,
+                                    px: 1,
+                                    borderBottom: 1,
+                                    borderColor: 'divider',
+                                    whiteSpace: 'nowrap',
+                                    ...col.style
+                                }}
+                                width={col.width}
+                            >
+                                {col.header}
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {loading ? (
+                        Array.from({ length: Math.min(rowsPerPage || 5, 5) }).map((_, index) => (
+                            <TableRow key={`skeleton-${index}`}>
+                                {columns.map((col, colIndex) => (
+                                    <TableCell key={`skeleton-cell-${colIndex}`} sx={{ py: 0.75, px: 1 }}>
+                                        <Skeleton animation="wave" height={16} width="80%" />
+                                    </TableCell>
+                                ))}
                             </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        ))
+                    ) : slicedData.length > 0 ? (
+                        slicedData.map((row, rowIndex) => (
+                            <TableRow
+                                hover
+                                role="checkbox"
+                                tabIndex={-1}
+                                key={rowIndex}
+                                onClick={() => onRowClick && onRowClick(row)}
+                                sx={{
+                                    cursor: onRowClick ? 'pointer' : 'default',
+                                    '&:last-child td': { borderBottom: 0 }
+                                }}
+                            >
+                                {columns.map((col) => (
+                                    <TableCell
+                                        key={`${rowIndex}-${col.field}`}
+                                        align={col.align || 'left'}
+                                        sx={{
+                                            fontSize: '0.75rem',
+                                            py: 0.75,
+                                            px: 1,
+                                            color: 'text.primary',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: col.width || 200
+                                        }}
+                                    >
+                                        {col.body ? col.body(row) : row[col.field]}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell
+                                colSpan={columns.length}
+                                align="center"
+                                sx={{ py: 3, fontSize: '0.75rem', color: 'text.secondary' }}
+                            >
+                                <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
+                                    {emptyMessage}
+                                </Typography>
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </TableContainer>
+    );
+
+    return (
+        <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 1, borderRadius: 1 }}>
+            {title && (
+                <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {title}
+                </Box>
+            )}
+
+            {/* Responsive rendering */}
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                {renderDesktopTable()}
+            </Box>
+            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                {renderMobileCards()}
+            </Box>
+
             {pagination && (
                 <TablePagination
                     rowsPerPageOptions={rowsPerPageOptions}
@@ -180,14 +277,20 @@ const CustomTable = <T extends Record<string, any>>({
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
                     sx={{
-                        borderTop: '1px solid #e0e0e0',
-                        fontSize: '12px',
+                        borderTop: 1,
+                        borderColor: 'divider',
+                        fontSize: '0.75rem',
                         '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                            fontSize: '12px',
-                            color: '#666666'
+                            fontSize: '0.75rem',
+                            color: 'text.secondary',
+                            m: 0
                         },
                         '& .MuiTablePagination-select': {
-                            fontSize: '12px'
+                            fontSize: '0.75rem'
+                        },
+                        '& .MuiTablePagination-toolbar': {
+                            minHeight: 40,
+                            px: 1
                         }
                     }}
                 />
@@ -197,4 +300,3 @@ const CustomTable = <T extends Record<string, any>>({
 };
 
 export default CustomTable;
-

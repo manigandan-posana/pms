@@ -1,10 +1,8 @@
 import React, { useEffect } from 'react';
+import { Box, Stack, Typography, Paper, Chip, Alert } from '@mui/material';
 import AdminDataTable from '../../components/AdminDataTable';
 import AdminFormModal from '../../components/AdminFormModal';
 import { useCRUD } from '../../hooks/useCRUD';
-import { Message } from 'primereact/message';
-
-// Example: Project Management Page using useCRUD hook
 
 export interface Project {
   id: string | number;
@@ -21,7 +19,6 @@ export interface Project {
 // Mock API functions - Replace with actual API calls
 const mockProjectAPI = {
   fetchAll: async (): Promise<Project[]> => {
-    // Simulated API call
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve([
@@ -87,8 +84,17 @@ const statusOptions = [
   { label: 'Cancelled', value: 'CANCELLED' },
 ];
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'ACTIVE': return 'success';
+    case 'ON_HOLD': return 'warning';
+    case 'COMPLETED': return 'info';
+    case 'CANCELLED': return 'error';
+    default: return 'default';
+  }
+};
+
 export const ProjectManagementPageV3: React.FC = () => {
-  // const [selectedProjectId] = useState<string>("");
   const crud = useCRUD<Project>({
     onFetch: mockProjectAPI.fetchAll,
     onCreate: mockProjectAPI.create,
@@ -101,12 +107,10 @@ export const ProjectManagementPageV3: React.FC = () => {
     },
   });
 
-  // Load data on mount
   useEffect(() => {
     crud.fetchData();
   }, []);
 
-  // Table columns
   const columns = [
     {
       field: 'code',
@@ -115,7 +119,9 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="font-mono font-semibold text-xs">{row.code}</span>
+        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+          {row.code}
+        </Typography>
       ),
     },
     {
@@ -124,7 +130,11 @@ export const ProjectManagementPageV3: React.FC = () => {
       sortable: true,
       filterable: true,
       width: '20%',
-      body: (row: Project) => <span className="font-medium">{row.name}</span>,
+      body: (row: Project) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {row.name}
+        </Typography>
+      ),
     },
     {
       field: 'description',
@@ -133,7 +143,9 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '20%',
       body: (row: Project) => (
-        <span className="text-xs text-gray-600 truncate">{row.description}</span>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
+          {row.description}
+        </Typography>
       ),
     },
     {
@@ -143,22 +155,12 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '12%',
       body: (row: Project) => (
-        <span
-          className={`
-            px-3 py-1 rounded text-xs font-semibold text-white
-            ${
-              row.status === 'ACTIVE'
-                ? 'bg-green-500'
-                : row.status === 'ON_HOLD'
-                  ? 'bg-yellow-500'
-                  : row.status === 'COMPLETED'
-                    ? 'bg-blue-500'
-                    : 'bg-red-500'
-            }
-          `}
-        >
-          {row.status}
-        </span>
+        <Chip
+          label={row.status}
+          size="small"
+          color={getStatusColor(row.status) as any}
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }}
+        />
       ),
     },
     {
@@ -167,9 +169,9 @@ export const ProjectManagementPageV3: React.FC = () => {
       sortable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="text-xs text-gray-600">
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
           {new Date(row.startDate).toLocaleDateString()}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -178,7 +180,9 @@ export const ProjectManagementPageV3: React.FC = () => {
       sortable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="font-semibold">${row.budget.toLocaleString()}</span>
+        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+          ${row.budget.toLocaleString()}
+        </Typography>
       ),
     },
     {
@@ -188,12 +192,11 @@ export const ProjectManagementPageV3: React.FC = () => {
       filterable: true,
       width: '12%',
       body: (row: Project) => (
-        <span className="text-xs">{row.manager || '-'}</span>
+        <Typography variant="caption">{row.manager || '-'}</Typography>
       ),
     },
   ];
 
-  // Form fields
   const formFields = [
     {
       name: 'code',
@@ -249,12 +252,10 @@ export const ProjectManagementPageV3: React.FC = () => {
     },
   ];
 
-  // Handle edit
   const handleEdit = (project: Project) => {
     crud.openEditModal(project);
   };
 
-  // Handle delete
   const handleDelete = (project: Project) => {
     if (
       window.confirm(
@@ -265,15 +266,10 @@ export const ProjectManagementPageV3: React.FC = () => {
     }
   };
 
-  // Handle save
   const handleSave = async () => {
     const dataToSave = crud.formData;
 
-    // Validation
-    if (!dataToSave.name?.trim()) {
-      return;
-    }
-    if (!dataToSave.code?.trim()) {
+    if (!dataToSave.name?.trim() || !dataToSave.code?.trim()) {
       return;
     }
 
@@ -285,21 +281,25 @@ export const ProjectManagementPageV3: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {crud.error && (
-        <Message severity="error" text={crud.error} className="mb-4" />
+        <Alert severity="error" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+          {crud.error}
+        </Alert>
       )}
 
-      <AdminDataTable
-        data={crud.data}
-        columns={columns}
-        title="Project Management"
-        loading={crud.loading}
-        totalRecords={crud.data.length}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onAdd={crud.openCreateModal}
-      />
+      <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+        <AdminDataTable
+          data={crud.data}
+          columns={columns}
+          title="Project Management"
+          loading={crud.loading}
+          totalRecords={crud.data.length}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAdd={crud.openCreateModal}
+        />
+      </Paper>
 
       <AdminFormModal
         visible={crud.modalOpen}
@@ -312,7 +312,7 @@ export const ProjectManagementPageV3: React.FC = () => {
         loading={crud.loading}
         submitLabel={crud.isEditing ? 'Update' : 'Create'}
       />
-    </div>
+    </Box>
   );
 };
 

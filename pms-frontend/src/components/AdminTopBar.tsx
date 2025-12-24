@@ -39,24 +39,22 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
       color="inherit"
       elevation={0}
       sx={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: 1,
+        borderColor: 'divider',
         zIndex: (theme) => theme.zIndex.drawer + 1
       }}
     >
-      <Toolbar sx={{ minHeight: 64, px: 2, display: 'flex', justifyContent: 'space-between' }}>
+      <Toolbar sx={{ minHeight: '48px !important', px: 1.5, display: 'flex', justifyContent: 'space-between' }}>
         {/* Left: Page Heading */}
-        <Box display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center" gap={1}>
           <Typography
-            variant="subtitle1"
+            variant="subtitle2"
             sx={{
               fontWeight: 600,
-              fontSize: '14px',
-              color: '#333333',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
+              fontSize: '0.875rem',
+              color: 'text.primary',
             }}
           >
             {pageHeading}
@@ -64,9 +62,9 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
         </Box>
 
         {/* Right: Actions */}
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={1} alignItems="center">
           {showProjectSelector && (
-            <Box sx={{ minWidth: 200 }}>
+            <Box sx={{ minWidth: 160, display: { xs: 'none', sm: 'block' } }}>
               <ProjectSelector />
             </Box>
           )}
@@ -74,30 +72,30 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
           <IconButton
             size="small"
             sx={{
-              color: '#666666',
-              '&:hover': { backgroundColor: '#f5f5f5' }
+              color: 'text.secondary',
+              '&:hover': { bgcolor: 'action.hover' }
             }}
           >
-            <FaBell size={18} />
+            <FaBell size={14} />
           </IconButton>
 
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={0.75} alignItems="center">
             <Box sx={{ display: { xs: 'none', sm: 'flex' }, flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '12px', color: '#333333', lineHeight: 1.2 }}>
+              <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.7rem', color: 'text.primary', lineHeight: 1.2 }}>
                 {userName || "—"}
               </Typography>
-              <Typography variant="caption" sx={{ fontSize: '10px', color: '#999999', lineHeight: 1 }}>
+              <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary', lineHeight: 1 }}>
                 {userRole || "—"}
               </Typography>
             </Box>
 
             <Avatar
               sx={{
-                width: 32,
-                height: 32,
-                backgroundColor: 'rgba(10, 115, 38, 0.1)', // brand-green light
-                color: '#0a7326',
-                fontSize: 13,
+                width: 28,
+                height: 28,
+                bgcolor: 'rgba(10, 115, 38, 0.1)',
+                color: 'primary.main',
+                fontSize: '0.7rem',
                 fontWeight: 600
               }}
             >

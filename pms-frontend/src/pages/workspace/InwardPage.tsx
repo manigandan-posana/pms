@@ -10,6 +10,7 @@ import type { RootState } from "../../store/store";
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import { FiPlus } from "react-icons/fi";
+import { Box, Stack, Typography, Chip } from "@mui/material";
 
 // -------- Types -------- //
 
@@ -127,11 +128,11 @@ const InwardPage: React.FC = () => {
     {
       field: 'code',
       header: 'Code',
-      width: 150,
+      width: 120,
       body: (row) => (
-        <span className="font-mono font-semibold text-slate-700">
+        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.primary' }}>
           {row.code || "—"}
-        </span>
+        </Typography>
       )
     },
     { field: 'projectName', header: 'Project', body: (row) => row.projectName || "—" },
@@ -140,83 +141,89 @@ const InwardPage: React.FC = () => {
     {
       field: 'date',
       header: 'Date',
-      width: 100,
+      width: 90,
       body: (row) => row.date ? new Date(row.date).toLocaleDateString() : "—"
     },
     {
       field: 'validated',
       header: 'Status',
-      width: 100,
+      width: 80,
       body: (row) => (
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${row.validated
-          ? 'bg-emerald-100 text-emerald-700'
-          : 'bg-amber-100 text-amber-700'
-          }`}>
-          {row.validated ? 'VALIDATED' : 'DRAFT'}
-        </span>
+        <Chip
+          label={row.validated ? 'VALIDATED' : 'DRAFT'}
+          size="small"
+          color={row.validated ? 'success' : 'warning'}
+          sx={{
+            height: 18,
+            fontSize: '0.65rem',
+            fontWeight: 600,
+            '& .MuiChip-label': { px: 0.75, py: 0 }
+          }}
+        />
       )
     },
     {
       field: 'items',
       header: 'Items',
-      width: 80,
+      width: 60,
       align: 'right',
-      body: (row) => <span className="font-semibold text-slate-600">{row.items || 0}</span>
+      body: (row) => <Typography variant="caption" sx={{ fontWeight: 600 }}>{row.items || 0}</Typography>
     }
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <div className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xs font-bold text-slate-800">Inward History</h1>
-            <p className="text-slate-500">Manage and view inward material entries</p>
-          </div>
-          <CustomButton
-            startIcon={<FiPlus />}
-            onClick={() => navigate('/workspace/inward/create')}
-            className="shadow-sm"
-          >
-            Create Inward
-          </CustomButton>
-        </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'text.primary' }}>
+            Inward History
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+            Manage and view inward material entries
+          </Typography>
+        </Box>
+        <CustomButton
+          startIcon={<FiPlus size={14} />}
+          onClick={() => navigate('/workspace/inward/create')}
+        >
+          Create Inward
+        </CustomButton>
+      </Stack>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <AdvancedHistoryFilters
-              filterType="inward"
-              onFilterChange={(filters) => {
-                setHistoryFilters(filters);
-                setHistoryPage(0);
-              }}
-              searchQuery={searchQuery}
-              onSearchChange={(value) => {
-                setSearchQuery(value);
-              }}
-              isLoading={loadingHistory}
-            />
-          </div>
-
-          <CustomTable
-            data={historyRecords}
-            columns={columns}
-            loading={loadingHistory}
-            pagination
-            rows={historyPageSize}
-            page={historyPage}
-            totalRecords={historyTotalRecords}
-            onPageChange={(newInstancePage, newInstanceRows) => {
-              setHistoryPage(newInstancePage);
-              setHistoryPageSize(newInstanceRows);
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1, overflow: 'hidden' }}>
+        <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+          <AdvancedHistoryFilters
+            filterType="inward"
+            onFilterChange={(filters) => {
+              setHistoryFilters(filters);
+              setHistoryPage(0);
             }}
-            rowsPerPageOptions={[5, 10, 20]}
-            onRowClick={handleRowClick}
-            emptyMessage="No inward history found"
+            searchQuery={searchQuery}
+            onSearchChange={(value) => {
+              setSearchQuery(value);
+            }}
+            isLoading={loadingHistory}
           />
-        </div>
-      </div>
-    </div>
+        </Box>
+
+        <CustomTable
+          data={historyRecords}
+          columns={columns}
+          loading={loadingHistory}
+          pagination
+          rows={historyPageSize}
+          page={historyPage}
+          totalRecords={historyTotalRecords}
+          onPageChange={(newInstancePage, newInstanceRows) => {
+            setHistoryPage(newInstancePage);
+            setHistoryPageSize(newInstanceRows);
+          }}
+          rowsPerPageOptions={[5, 10, 20]}
+          onRowClick={handleRowClick}
+          emptyMessage="No inward history found"
+        />
+      </Box>
+    </Box>
   );
 };
 

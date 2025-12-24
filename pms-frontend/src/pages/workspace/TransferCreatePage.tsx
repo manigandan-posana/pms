@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
+import { Box, Stack, Typography, Paper, Grid, Chip } from "@mui/material";
 
 import CustomButton from "../../widgets/CustomButton";
 import CustomTable from "../../widgets/CustomTable";
@@ -106,7 +107,7 @@ interface TransferModalProps {
   onClose: () => void;
 }
 
-  const TransferModal: React.FC<TransferModalProps> = ({
+const TransferModal: React.FC<TransferModalProps> = ({
   line,
   values, // We will treat this as initial value provider
   onChange, // Deprecated in favor of local state, but kept for signature if needed or we remove it
@@ -138,31 +139,35 @@ interface TransferModalProps {
       open={Boolean(line)}
       onClose={onClose}
       footer={
-        <div className="flex justify-end gap-2">
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
           <CustomButton variant="text" onClick={onClose} size="small">Cancel</CustomButton>
           <CustomButton onClick={handleSave} size="small" startIcon={<FiSave />}>Save</CustomButton>
-        </div>
+        </Stack>
       }
     >
-      <div className="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
-        <span className="font-semibold">{line.unit}</span>
-        {" \u00b7 "}
-        In stock: <span className="font-semibold text-slate-700">{line.availableQty ?? line.allocatedQty ?? line.qty ?? 0}</span>
-      </div>
-      <div className="grid gap-2">
-        <CustomTextField
-          label="Transfer Qty *"
-          type="number"
-          value={localQty}
-          onChange={(e) => setLocalQty(e.target.value)}
-          required
-          autoFocus
-        />
-      </div>
-      <p className="mt-2 text-xs text-slate-400">
+      <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="body2" color="text.secondary">
+          <Box component="span" fontWeight={600}>{line.unit}</Box>
+          {" \u00b7 "}
+          In stock: <Box component="span" fontWeight={600} color="text.primary">{line.availableQty ?? line.allocatedQty ?? line.qty ?? 0}</Box>
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <CustomTextField
+            label="Transfer Qty *"
+            type="number"
+            value={localQty}
+            onChange={(e) => setLocalQty(e.target.value)}
+            required
+            autoFocus
+          />
+        </Grid>
+      </Grid>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
         Enter quantity to transfer.
-      </p>
-    </CustomModal>
+      </Typography>
+    </CustomModal >
   );
 };
 
@@ -177,7 +182,6 @@ const TransferCreatePage: React.FC = () => {
       (state) =>
         state.workspace as unknown as WorkspaceStateShape
     );
-
 
 
   const {
@@ -377,184 +381,242 @@ const TransferCreatePage: React.FC = () => {
       width: "50px",
       align: "center",
       body: (row) => (
-        <div
-          className="flex items-center justify-center cursor-pointer p-2"
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            p: 1
+          }}
           onClick={(e) => handleCheckboxClick(e, row)}
         >
           {row._selected ? (
-            <FiCheckCircle className="text-emerald-600 text-xs" />
+            <FiCheckCircle className="text-emerald-600" size={18} />
           ) : (
-            <FiCircle className="text-slate-300 text-xs" />
+            <FiCircle className="text-slate-300" size={18} />
           )}
-        </div>
+        </Box>
       )
     },
-    { field: "code", header: "Code", sortable: true, width: "120px", body: (row) => <span className="font-mono font-semibold text-slate-700">{row.code || "—"}</span> },
-    { field: "name", header: "Material", sortable: true, body: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
-    { field: "unit", header: "Unit", width: "80px", body: (row) => <span className="text-slate-500">{row.unit || "—"}</span> },
+    {
+      field: "code",
+      header: "Code",
+      sortable: true,
+      width: "120px",
+      body: (row) => <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.primary' }}>{row.code || "—"}</Typography>
+    },
+    {
+      field: "name",
+      header: "Material",
+      sortable: true,
+      body: (row) => <Typography variant="body2" fontWeight={500}>{row.name}</Typography>
+    },
+    {
+      field: "unit",
+      header: "Unit",
+      width: "80px",
+      body: (row) => <Typography variant="caption" color="text.secondary">{row.unit || "—"}</Typography>
+    },
     {
       field: "availableQty",
       header: "In Stock",
       align: "right",
       width: "100px",
-      body: (row) => <span className="font-medium text-slate-600">{row.availableQty ?? 0}</span>
+      body: (row) => <Typography variant="body2" color="text.secondary" fontWeight={500}>{row.availableQty ?? 0}</Typography>
     },
     {
       field: "_transferQty",
       header: "Transfer Qty",
       align: "right",
-      width: "100px",
-      body: (row) => <span className="font-bold text-emerald-600">{row._transferQty || "—"}</span>
+      width: "120px",
+      body: (row) => (
+        <Typography
+          variant="body2"
+          fontWeight={700}
+          color="primary.main"
+        >
+          {row._transferQty || "—"}
+        </Typography>
+      )
     },
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Inventory Navigation Tabs */}
-      <div className="px-6 pt-6">
-      </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
 
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
-        <div className="flex items-center gap-4">
+      <Paper
+        elevation={0}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
+        }}
+      >
+        <Stack direction="row" spacing={2} alignItems="center">
           <CustomButton
             variant="text"
             onClick={() => navigate('/workspace/inventory/transfers')}
-            className="text-slate-500 hover:text-slate-700"
-            size="small"
+            sx={{ minWidth: 40, p: 1, color: 'text.secondary' }}
           >
             <FiArrowLeft size={20} />
           </CustomButton>
-          <div>
-            <h1 className="text-xs font-bold text-slate-800">New Transfer</h1>
-            <p className="text-slate-500 text-xs">Transfer materials between projects</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-xs text-slate-500 mr-2">
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+              New Transfer
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Transfer materials between projects
+            </Typography>
+          </Box>
+        </Stack>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Typography variant="caption" color="text.secondary">
             {selectedLineCount} items selected
-          </div>
+          </Typography>
           <CustomButton
             onClick={handleSaveTransfer}
             disabled={saving || selectedLineCount === 0}
             loading={saving}
             startIcon={<FiSave />}
-            className="px-6"
+            sx={{ px: 3 }}
           >
             Save Transfer
           </CustomButton>
-        </div>
-      </div>
+        </Stack>
+      </Paper>
 
-      <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
-        {/* Transfer Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-            <h2 className="text-xs font-bold text-slate-800">Transfer Details</h2>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
-            <CustomSelect
-              label="From Project *"
-              value={fromProject}
-              options={fromProjects.map((p) => ({
-                label: `${p.code} \u2014 ${p.name}`,
-                value: String(p.id),
-              }))}
-              onChange={(value) =>
-                dispatch(
-                  setTransferField({
-                    field: "fromProject",
-                    value: String(value),
-                  })
-                )
-              }
-            />
-            <CustomTextField
-              label="From Site"
-              value={fromSite}
-              onChange={(e) =>
-                dispatch(
-                  setTransferField({
-                    field: "fromSite",
-                    value: e.target.value,
-                  })
-                )
-              }
-            />
-            <CustomSelect
-              label="To Project *"
-              value={toProject}
-              options={toProjects.map((p) => ({
-                label: `${p.code} \u2014 ${p.name}`,
-                value: String(p.id),
-              }))}
-              onChange={(value) =>
-                dispatch(
-                  setTransferField({
-                    field: "toProject",
-                    value: String(value),
-                  })
-                )
-              }
-            />
-            <CustomTextField
-              label="To Site"
-              value={toSite}
-              onChange={(e) =>
-                dispatch(
-                  setTransferField({
-                    field: "toSite",
-                    value: e.target.value,
-                  })
-                )
-              }
-            />
-            <CustomTextField
-              label="Remarks"
-              value={remarks}
-              onChange={(e) =>
-                dispatch(
-                  setTransferField({
-                    field: "remarks",
-                    value: e.target.value,
-                  })
-                )
-              }
-            />
-          </div>
-        </div>
-
-        {/* Material Table */}
-        {fromProject && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-xs font-bold text-slate-800">Select Materials to Transfer</h2>
-              <div className="w-60">
-                <CustomTextField
-                  placeholder="Search materials..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setPage(0);
-                    setSearchQuery(e.target.value);
-                  }}
-                  size="small"
+      <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
+        <Box sx={{ maxWidth: '100%', mx: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Transfer Form */}
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 2, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
+              Transfer Details
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4} lg={2.4}>
+                <CustomSelect
+                  label="From Project *"
+                  value={fromProject}
+                  options={fromProjects.map((p) => ({
+                    label: `${p.code} \u2014 ${p.name}`,
+                    value: String(p.id),
+                  }))}
+                  onChange={(value) =>
+                    dispatch(
+                      setTransferField({
+                        field: "fromProject",
+                        value: String(value),
+                      })
+                    )
+                  }
                 />
-              </div>
-            </div>
+              </Grid>
+              <Grid item xs={12} md={4} lg={2.4}>
+                <CustomTextField
+                  label="From Site"
+                  value={fromSite}
+                  onChange={(e) =>
+                    dispatch(
+                      setTransferField({
+                        field: "fromSite",
+                        value: e.target.value,
+                      })
+                    )
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={4} lg={2.4}>
+                <CustomSelect
+                  label="To Project *"
+                  value={toProject}
+                  options={toProjects.map((p) => ({
+                    label: `${p.code} \u2014 ${p.name}`,
+                    value: String(p.id),
+                  }))}
+                  onChange={(value) =>
+                    dispatch(
+                      setTransferField({
+                        field: "toProject",
+                        value: String(value),
+                      })
+                    )
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={4} lg={2.4}>
+                <CustomTextField
+                  label="To Site"
+                  value={toSite}
+                  onChange={(e) =>
+                    dispatch(
+                      setTransferField({
+                        field: "toSite",
+                        value: e.target.value,
+                      })
+                    )
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={8} lg={2.4}>
+                <CustomTextField
+                  label="Remarks"
+                  value={remarks}
+                  onChange={(e) =>
+                    dispatch(
+                      setTransferField({
+                        field: "remarks",
+                        value: e.target.value,
+                      })
+                    )
+                  }
+                />
+              </Grid>
+            </Grid>
+          </Paper>
 
-            <CustomTable
-              data={tableRows}
-              columns={columns}
-              pagination
-              rows={rows}
-              page={page}
-              onPageChange={(p, r) => { setPage(p); setRows(r); }}
-              onRowClick={(row) => openModalForLine(row)}
-              emptyMessage="No available materials found in the source project."
-            />
-          </div>
-        )}
-      </div>
+          {/* Material Table */}
+          {fromProject && (
+            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                  Select Materials to Transfer
+                </Typography>
+                <Box sx={{ width: 240 }}>
+                  <CustomTextField
+                    placeholder="Search materials..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setPage(0);
+                      setSearchQuery(e.target.value);
+                    }}
+                    size="small"
+                  />
+                </Box>
+              </Box>
+
+              <CustomTable
+                data={tableRows}
+                columns={columns}
+                pagination
+                rows={rows}
+                page={page}
+                onPageChange={(p, r) => { setPage(p); setRows(r); }}
+                onRowClick={(row) => openModalForLine(row)}
+                emptyMessage="No available materials found in the source project."
+              />
+            </Paper>
+          )}
+        </Box>
+      </Box>
 
       {/* Transfer Quantity Modal */}
       <TransferModal
@@ -564,7 +626,7 @@ const TransferCreatePage: React.FC = () => {
         onSave={handleModalSave}
         onClose={handleModalClose}
       />
-    </div>
+    </Box>
   );
 };
 

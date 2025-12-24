@@ -6,10 +6,10 @@ import { getInwardById, updateInward, validateInward } from "../../store/slices/
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiSave, FiCheckCircle, FiInfo, FiSearch } from "react-icons/fi";
 import type { RootState } from "../../store/store";
-
 import CustomTable, { type ColumnDef } from "../../widgets/CustomTable";
 import CustomButton from "../../widgets/CustomButton";
 import CustomTextField from "../../widgets/CustomTextField";
+import { Box, Stack, Typography, Paper, Grid, Chip, CircularProgress, Alert, TextField } from "@mui/material";
 
 // -------- Types -------- //
 
@@ -51,8 +51,6 @@ const InwardDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingLines, setEditingLines] = useState<Record<number, { orderedQty: number; receivedQty: number }>>({});
-
-  // Pagination and search state
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const buildLinePayload = useCallback(
@@ -139,8 +137,6 @@ const InwardDetailPage: React.FC = () => {
         toast.success('Quantities updated successfully');
       }
 
-      // Reload to ensure sync? Or just navigate/stay? 
-      // Original code navigated to list, but maybe better to stay or navigate
       navigate('/workspace/inventory/inwards');
     } catch (error) {
       console.error('Failed to save changes:', error);
@@ -175,28 +171,28 @@ const InwardDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="text-slate-500 flex flex-col items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-          Loading details...
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'grey.50' }}>
+        <Stack spacing={1} alignItems="center">
+          <CircularProgress size={32} />
+          <Typography variant="caption" color="text.secondary">Loading details...</Typography>
+        </Stack>
+      </Box>
     );
   }
 
   if (!record) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-          <p className="text-slate-500 mb-4">No record found</p>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'grey.50' }}>
+        <Paper sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>No record found</Typography>
           <CustomButton
             onClick={() => navigate('/workspace/inventory/inwards')}
-            startIcon={<FiArrowLeft />}
+            startIcon={<FiArrowLeft size={14} />}
           >
             Back to Inwards
           </CustomButton>
-        </div>
-      </div>
+        </Paper>
+      </Box>
     );
   }
 
@@ -204,34 +200,33 @@ const InwardDetailPage: React.FC = () => {
     {
       field: 'materialCode',
       header: 'Material Code',
-      width: '150px',
-      body: (row) => <span className="font-mono text-slate-700 font-semibold">{row.materialCode || '—'}</span>
+      width: 120,
+      body: (row) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.materialCode || '—'}</Typography>
     },
     {
       field: 'materialName',
       header: 'Material Name',
-      body: (row) => <span className="text-slate-800">{row.materialName || '—'}</span>
+      body: (row) => row.materialName || '—'
     },
     {
       field: 'unit',
       header: 'Unit',
-      width: '80px',
-      body: (row) => <span className="text-slate-500">{row.unit || '—'}</span>
+      width: 60,
+      body: (row) => row.unit || '—'
     },
     {
       field: 'orderedQty',
       header: 'Ordered Qty',
-      width: '150px',
+      width: 120,
       body: (row) => {
         const currentValue = editingLines[row.id]?.orderedQty ?? row.orderedQty ?? 0;
         if (record.validated) {
-          return <span className="font-mono">{currentValue}</span>;
+          return <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{currentValue}</Typography>;
         }
         return (
-          <input
+          <TextField
             type="number"
-            min="0"
-            step="any"
+            size="small"
             value={currentValue}
             onChange={(e) => {
               const val = parseFloat(e.target.value) || 0;
@@ -243,7 +238,10 @@ const InwardDetailPage: React.FC = () => {
                 }
               }));
             }}
-            className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            sx={{
+              '& .MuiInputBase-input': { fontSize: '0.75rem', py: 0.5, px: 0.75 },
+              '& .MuiOutlinedInput-root': { minHeight: 28 }
+            }}
           />
         );
       }
@@ -251,17 +249,16 @@ const InwardDetailPage: React.FC = () => {
     {
       field: 'receivedQty',
       header: 'Received Qty',
-      width: '150px',
+      width: 120,
       body: (row) => {
         const currentValue = editingLines[row.id]?.receivedQty ?? row.receivedQty ?? 0;
         if (record.validated) {
-          return <span className="font-mono">{currentValue}</span>;
+          return <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{currentValue}</Typography>;
         }
         return (
-          <input
+          <TextField
             type="number"
-            min="0"
-            step="any"
+            size="small"
             value={currentValue}
             onChange={(e) => {
               const val = parseFloat(e.target.value) || 0;
@@ -273,7 +270,10 @@ const InwardDetailPage: React.FC = () => {
                 }
               }));
             }}
-            className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            sx={{
+              '& .MuiInputBase-input': { fontSize: '0.75rem', py: 0.5, px: 0.75 },
+              '& .MuiOutlinedInput-root': { minHeight: 28 }
+            }}
           />
         );
       }
@@ -281,130 +281,133 @@ const InwardDetailPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
-      {/* Inventory Navigation Tabs */}
-      <div className="px-6 pt-6">
-      </div>
-      
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <Paper sx={{ borderBottom: 1, borderColor: 'divider', px: 1.5, py: 1, position: 'sticky', top: 0, zIndex: 10 }}>
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={1} alignItems="center">
             <CustomButton
               variant="text"
               onClick={() => navigate('/workspace/inventory/inwards')}
-              className="!p-2 text-slate-500 hover:bg-slate-100 rounded-full"
+              sx={{ minWidth: 'auto', p: 0.5 }}
             >
-              <FiArrowLeft size={20} />
+              <FiArrowLeft size={16} />
             </CustomButton>
-            <div>
-              <h1 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                Inward Details
-                <span className="text-slate-400 font-normal">|</span>
-                <span className="font-mono text-xs text-blue-600">{record.code}</span>
-              </h1>
-            </div>
-          </div>
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                  Inward Details
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>|</Typography>
+                <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'primary.main', fontWeight: 600 }}>
+                  {record.code}
+                </Typography>
+              </Stack>
+            </Box>
+          </Stack>
 
-          <div className="flex items-center gap-3">
+          <Stack direction="row" spacing={0.5}>
             {record.validated ? (
-              <span className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg border border-green-200 font-medium">
-                <FiCheckCircle /> Validated & Locked
-              </span>
+              <Chip
+                icon={<FiCheckCircle size={14} />}
+                label="Validated & Locked"
+                color="success"
+                size="small"
+                sx={{ height: 24, fontSize: '0.7rem', fontWeight: 600 }}
+              />
             ) : (
               <>
                 <CustomButton
                   variant="outlined"
                   onClick={handleSaveChanges}
-                  loading={saving}
-                  startIcon={<FiSave />}
+                  disabled={saving}
+                  startIcon={<FiSave size={14} />}
                 >
                   Save Draft
                 </CustomButton>
                 <CustomButton
                   onClick={handleValidate}
-                  loading={saving}
-                  startIcon={<FiCheckCircle />}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  disabled={saving}
+                  startIcon={<FiCheckCircle size={14} />}
+                  color="success"
                 >
                   Validate & Lock
                 </CustomButton>
               </>
             )}
-          </div>
-        </div>
-      </div>
+          </Stack>
+        </Stack>
+      </Paper>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-
+      <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+        <Stack spacing={1}>
           {/* Info Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Record Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Project</span>
-                <span className="font-semibold text-slate-800">{record.projectName || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Supplier</span>
-                <span className="font-semibold text-slate-800">{record.supplierName || '—'}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Invoice No</span>
-                <span className="font-mono font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs inline-block">
-                  {record.invoiceNo || '—'}
-                </span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Entry Date</span>
-                <span className="font-medium text-slate-800">
+          <Paper sx={{ p: 1.5, borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+              Record Information
+            </Typography>
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Project</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.projectName || '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Supplier</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.supplierName || '—'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Invoice No</Typography>
+                <Chip label={record.invoiceNo || '—'} size="small" sx={{ height: 20, fontSize: '0.65rem', fontFamily: 'monospace' }} />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Entry Date</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
                   {record.entryDate ? new Date(record.entryDate).toLocaleDateString() : '—'}
-                </span>
-              </div>
+                </Typography>
+              </Grid>
               {record.vehicleNo && (
-                <div>
-                  <span className="text-xs text-slate-500 block mb-1">Vehicle No</span>
-                  <span className="font-semibold text-slate-800">{record.vehicleNo}</span>
-                </div>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Vehicle No</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{record.vehicleNo}</Typography>
+                </Grid>
               )}
               {record.remarks && (
-                <div className="col-span-1 md:col-span-2 lg:col-span-4">
-                  <span className="text-xs text-slate-500 block mb-1">Remarks</span>
-                  <span className="text-slate-700 bg-slate-50 p-3 rounded-lg block text-xs border border-slate-100">
+                <Grid item xs={12} >
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>Remarks</Typography>
+                  <Typography variant="caption" sx={{ bgcolor: 'grey.50', p: 1, borderRadius: 0.5, display: 'block', border: 1, borderColor: 'divider' }}>
                     {record.remarks}
-                  </span>
-                </div>
+                  </Typography>
+                </Grid>
               )}
-            </div>
-          </div>
+            </Grid>
+          </Paper>
 
           {/* Materials Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[400px]">
-            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                Materials
-                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-semibold">
-                  {filteredLines.length}
-                </span>
-              </h3>
+          <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Materials</Typography>
+                <Chip label={filteredLines.length} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
+              </Stack>
 
-              <div className="w-full sm:w-72">
+              <Box sx={{ width: { xs: '100%', sm: 240 } }}>
                 <CustomTextField
                   placeholder="Search materials..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  startAdornment={<FiSearch className="text-slate-400" />}
+                  startAdornment={<FiSearch size={14} style={{ color: '#9ca3af' }} />}
                   size="small"
                 />
-              </div>
-            </div>
+              </Box>
+            </Stack>
 
             {record.validated && (
-              <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center gap-2 text-xs text-amber-800">
-                <FiInfo className="flex-shrink-0" />
-                This record has been validated. Quantities cannot be edited.
-              </div>
+              <Alert severity="warning" sx={{ borderRadius: 0, fontSize: '0.7rem', py: 0.5 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <FiInfo size={12} />
+                  <Typography variant="caption">This record has been validated. Quantities cannot be edited.</Typography>
+                </Stack>
+              </Alert>
             )}
 
             <CustomTable
@@ -414,11 +417,10 @@ const InwardDetailPage: React.FC = () => {
               rows={10}
               emptyMessage="No materials found in this record."
             />
-          </div>
-
-        </div>
-      </div>
-    </div>
+          </Paper>
+        </Stack>
+      </Box>
+    </Box >
   );
 };
 

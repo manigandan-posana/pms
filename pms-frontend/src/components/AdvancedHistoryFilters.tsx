@@ -3,6 +3,7 @@ import CustomTextField from "../widgets/CustomTextField";
 import CustomDateInput from "../widgets/CustomDateInput";
 import CustomButton from "../widgets/CustomButton";
 import { FiCalendar, FiSearch, FiX } from "react-icons/fi";
+import { Stack, Box, IconButton } from "@mui/material";
 
 export interface HistoryFilters {
   startDate?: Date | null;
@@ -47,12 +48,18 @@ export const AdvancedHistoryFilters: React.FC<AdvancedHistoryFiltersProps> = ({
   }, [onFilterChange, onSearchChange]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={1}
+      alignItems={{ xs: 'stretch', sm: 'center' }}
+      justifyContent="space-between"
+      sx={{ width: '100%' }}
+    >
       {/* Date filters */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <FiCalendar className="text-slate-400" />
-          <div style={{ width: 140 }}>
+      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <FiCalendar size={14} style={{ color: '#9ca3af' }} />
+          <Box sx={{ width: 120 }}>
             <CustomDateInput
               value={filters.startDate}
               onChange={(e: any) => handleInputChange("startDate", e.value)}
@@ -60,12 +67,12 @@ export const AdvancedHistoryFilters: React.FC<AdvancedHistoryFiltersProps> = ({
               size="small"
               disabled={isLoading}
             />
-          </div>
-        </div>
+          </Box>
+        </Stack>
 
-        <div className="flex items-center gap-2">
-          <FiCalendar className="text-slate-400" />
-          <div style={{ width: 140 }}>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <FiCalendar size={14} style={{ color: '#9ca3af' }} />
+          <Box sx={{ width: 120 }}>
             <CustomDateInput
               value={filters.endDate}
               onChange={(e: any) => handleInputChange("endDate", e.value)}
@@ -73,39 +80,37 @@ export const AdvancedHistoryFilters: React.FC<AdvancedHistoryFiltersProps> = ({
               size="small"
               disabled={isLoading}
             />
-          </div>
-        </div>
+          </Box>
+        </Stack>
 
         {(filters.startDate || filters.endDate || searchQuery) && (
-          <CustomButton
+          <IconButton
             onClick={handleReset}
             disabled={isLoading}
-            variant="text"
-            className="text-slate-500 hover:text-slate-700 p-2 min-w-0"
+            size="small"
             title="Clear filters"
+            sx={{ color: 'text.secondary' }}
           >
-            <FiX size={18} />
-          </CustomButton>
+            <FiX size={16} />
+          </IconButton>
         )}
-      </div>
+      </Stack>
 
       {/* Search bar and create button */}
-      <div className="flex items-center gap-3">
-        <div className="w-64">
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Box sx={{ width: { xs: '100%', sm: 200 } }}>
           <CustomTextField
             value={searchQuery || ""}
             onChange={(e) => onSearchChange(e.target.value)}
             disabled={isLoading}
             placeholder="Search records..."
             size="small"
-            InputProps={{
-              startAdornment: <FiSearch className="text-slate-400 mr-2" />,
-            }}
+            startAdornment={<FiSearch size={14} style={{ color: '#9ca3af' }} />}
           />
-        </div>
+        </Box>
         {createButton}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 };
 

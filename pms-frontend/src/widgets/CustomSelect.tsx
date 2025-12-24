@@ -29,6 +29,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     helperText,
     error,
     size = "small",
+    sx,
     ...props
 }) => {
     const handleChange = (event: any) => {
@@ -39,21 +40,30 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
     return (
         <FormControl fullWidth size={size} error={error} variant="outlined">
-            {label && <InputLabel>{label}</InputLabel>}
+            {label && <InputLabel sx={{ fontSize: '0.75rem' }}>{label}</InputLabel>}
             <Select
                 label={label}
                 value={value}
                 onChange={handleChange}
-                style={{ backgroundColor: '#fff', fontSize: '0.875rem' }}
+                sx={{
+                    bgcolor: 'background.paper',
+                    fontSize: '0.75rem',
+                    '& .MuiSelect-select': {
+                        py: 0.75,
+                        fontSize: '0.75rem'
+                    },
+                    minHeight: 32,
+                    ...sx
+                }}
                 {...props}
             >
                 {options.map((option) => (
-                    <MenuItem key={option.value} value={option.value} style={{ fontSize: '0.875rem' }}>
+                    <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.75rem', py: 0.5 }}>
                         {option.label}
                     </MenuItem>
                 ))}
             </Select>
-            {helperText && <FormHelperText>{helperText}</FormHelperText>}
+            {helperText && <FormHelperText sx={{ fontSize: '0.65rem', mt: 0.25 }}>{helperText}</FormHelperText>}
         </FormControl>
     );
 };
