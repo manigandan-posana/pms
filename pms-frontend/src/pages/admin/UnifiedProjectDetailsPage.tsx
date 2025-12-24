@@ -191,23 +191,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
     { field: 'date', header: 'Date', width: '100px', body: (r) => <span className="text-xs">{r.date}</span> },
     { field: 'supplierName', header: 'Supplier', body: (r) => <span className="text-xs text-slate-700">{r.supplierName}</span> },
     { field: 'invoiceNo', header: 'Invoice', width: '100px', body: (r) => <span className="text-xs text-slate-500">{r.invoiceNo || '—'}</span> },
-    { field: 'items', header: 'Items', width: '80px', align: 'center', body: (r) => <span className="font-bold text-green-700 text-xs">{r.items || 0}</span> },
-    {
-      field: 'id',
-      header: 'Action',
-      width: '80px',
-      align: 'right',
-      body: (r) => (
-        <CustomButton
-          variant="text"
-          size="small"
-          className="text-blue-600 p-1 min-w-0"
-          onClick={() => navigate(`/admin/inward/${r.id || r.code}`)}
-        >
-          View
-        </CustomButton>
-      )
-    }
+    { field: 'items', header: 'Items', width: '80px', align: 'center', body: (r) => <span className="font-bold text-green-700 text-xs">{r.items || 0}</span> }
   ];
 
   const outwardColumns: ColumnDef<OutwardRecord>[] = [
@@ -224,46 +208,14 @@ const UnifiedProjectDetailsPage: React.FC = () => {
         </span>
       )
     },
-    { field: 'items', header: 'Items', width: '80px', align: 'center', body: (r) => <span className="font-bold text-red-700 text-xs">{r.items || 0}</span> },
-    {
-      field: 'id',
-      header: 'Action',
-      width: '80px',
-      align: 'right',
-      body: (r) => (
-        <CustomButton
-          variant="text"
-          size="small"
-          className="text-blue-600 p-1 min-w-0"
-          onClick={() => navigate(`/admin/outward/${r.id || r.code}`)}
-        >
-          View
-        </CustomButton>
-      )
-    }
+    { field: 'items', header: 'Items', width: '80px', align: 'center', body: (r) => <span className="font-bold text-red-700 text-xs">{r.items || 0}</span> }
   ];
 
   const transferColumns: ColumnDef<TransferRecord>[] = [
     { field: 'code', header: 'Code', width: '120px', body: (r) => <span className="font-mono text-blue-700 font-bold text-xs">{r.code}</span> },
     { field: 'date', header: 'Date', width: '100px', body: (r) => <span className="text-xs">{r.date}</span> },
     { field: 'fromProjectName', header: 'From', body: (r) => <span className="text-xs text-slate-600">{r.fromProjectName}</span> },
-    { field: 'toProjectName', header: 'To', body: (r) => <span className="text-xs text-slate-600">{r.toProjectName}</span> },
-    {
-      field: 'id',
-      header: 'Action',
-      width: '80px',
-      align: 'right',
-      body: (r) => (
-        <CustomButton
-          variant="text"
-          size="small"
-          className="text-blue-600 p-1 min-w-0"
-          onClick={() => navigate(`/admin/transfer/${r.id || r.code}`)}
-        >
-          View
-        </CustomButton>
-      )
-    }
+    { field: 'toProjectName', header: 'To', body: (r) => <span className="text-xs text-slate-600">{r.toProjectName}</span> }
   ];
 
   const selectedProject = projects.find(p => String(p.id) === String(selectedAdminProjectId));
@@ -319,6 +271,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
                         pagination
                         rows={10}
                         emptyMessage="No inward records found"
+                        onRowClick={(r) => navigate(`/admin/inward/${r.id || r.code}`)}
                       />
                     </div>
                   )
@@ -334,6 +287,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
                         pagination
                         rows={10}
                         emptyMessage="No outward records found"
+                        onRowClick={(r) => navigate(`/admin/outward/${r.id || r.code}`)}
                       />
                     </div>
                   )
@@ -348,6 +302,7 @@ const UnifiedProjectDetailsPage: React.FC = () => {
                       pagination
                       rows={10}
                       emptyMessage="No updated transfer records"
+                      onRowClick={(r) => navigate(`/admin/transfer/${r.id || r.code}`)}
                     />
                   )
                 }
