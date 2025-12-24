@@ -169,7 +169,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     setModalState({ ...createEmptyModal(), open: true });
   };
 
-  const openEditMaterial = (material: Material) => {
+  const openEditMaterial = useCallback((material: Material) => {
     setModalState({
       open: true,
       mode: "edit",
@@ -184,7 +184,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
         category: material.category || "",
       },
     });
-  };
+  }, []);
 
   const handleFieldChange = (field: keyof MaterialFormFields, value: string) => {
     setModalState((prev) => ({
@@ -230,7 +230,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     }
   };
 
-  const handleDelete = async (materialId: number | string | null | undefined) => {
+  const handleDelete = useCallback(async (materialId: number | string | null | undefined) => {
     if (!token || materialId == null) return;
     const confirmDelete = window.confirm("Delete this material?");
     if (!confirmDelete) return;
@@ -242,7 +242,7 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     } catch (err: unknown) {
       toast.error("Unable to delete material");
     }
-  };
+  }, [dispatch, onRequestReload, refreshMaterials, token]);
 
   const handleImportClick = () => {
     if (fileInputRef.current) {
@@ -293,30 +293,33 @@ const MaterialDirectoryPage: React.FC<MaterialDirectoryPageProps> = ({
     }
   };
 
-  const columns: ColumnDef<Material>[] = [
-    { field: 'code', header: 'Code', width: 100, body: (r) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{r.code || '—'}</Typography> },
-    { field: 'name', header: 'Material', body: (r) => <Typography variant="caption" sx={{ fontWeight: 500 }}>{r.name || '—'}</Typography> },
-    { field: 'partNo', header: 'Part No', width: 100, body: (r) => r.partNo || '—' },
-    { field: 'lineType', header: 'Line Type', width: 90, body: (r) => r.lineType || '—' },
-    { field: 'unit', header: 'UOM', width: 60, body: (r) => r.unit || '—' },
-    { field: 'category', header: 'Category', width: 100, body: (r) => <Chip label={r.category || '—'} size="small" sx={{ height: 18, fontSize: '0.65rem' }} /> },
-    {
-      field: 'id',
-      header: 'Actions',
-      align: 'right',
-      width: 80,
-      body: (r) => (
-        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-          <IconButton size="small" onClick={() => openEditMaterial(r)} sx={{ color: 'primary.main' }} title="Edit">
-            <FiEdit2 size={14} />
-          </IconButton>
-          <IconButton size="small" onClick={() => handleDelete(r.id)} sx={{ color: 'error.main' }} title="Delete">
-            <FiTrash2 size={14} />
-          </IconButton>
-        </Stack>
-      )
-    }
-  ];
+  const columns = React.useMemo<ColumnDef<Material>[]>(
+    () => [
+      { field: 'code', header: 'Code', width: 100, body: (r) => <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{r.code || '—'}</Typography> },
+      { field: 'name', header: 'Material', body: (r) => <Typography variant="caption" sx={{ fontWeight: 500 }}>{r.name || '—'}</Typography> },
+      { field: 'partNo', header: 'Part No', width: 100, body: (r) => r.partNo || '—' },
+      { field: 'lineType', header: 'Line Type', width: 90, body: (r) => r.lineType || '—' },
+      { field: 'unit', header: 'UOM', width: 60, body: (r) => r.unit || '—' },
+      { field: 'category', header: 'Category', width: 100, body: (r) => <Chip label={r.category || '—'} size="small" sx={{ height: 18, fontSize: '0.65rem' }} /> },
+      {
+        field: 'id',
+        header: 'Actions',
+        align: 'right',
+        width: 80,
+        body: (r) => (
+          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+            <IconButton size="small" onClick={() => openEditMaterial(r)} sx={{ color: 'primary.main' }} title="Edit">
+              <FiEdit2 size={14} />
+            </IconButton>
+            <IconButton size="small" onClick={() => handleDelete(r.id)} sx={{ color: 'error.main' }} title="Delete">
+              <FiTrash2 size={14} />
+            </IconButton>
+          </Stack>
+        )
+      }
+    ],
+    [handleDelete, openEditMaterial]
+  );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

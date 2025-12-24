@@ -11,40 +11,26 @@ const AllocatedMaterialsPage = React.lazy(() => import("./AllocatedMaterialsPage
 const AdminInventoryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const tabRoutes = [
+    "/admin/inventory/materials",
+    "/admin/inventory/allocations",
+    "/admin/inventory/allocated",
+  ];
 
-  // Map tab indices to routes
-  const tabRoutes = useMemo(
-    () => [
-      "/admin/inventory/materials",
-      "/admin/inventory/allocations",
-      "/admin/inventory/allocated",
-    ],
-    []
-  );
+  // Determine active index from current path
+  const currentPath = location.pathname;
+  let activeIndex = tabRoutes.findIndex(route => currentPath.startsWith(route));
+  if (activeIndex === -1) activeIndex = 0;
 
-  // Sync active tab with current route
+  // Handle root redirect
   useEffect(() => {
-    const currentPath = location.pathname;
-
     if (currentPath === "/admin/inventory" || currentPath === "/admin/inventory/") {
-      // Default to Material Directory tab
-      if (activeIndex !== 0) {
-        setActiveIndex(0);
-      }
       navigate("/admin/inventory/materials", { replace: true });
-    } else {
-      const index = tabRoutes.findIndex(route => currentPath.startsWith(route));
-      if (index !== -1 && index !== activeIndex) {
-        setActiveIndex(index);
-      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, navigate]);
+  }, [currentPath, navigate]);
 
   // Handle tab change and navigate
   const handleTabChange = (index: number) => {
-    setActiveIndex(index);
     navigate(tabRoutes[index]);
   };
 

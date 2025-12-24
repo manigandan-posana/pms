@@ -22,7 +22,7 @@ interface User {
   email?: string | null;
   role?: UserRole;
   accessType?: AccessType;
-  projects?: string[];
+  projects?: { id: string | number; name: string; code?: string }[];
   [key: string]: any;
 }
 
@@ -40,7 +40,7 @@ export const UserManagementPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const token = useSelector((state: RootState) => state.auth.token);
 
-  const { items: users, totalItems, status, error } = useSelector(
+  const { items: users, totalItems, status, error, projects: availableProjects } = useSelector(
     (state: RootState) => state.adminUsers as any
   );
 
@@ -51,7 +51,7 @@ export const UserManagementPage: React.FC = () => {
     email: "",
     role: "USER" as UserRole,
     accessType: "PROJECTS" as AccessType,
-    projectIds: "",
+    projectIds: [] as (string | number)[],
   });
 
   const loading = status === "loading";
@@ -77,7 +77,7 @@ export const UserManagementPage: React.FC = () => {
       email: "",
       role: "USER",
       accessType: "PROJECTS",
-      projectIds: "",
+      projectIds: [],
     });
     setModalVisible(true);
   };
@@ -89,7 +89,7 @@ export const UserManagementPage: React.FC = () => {
       email: user.email || "",
       role: user.role || "USER",
       accessType: user.accessType || "PROJECTS",
-      projectIds: (user.projects || []).join(","),
+      projectIds: user.projects ? user.projects.map(p => String(p.id)) : [],
     });
     setModalVisible(true);
   };
@@ -126,11 +126,8 @@ export const UserManagementPage: React.FC = () => {
 
     const projectIds =
       formData.accessType === "PROJECTS"
-        ? formData.projectIds
-          .split(",")
-          .map((id: string) => id.trim())
-          .filter((id: string) => id)
-          .map((id: string) => Number(id))
+        ? (Array.isArray(formData.projectIds) ? formData.projectIds : [])
+          .map((id: string | number) => Number(id))
         : [];
 
     if (editingUser) {
@@ -264,10 +261,15 @@ export const UserManagementPage: React.FC = () => {
     },
     {
       name: "projectIds",
-      label: "Project IDs (comma-separated, only if Specific Projects)",
-      type: "textarea" as const,
-      placeholder: "1,2,3",
+      label: "Select Projects (only if Specific Projects)",
+      type: "select" as const,
+      multiple: true,
+      options: (availableProjects || []).map((p: any) => ({
+        label: `${p.code ? p.code + ' - ' : ''}${p.name}`,
+        value: String(p.id)
+      })),
       disabled: formData.accessType === "ALL",
+      required: formData.accessType === "PROJECTS", // Require selection if specific
     },
   ];
 

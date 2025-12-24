@@ -265,6 +265,11 @@ function MultiAllocationPanel({
     }
   };
 
+  const slicedData = useMemo(() => {
+    const start = page * pageSize;
+    return tableData.slice(start, start + pageSize);
+  }, [tableData, page, pageSize]);
+
   if (!projectId) {
     return (
       <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-500">
@@ -273,7 +278,7 @@ function MultiAllocationPanel({
     );
   }
 
-  const columns: ColumnDef<any>[] = [
+  const columns = useMemo<ColumnDef<any>[]>(() => [
     {
       field: 'id',
       header: '',
@@ -292,7 +297,7 @@ function MultiAllocationPanel({
       align: 'right',
       body: (row) => row._selected ? <span className="font-bold text-emerald-600">{Number(row._quantity).toLocaleString()}</span> : <span className="text-slate-300">—</span>
     }
-  ];
+  ], []);
 
   return (
     <div className="mt-6 flex flex-col gap-4">
@@ -353,7 +358,7 @@ function MultiAllocationPanel({
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <CustomTable
-          data={tableData}
+          data={slicedData}
           columns={columns}
           pagination
           rows={pageSize}
@@ -392,8 +397,6 @@ function MultiAllocationPanel({
     </div>
   );
 }
-
-/* ---------- Main ProjectAllocationManager ---------- */
 
 interface ProjectAllocationManagerProps {
   token?: string | null;
@@ -483,15 +486,15 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
     onProjectBomUpdate?.(selectedProjectId);
   }, [dispatch, resolvedToken, selectedProjectId, refreshBom, onProjectBomUpdate]);
 
-  const handleDelete = async (line: AllocationWithMaterial) => {
+  const handleDelete = useCallback(async (line: AllocationWithMaterial) => {
     if (!resolvedToken || !selectedProjectId || !line.materialId) return;
     if (!window.confirm("Remove allocation?")) return;
     await dispatch(deleteProjectAllocation({ projectId: selectedProjectId, materialId: line.materialId })).unwrap();
     toast.success("Removed");
     refreshBom(selectedProjectId);
-  };
+  }, [dispatch, refreshBom, resolvedToken, selectedProjectId]);
 
-  const handleEditAllocation = (line: AllocationWithMaterial) => {
+  const handleEditAllocation = useCallback((line: AllocationWithMaterial) => {
     setFormModal({
       open: true,
       mode: "edit",
@@ -500,7 +503,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
       saving: false,
       line: line,
     });
-  };
+  }, []);
 
   const handleSaveForm = async () => {
     if (!resolvedToken || !selectedProjectId) return;
@@ -531,7 +534,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   };
 
   // Columns for Allocated Table
-  const allocColumns: ColumnDef<AllocationWithMaterial>[] = [
+  const allocColumns = useMemo<ColumnDef<AllocationWithMaterial>[]>(() => [
     { field: 'code', header: 'Code', body: (r) => <span className="font-mono text-slate-700">{r.code || '—'}</span> },
     { field: 'name', header: 'Material', body: (r) => <span className="font-medium text-slate-800">{r.name || '—'}</span> },
     { field: 'qty', header: 'Required Qty', align: 'right', body: (r) => <span className="font-bold text-slate-700">{Number(getLineQty(r)).toLocaleString()}</span> },
@@ -544,7 +547,7 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
         </div>
       )
     }
-  ];
+  ], [handleDelete, handleEditAllocation]);
 
   return (
     <div className="flex flex-col gap-6">

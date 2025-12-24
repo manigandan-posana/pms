@@ -12,6 +12,7 @@ interface FormField {
   required?: boolean;
   placeholder?: string;
   options?: { label: string; value: any }[];
+  multiple?: boolean;
   validation?: (value: any) => string | null;
   disabled?: boolean;
   className?: string;
@@ -98,6 +99,7 @@ export const AdminFormModal: React.FC<AdminFormModalProps> = ({
               options={field.options || []}
               disabled={field.disabled || loading}
               required={field.required}
+              multiple={field.multiple}
               // error={!!hasError} // CustomSelect doesn't have explicit error prop shown in previous edit, let's assume it handles it or I ignored it.
               // Wait, CustomSelect definition: `error?: boolean; helperText?: string;`. Yes.
               error={!!hasError}
