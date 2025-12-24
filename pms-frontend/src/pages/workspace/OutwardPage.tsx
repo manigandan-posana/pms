@@ -81,20 +81,9 @@ const OutwardPage: React.FC = () => {
     };
   }, [searchQuery]);
 
-  // Load history when filters change
-  useEffect(() => {
-    loadHistory();
-  }, [historyFilters, historyPage, historyPageSize, debouncedSearch, token]);
-
-  const handleRowClick = (record: OutwardHistoryRecord) => {
-    if (record.id) {
-      navigate(`/workspace/outward/detail/${record.id}`);
-    }
-  };
-
   const dispatch = useAppDispatch();
 
-  const loadHistory = async () => {
+  const loadHistory = React.useCallback(async () => {
     if (!token) {
       toast.error('Token not available');
       return;
@@ -121,6 +110,17 @@ const OutwardPage: React.FC = () => {
       toast.error('Failed to load outward history');
     } finally {
       setLoadingHistory(false);
+    }
+  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch]);
+
+  // Load history when filters change
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  const handleRowClick = (record: OutwardHistoryRecord) => {
+    if (record.id) {
+      navigate(`/workspace/outward/detail/${record.id}`);
     }
   };
 

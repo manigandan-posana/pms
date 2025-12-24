@@ -28,7 +28,9 @@ const AdminInventoryPage: React.FC = () => {
 
     if (currentPath === "/admin/inventory" || currentPath === "/admin/inventory/") {
       // Default to Material Directory tab
-      setActiveIndex(0);
+      if (activeIndex !== 0) {
+        setActiveIndex(0);
+      }
       navigate("/admin/inventory/materials", { replace: true });
     } else {
       const index = tabRoutes.findIndex(route => currentPath.startsWith(route));
@@ -36,7 +38,8 @@ const AdminInventoryPage: React.FC = () => {
         setActiveIndex(index);
       }
     }
-  }, [activeIndex, location.pathname, navigate, tabRoutes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, navigate]);
 
   // Handle tab change and navigate
   const handleTabChange = (index: number) => {

@@ -74,20 +74,9 @@ const TransferPage: React.FC = () => {
     };
   }, [searchQuery]);
 
-  // Load history when filters change
-  useEffect(() => {
-    loadHistory();
-  }, [historyFilters, historyPage, historyPageSize, debouncedSearch, token]);
-
-  const handleRowClick = (record: TransferHistoryRecord) => {
-    if (record && (record as any).id) {
-      navigate(`/workspace/transfer/detail/${(record as any).id}`);
-    }
-  };
-
   const dispatch = useAppDispatch();
 
-  const loadHistory = async () => {
+  const loadHistory = React.useCallback(async () => {
     if (!token) {
       toast.error('Token not available');
       return;
@@ -114,6 +103,17 @@ const TransferPage: React.FC = () => {
       toast.error('Failed to load transfer history');
     } finally {
       setLoadingHistory(false);
+    }
+  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch]);
+
+  // Load history when filters change
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  const handleRowClick = (record: TransferHistoryRecord) => {
+    if (record && (record as any).id) {
+      navigate(`/workspace/transfer/detail/${(record as any).id}`);
     }
   };
 

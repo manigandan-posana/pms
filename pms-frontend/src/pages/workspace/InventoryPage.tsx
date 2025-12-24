@@ -30,7 +30,9 @@ const InventoryPage: React.FC = () => {
 
     if (currentPath === "/workspace/inventory" || currentPath === "/workspace/inventory/") {
       // Default to BOM tab
-      setActiveIndex(0);
+      if (activeIndex !== 0) {
+        setActiveIndex(0);
+      }
       navigate("/workspace/inventory/bom", { replace: true });
     } else {
       const index = tabRoutes.findIndex(route => currentPath.startsWith(route));
@@ -38,7 +40,8 @@ const InventoryPage: React.FC = () => {
         setActiveIndex(index);
       }
     }
-  }, [activeIndex, location.pathname, navigate, tabRoutes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, navigate]);
 
   // Handle tab change and navigate
   const handleTabChange = (index: number) => {

@@ -80,14 +80,9 @@ const InwardPage: React.FC = () => {
     };
   }, [searchQuery]);
 
-  // Load history when filters change
-  useEffect(() => {
-    loadHistory();
-  }, [historyFilters, historyPage, historyPageSize, debouncedSearch, token]);
-
   const dispatch = useAppDispatch();
 
-  const loadHistory = async () => {
+  const loadHistory = React.useCallback(async () => {
     if (!token) {
       toast.error('Token not available');
       return;
@@ -115,7 +110,12 @@ const InwardPage: React.FC = () => {
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch]);
+
+  // Load history when filters change
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   const handleRowClick = (record: InwardHistoryRecord) => {
     if (record.id) {

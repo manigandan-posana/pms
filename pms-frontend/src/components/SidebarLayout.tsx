@@ -19,7 +19,6 @@ import type { CSSObject, Theme } from "@mui/material";
 import {
   FiBox,
   FiBarChart2,
-  FiFile,
   FiTruck,
   FiSettings,
 } from "react-icons/fi";
@@ -161,6 +160,8 @@ const SidebarItem = React.memo(({ item, open, isActive }: { item: NavItem; open:
     </ListItem>
   );
 });
+
+SidebarItem.displayName = 'SidebarItem';
 
 const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   children,
