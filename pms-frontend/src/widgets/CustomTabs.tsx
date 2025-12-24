@@ -59,16 +59,20 @@ const CustomTabs: React.FC<CustomTabsProps> = ({ tabs, defaultIndex = 0, activeI
                     ))}
                 </Tabs>
             </Box>
-            {/* Only render the active tab content */}
-            <div
-                role="tabpanel"
-                id={`simple-tabpanel-${activeIndex}`}
-                aria-labelledby={`simple-tab-${activeIndex}`}
-            >
-                <Box sx={{ p: 1 }}>
-                    {tabs[activeIndex]?.content}
-                </Box>
-            </div>
+            {tabs.map((tab, index) => (
+                <div
+                    key={index}
+                    role="tabpanel"
+                    hidden={activeIndex !== index}
+                    id={`simple-tabpanel-${index}`}
+                    aria-labelledby={`simple-tab-${index}`}
+                    style={{ display: activeIndex === index ? 'block' : 'none' }}
+                >
+                    <Box sx={{ p: 1 }}>
+                        {tab.content}
+                    </Box>
+                </div>
+            ))}
         </Box>
     );
 };
