@@ -155,11 +155,14 @@ export default function Login() {
 
         console.log("User role:", userSession.role);
 
+        const canAccessAdmin =
+          userSession.role === "ADMIN" || (userSession.permissions || []).includes("ADMIN_ACCESS");
+
         // Determine landing page based on database role
         let target = workspacePath;
-        if (userSession.role === "ADMIN") {
+        if (canAccessAdmin) {
           target = adminDashboardPath;
-        } else if (userSession.role !== "USER") {
+        } else if (userSession.role !== "USER" && userSession.role !== "USER_PLUS") {
           throw new Error("User does not have a supported role");
         }
 
@@ -175,6 +178,7 @@ export default function Login() {
             accessToken: bearerToken,
             roles: [userSession.role],
             role: userSession.role,
+            permissions: userSession.permissions || [],
           })
         );
 

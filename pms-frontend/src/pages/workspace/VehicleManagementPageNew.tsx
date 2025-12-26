@@ -7,7 +7,6 @@ import { Box } from "@mui/material";
 const VehicleDirectoryPage = React.lazy(() => import("./VehicleDirectoryPage.tsx"));
 const FuelManagementPage = React.lazy(() => import("./FuelManagementPage.tsx"));
 const DailyLogPage = React.lazy(() => import("./DailyLogPage.tsx"));
-const SupplierManagementPage = React.lazy(() => import("./SupplierManagementPage.tsx"));
 
 const VehicleManagementPage: React.FC = () => {
     const navigate = useNavigate();
@@ -20,7 +19,6 @@ const VehicleManagementPage: React.FC = () => {
             "/workspace/vehicles/directory",
             "/workspace/vehicles/fuel",
             "/workspace/vehicles/daily-log",
-            "/workspace/vehicles/suppliers",
         ],
         []
     );
@@ -73,14 +71,6 @@ const VehicleManagementPage: React.FC = () => {
                 content: (
                     <Suspense fallback={<GlobalLoader overlay={false} className="py-12" />}>
                         <DailyLogPage />
-                    </Suspense>
-                ),
-            },
-            {
-                label: "Suppliers",
-                content: (
-                    <Suspense fallback={<GlobalLoader overlay={false} className="py-12" />}>
-                        <SupplierManagementPage />
                     </Suspense>
                 ),
             },

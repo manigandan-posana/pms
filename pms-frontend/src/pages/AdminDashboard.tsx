@@ -26,7 +26,7 @@ const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const store = useStore();
   const { instance } = useMsal();
-  const { name, email, role } = useSelector((state: any) => state.auth);
+  const { name, email, role, permissions } = useSelector((state: any) => state.auth);
   const [collapsed, setCollapsed] = useState(false);
 
   const pageHeading = useMemo(() => getAdminPageHeading(location.pathname), [location.pathname]);
@@ -45,6 +45,7 @@ const AdminDashboard: React.FC = () => {
         onLogout={handleLogout}
         userName={name || email}
         userRole={role}
+        permissions={permissions}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
       />
