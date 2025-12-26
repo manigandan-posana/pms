@@ -16,6 +16,7 @@ import {
 import type { Theme, CSSObject } from "@mui/material";
 import {
   FaLayerGroup,
+  FaHome,
   FaProjectDiagram,
   FaUsers,
   FaSignOutAlt,
@@ -31,6 +32,7 @@ export interface AdminSidebarProps {
   onLogout: () => void;
   userName?: string;
   userRole?: string;
+  permissions?: string[];
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -39,12 +41,14 @@ interface MenuItem {
   label: string;
   to: string;
   icon: React.ComponentType<{ size?: number }>;
+  permission?: string;
 }
 
 const ADMIN_MENU: MenuItem[] = [
-  { label: "Project Management", to: "/admin/project-details", icon: FaProjectDiagram },
-  { label: "Inventory", to: "/admin/inventory", icon: FaLayerGroup },
-  { label: "User Management", to: "/admin/users", icon: FaUsers },
+  { label: "Workspace", to: "/workspace/dashboard", icon: FaHome },
+  { label: "Project Management", to: "/admin/project-details", icon: FaProjectDiagram, permission: "PROJECT_MANAGEMENT" },
+  { label: "Inventory", to: "/admin/inventory", icon: FaLayerGroup, permission: "MATERIAL_MANAGEMENT" },
+  { label: "User Management", to: "/admin/users", icon: FaUsers, permission: "USER_MANAGEMENT" },
 ];
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -100,6 +104,8 @@ const StyledDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'ope
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onLogout,
+  permissions,
+  userRole,
   collapsed: collapsedProp,
   onToggleCollapse
 }) => {
@@ -116,6 +122,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     } else {
       setInternalCollapsed((prev) => !prev);
     }
+  };
+
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true;
+    if (userRole === "ADMIN") return true;
+    return (permissions || []).includes(permission);
   };
 
   return (
@@ -138,7 +150,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <Divider />
 
       <List sx={{ px: 1, py: 1, flexGrow: 1 }}>
-        {ADMIN_MENU.map(({ label, to, icon: Icon }) => {
+        {ADMIN_MENU.filter((item) => hasPermission(item.permission)).map(({ label, to, icon: Icon }) => {
           const isActive = location.pathname.startsWith(to);
 
           return (

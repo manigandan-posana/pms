@@ -45,6 +45,7 @@ export interface AdminProject {
   code?: string;
   name?: string;
   prefix?: string;
+  projectManager?: string;
   // extend with whatever fields your backend returns
   [key: string]: any;
 }

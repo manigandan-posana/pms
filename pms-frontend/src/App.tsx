@@ -16,7 +16,6 @@ import {
 import {
   adminBasePath,
   adminDashboardPath,
-  adminMaterialsPath,
   loginPath,
   workspacePath,
   workspaceRoutes,
@@ -45,21 +44,13 @@ function RequireAdmin({ canAccessAdmin }: { canAccessAdmin: boolean }) {
   return <Outlet />;
 }
 
-function RequireNonAdmin({ canAccessAdmin }: { canAccessAdmin: boolean }) {
-  const location = useLocation();
-  if (canAccessAdmin) {
-    return <Navigate to={adminMaterialsPath} replace state={{ from: location }} />;
-  }
-  return <Outlet />;
-}
-
 // ---------- Main App ----------
 
 export default function App() {
   const { instance } = useMsal();
   const store = useStore();
   const navigate = useNavigate();
-  const { accessToken, idToken, role, name, email } = useSelector(
+  const { accessToken, idToken, role, name, email, permissions } = useSelector(
     (state: any) => state.auth
   );
   const [loadingTimeout, setLoadingTimeout] = useState(false);
@@ -123,11 +114,27 @@ export default function App() {
       setLoadingTimeout(false);
     }
   }, [isAuthenticated, role, navigate]);
-  const canAccessAdmin = role === "ADMIN";
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true;
+    if (role === "ADMIN") return true;
+    return (permissions || []).includes(permission);
+  };
 
-  // Compute default route without hooks to avoid hook-order issues with early returns
+  // Admin area entry is allowed for full admins or any user with at least
+  // one admin route permission configured by an administrator (USER_PLUS).
+  const adminReachableRoutes = adminRoutes.filter(({ requiredPermission }) =>
+    hasPermission(requiredPermission)
+  );
+  const canAccessAdmin = role === "ADMIN" || adminReachableRoutes.length > 0;
+
+  // Compute a safe default route. If the user has any admin route access, use the
+  // first reachable admin path instead of hard-coding the dashboard (which might
+  // require permissions the user does not have), otherwise fall back to workspace.
+  const primaryAdminPath = adminReachableRoutes.length > 0
+    ? `${adminBasePath}/${adminReachableRoutes[0].path}`
+    : adminDashboardPath;
   const defaultProtectedRoute = canAccessAdmin
-    ? adminDashboardPath
+    ? primaryAdminPath
     : workspacePath;
 
   // Centralized logout handler that clears backend session, MSAL cache, Redux, and storage
@@ -184,44 +191,56 @@ export default function App() {
       <Routes>
         {/* Protected routes */}
         <Route element={<RequireAuth isAuthenticated={isAuthenticated} />}> 
-          {/* Workspace layout with nested routes - only for non-admin users */}
-          <Route element={<RequireNonAdmin canAccessAdmin={canAccessAdmin} />}>
-            <Route
-              path={workspacePath}
-              element={
-                <WorkspaceLayout
-                  token={accessToken || idToken}
-                  currentUser={
-                    name || email
-                      ? {
-                          id: "user",
-                          name: name || email,
-                          role: role,
-                        }
-                      : null
-                  }
-                  onLogout={logoutUser}
-                />
-              }
-            >
-              {workspaceRoutes.map(({ path, component: Component }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={<RouteComponent component={Component} />}
-                />
-              ))}
-            </Route>
+          {/* Workspace layout available to all authenticated users */}
+          <Route
+            path={workspacePath}
+            element={
+              <WorkspaceLayout
+                token={accessToken || idToken}
+                currentUser={
+                  name || email
+                    ? {
+                        id: "user",
+                        name: name || email,
+                        role: role,
+                      }
+                    : null
+                }
+                canAccessAdmin={canAccessAdmin}
+                onOpenAdmin={() => navigate(adminDashboardPath)}
+                onLogout={logoutUser}
+              />
+            }
+          >
+            {workspaceRoutes.map(({ path, component: Component, requiredPermission }) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  hasPermission(requiredPermission) ? (
+                    <RouteComponent component={Component} />
+                  ) : (
+                    <Navigate to={`${workspacePath}/dashboard`} replace />
+                  )
+                }
+              />
+            ))}
           </Route>
 
           {/* Admin routes (only for the ADMIN role) */}
           <Route element={<RequireAdmin canAccessAdmin={canAccessAdmin} />}>
             <Route path={adminBasePath} element={<AdminDashboard />}>
-              {adminRoutes.map(({ path, component: Component }) => (
+              {adminRoutes.map(({ path, component: Component, requiredPermission }) => (
                 <Route
                   key={path}
                   path={path}
-                  element={<RouteComponent component={Component} />}
+                  element={
+                    hasPermission(requiredPermission) ? (
+                      <RouteComponent component={Component} />
+                    ) : (
+                      <Navigate to={defaultProtectedRoute} replace />
+                    )
+                  }
                 />
               ))}
             </Route>
