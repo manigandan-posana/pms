@@ -15,10 +15,7 @@ import {
 } from "@mui/material";
 import type { Theme, CSSObject } from "@mui/material";
 import {
-  FaLayerGroup,
   FaHome,
-  FaProjectDiagram,
-  FaUsers,
   FaSignOutAlt,
   FaChevronLeft,
   FaChevronRight,
@@ -46,9 +43,6 @@ interface MenuItem {
 
 const ADMIN_MENU: MenuItem[] = [
   { label: "Workspace", to: "/workspace/dashboard", icon: FaHome },
-  { label: "Project Management", to: "/admin/project-details", icon: FaProjectDiagram, permission: "PROJECT_MANAGEMENT" },
-  { label: "Inventory", to: "/admin/inventory", icon: FaLayerGroup, permission: "MATERIAL_MANAGEMENT" },
-  { label: "User Management", to: "/admin/users", icon: FaUsers, permission: "USER_MANAGEMENT" },
 ];
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -136,7 +130,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {open && (
           <Box
             component={NavLink}
-            to="/admin/inventory"
+            to="/workspace/dashboard"
             sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 0.5 }}
           >
             <img src="/posana-logo.svg" alt="Logo" style={{ height: 24, width: 'auto' }} />

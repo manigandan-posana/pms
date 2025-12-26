@@ -314,10 +314,6 @@ public class AdminService {
         // Validate that project-scoped roles have at least one project assigned
         Role role = Role.valueOf(request.role());
         AccessType accessType = resolveAccessType(role, request.accessType());
-        boolean requiresProjects = accessType == AccessType.PROJECTS;
-        if (requiresProjects && (request.projectIds() == null || request.projectIds().isEmpty())) {
-            throw new BadRequestException("At least one project must be assigned for this role");
-        }
 
         UserAccount user = new UserAccount();
         applyUserFields(user, request.name(), role, accessType, request.permissions(), null);

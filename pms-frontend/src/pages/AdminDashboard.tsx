@@ -14,10 +14,6 @@ const getAdminPageHeading = (pathname: string): string => {
   if (pathname.includes("/admin/inward/")) return "Inward Transaction Details";
   if (pathname.includes("/admin/outward/")) return "Outward Transaction Details";
   if (pathname.includes("/admin/transfer/")) return "Transfer Transaction Details";
-  if (pathname.includes("/admin/inventory")) return "Inventory Management";
-  if (pathname.includes("/admin/allocated-materials")) return "Allocated Materials";
-  if (pathname.includes("/admin/projects")) return "Project Management";
-  if (pathname.includes("/admin/users")) return "User Management";
   return "Admin";
 };
 

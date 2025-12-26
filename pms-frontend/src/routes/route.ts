@@ -25,7 +25,6 @@ const ProjectManagementPage = lazy(() => import("../pages/admin/ProjectManagemen
 const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
 
 // Lazy‑loaded admin pages
-const AdminInventoryPage = lazy(() => import("../pages/admin/AdminInventoryPage"));
 const AllocatedMaterialsManagementPage = lazy(() => import("../pages/admin/AllocatedMaterialsManagementPage"));
 const UnifiedProjectDetailsPage = lazy(() => import("../pages/admin/UnifiedProjectDetailsPage"));
 const AdminInwardDetailPage = lazy(() => import("../pages/admin/AdminInwardDetailPage"));
@@ -47,8 +46,6 @@ export const loginPath = "/";
 export const workspacePath = "/workspace";
 export const adminBasePath = "/admin";
 export const adminDashboardPath = "/admin/project-details";
-export const adminMaterialsPath = "/admin/materials";
-export const adminAllocatedMaterialsPath = "/admin/allocated-materials";
 
 // ----- Workspace nested routes (/workspace/...) -----
 
@@ -90,11 +87,5 @@ export const adminRoutes: IRouteConfig[] = [
   { path: "inward/:id", component: AdminInwardDetailPage, requiredPermission: "ADMIN_ACCESS" },
   { path: "outward/:id", component: AdminOutwardDetailPage, requiredPermission: "ADMIN_ACCESS" },
   { path: "transfer/:id", component: AdminTransferDetailPage, requiredPermission: "ADMIN_ACCESS" },
-  { path: "inventory", component: AdminInventoryPage, requiredPermission: "MATERIAL_MANAGEMENT" },
-  { path: "inventory/materials", component: AdminInventoryPage, requiredPermission: "MATERIAL_MANAGEMENT" },
-  { path: "inventory/allocations", component: AdminInventoryPage, requiredPermission: "MATERIAL_ALLOCATION" },
-  { path: "inventory/allocated", component: AdminInventoryPage, requiredPermission: "ALLOCATED_MATERIALS_VIEW" },
   { path: "allocated-materials", component: AllocatedMaterialsManagementPage, requiredPermission: "ALLOCATED_MATERIALS_VIEW" },
-  { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
-  { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },
 ];

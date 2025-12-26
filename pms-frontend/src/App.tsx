@@ -15,7 +15,6 @@ import {
 } from "react-router-dom";
 import {
   adminBasePath,
-  adminDashboardPath,
   loginPath,
   workspacePath,
   workspaceRoutes,
@@ -127,15 +126,8 @@ export default function App() {
   );
   const canAccessAdmin = role === "ADMIN" || adminReachableRoutes.length > 0;
 
-  // Compute a safe default route. If the user has any admin route access, use the
-  // first reachable admin path instead of hard-coding the dashboard (which might
-  // require permissions the user does not have), otherwise fall back to workspace.
-  const primaryAdminPath = adminReachableRoutes.length > 0
-    ? `${adminBasePath}/${adminReachableRoutes[0].path}`
-    : adminDashboardPath;
-  const defaultProtectedRoute = canAccessAdmin
-    ? primaryAdminPath
-    : workspacePath;
+  // Default all roles to the unified workspace dashboard.
+  const defaultProtectedRoute = `${workspacePath}/dashboard`;
 
   // Centralized logout handler that clears backend session, MSAL cache, Redux, and storage
   const logoutUser = useMemo(
@@ -207,7 +199,7 @@ export default function App() {
                     : null
                 }
                 canAccessAdmin={canAccessAdmin}
-                onOpenAdmin={() => navigate(adminDashboardPath)}
+                onOpenAdmin={() => navigate(defaultProtectedRoute)}
                 onLogout={logoutUser}
               />
             }
