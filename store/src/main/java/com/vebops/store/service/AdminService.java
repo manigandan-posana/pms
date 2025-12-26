@@ -501,6 +501,7 @@ public class AdminService {
                     ? AccessType.valueOf(requestedAccessType)
                     : AccessType.PROJECTS;
             case USER -> AccessType.PROJECTS;
+            default -> throw new IllegalStateException("Unhandled role: " + role);
         };
     }
 
