@@ -274,6 +274,21 @@ export const UserManagementPage: React.FC = () => {
     },
   ];
 
+  const projectSelectionField = editingUser
+    ? {
+        name: "projectIds",
+        label: "Select Projects (only if Specific Projects)",
+        type: "select" as const,
+        multiple: true,
+        options: (availableProjects || []).map((p: any) => ({
+          label: `${p.code ? p.code + ' - ' : ''}${p.name}`,
+          value: String(p.id)
+        })),
+        disabled: formData.accessType === "ALL",
+        required: formData.accessType === "PROJECTS", // Require selection if specific
+      }
+    : null;
+
   const formFields = [
     {
       name: "name",
@@ -312,19 +327,8 @@ export const UserManagementPage: React.FC = () => {
       disabled: formData.role === "USER",
       helperText: formData.role === "ADMIN" ? "Admins automatically receive all permissions." : undefined,
     },
-    {
-      name: "projectIds",
-      label: "Select Projects (only if Specific Projects)",
-      type: "select" as const,
-      multiple: true,
-      options: (availableProjects || []).map((p: any) => ({
-        label: `${p.code ? p.code + ' - ' : ''}${p.name}`,
-        value: String(p.id)
-      })),
-      disabled: formData.accessType === "ALL",
-      required: formData.accessType === "PROJECTS", // Require selection if specific
-    },
-  ];
+    projectSelectionField,
+  ].filter((field): field is NonNullable<typeof field> => Boolean(field));
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

@@ -193,6 +193,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
       { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
       { id: "materials", label: "Material Directory", icon: FiDatabase, path: "/workspace/materials", requiredPermission: "MATERIAL_MANAGEMENT" },
+      { id: "projects", label: "Projects", icon: FiSettings, path: "/workspace/projects", requiredPermission: "PROJECT_MANAGEMENT" },
+      { id: "users", label: "Users", icon: FiUsers, path: "/workspace/users", requiredPermission: "USER_MANAGEMENT" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
       { id: "suppliers", label: "Suppliers", icon: FiUsers, path: "/workspace/suppliers" },
     ];

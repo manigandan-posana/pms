@@ -21,12 +21,12 @@ const VehicleDetailsPage = lazy(() => import("../pages/workspace/VehicleDetailsP
 const SupplierManagementPage = lazy(() => import("../pages/workspace/SupplierManagementPage"));
 const MaterialDirectoryPage = lazy(() => import("../pages/admin/MaterialDirectoryPage"));
 const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPage"));
+const ProjectManagementPage = lazy(() => import("../pages/admin/ProjectManagementPage"));
+const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
 
 // Lazy‑loaded admin pages
 const AdminInventoryPage = lazy(() => import("../pages/admin/AdminInventoryPage"));
 const AllocatedMaterialsManagementPage = lazy(() => import("../pages/admin/AllocatedMaterialsManagementPage"));
-const ProjectManagementPage = lazy(() => import("../pages/admin/ProjectManagementPage"));
-const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
 const UnifiedProjectDetailsPage = lazy(() => import("../pages/admin/UnifiedProjectDetailsPage"));
 const AdminInwardDetailPage = lazy(() => import("../pages/admin/AdminInwardDetailPage"));
 const AdminOutwardDetailPage = lazy(() => import("../pages/admin/AdminOutwardDetailPage"));
@@ -79,6 +79,8 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "vehicles/suppliers", component: SupplierManagementPage },
   { path: "suppliers", component: SupplierManagementPage },
   { path: "vehicles/details/:vehicleId", component: VehicleDetailsPage },
+  { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
+  { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },
 ];
 
 // ----- Admin nested routes (/admin/...) -----

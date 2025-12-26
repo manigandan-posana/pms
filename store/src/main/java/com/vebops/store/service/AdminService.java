@@ -163,6 +163,9 @@ public class AdminService {
         Project project = new Project();
         project.setCode(code);
         project.setName(request.name().trim());
+        if (StringUtils.hasText(request.projectManager())) {
+            project.setProjectManager(request.projectManager().trim());
+        }
         return toProjectDto(projectRepository.save(project));
     }
 
@@ -194,6 +197,10 @@ public class AdminService {
         }
         if (StringUtils.hasText(request.name())) {
             project.setName(request.name().trim());
+        }
+        if (request.projectManager() != null) {
+            String trimmedManager = request.projectManager().trim();
+            project.setProjectManager(StringUtils.hasText(trimmedManager) ? trimmedManager : null);
         }
         return toProjectDto(projectRepository.save(project));
     }
@@ -545,7 +552,11 @@ public class AdminService {
     }
 
     private ProjectDto toProjectDto(Project project) {
-        return new ProjectDto(String.valueOf(project.getId()), project.getCode(), project.getName());
+        return new ProjectDto(
+                String.valueOf(project.getId()),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager());
     }
 
     private int normalizePage(int page) {

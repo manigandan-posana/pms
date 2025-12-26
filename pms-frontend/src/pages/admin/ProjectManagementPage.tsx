@@ -18,6 +18,7 @@ interface Project {
   id: string | number;
   code?: string;
   name: string;
+  projectManager?: string;
 }
 
 const getStatusColor = (status?: string) => {
@@ -39,6 +40,7 @@ export const ProjectManagementPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [projectManager, setProjectManager] = useState('');
   const [saving, setSaving] = useState(false);
 
   const loading = status === 'loading';
@@ -50,12 +52,14 @@ export const ProjectManagementPage: React.FC = () => {
   const handleOpenCreate = () => {
     setEditingProject(null);
     setProjectName('');
+    setProjectManager('');
     setModalOpen(true);
   };
 
   const handleOpenEdit = (project: Project) => {
     setEditingProject(project);
     setProjectName(project.name);
+    setProjectManager(project.projectManager || '');
     setModalOpen(true);
   };
 
@@ -63,6 +67,7 @@ export const ProjectManagementPage: React.FC = () => {
     setModalOpen(false);
     setEditingProject(null);
     setProjectName('');
+    setProjectManager('');
   };
 
   const handleSave = async () => {
@@ -77,13 +82,13 @@ export const ProjectManagementPage: React.FC = () => {
         await dispatch(
           updateProject({
             projectId: editingProject.id,
-            payload: { name: projectName.trim() },
+            payload: { name: projectName.trim(), projectManager: projectManager.trim() },
           })
         ).unwrap();
         toast.success('Project updated successfully');
       } else {
         await dispatch(
-          createProject({ name: projectName.trim() })
+          createProject({ name: projectName.trim(), projectManager: projectManager.trim() })
         ).unwrap();
         toast.success('Project created successfully');
       }
@@ -134,6 +139,18 @@ export const ProjectManagementPage: React.FC = () => {
       body: (row: Project) => (
         <Typography variant="caption" sx={{ fontWeight: 500 }}>
           {row.name}
+        </Typography>
+      ),
+    },
+    {
+      field: 'projectManager',
+      header: 'Project Manager',
+      sortable: true,
+      filterable: true,
+      width: '30%',
+      body: (row: Project) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {row.projectManager || '—'}
         </Typography>
       ),
     },
@@ -198,6 +215,13 @@ export const ProjectManagementPage: React.FC = () => {
             placeholder="Enter project name"
             required
             autoFocus
+          />
+          <CustomTextField
+            label="Project Manager"
+            value={projectManager}
+            onChange={(e) => setProjectManager(e.target.value)}
+            placeholder="Enter project manager name"
+            className="mt-3"
           />
           {editingProject && (
             <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
