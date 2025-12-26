@@ -8,5 +8,6 @@ public record UserDto(
     String email,
     String role,
     String accessType,
-    List<ProjectDto> projects
+    List<ProjectDto> projects,
+    List<String> permissions
 ) {}
