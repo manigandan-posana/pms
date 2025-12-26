@@ -120,11 +120,21 @@ export default function App() {
     return (permissions || []).includes(permission);
   };
 
-  const canAccessAdmin = hasPermission("ADMIN_ACCESS");
+  // Admin area entry is allowed for full admins or any user with at least
+  // one admin route permission configured by an administrator (USER_PLUS).
+  const adminReachableRoutes = adminRoutes.filter(({ requiredPermission }) =>
+    hasPermission(requiredPermission)
+  );
+  const canAccessAdmin = role === "ADMIN" || adminReachableRoutes.length > 0;
 
-  // Compute default route without hooks to avoid hook-order issues with early returns
+  // Compute a safe default route. If the user has any admin route access, use the
+  // first reachable admin path instead of hard-coding the dashboard (which might
+  // require permissions the user does not have), otherwise fall back to workspace.
+  const primaryAdminPath = adminReachableRoutes.length > 0
+    ? `${adminBasePath}/${adminReachableRoutes[0].path}`
+    : adminDashboardPath;
   const defaultProtectedRoute = canAccessAdmin
-    ? adminDashboardPath
+    ? primaryAdminPath
     : workspacePath;
 
   // Centralized logout handler that clears backend session, MSAL cache, Redux, and storage
