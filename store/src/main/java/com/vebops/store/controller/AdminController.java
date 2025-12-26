@@ -5,11 +5,14 @@ import com.vebops.store.dto.CreateProjectRequest;
 import com.vebops.store.dto.CreateUserRequest;
 import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.dto.ProjectActivityDto;
+import com.vebops.store.dto.ProjectDetailsDto;
 import com.vebops.store.dto.ProjectDto;
+import com.vebops.store.dto.ProjectTeamAssignmentRequest;
 import com.vebops.store.dto.UpdateProjectRequest;
 import com.vebops.store.dto.UpdateUserRequest;
 import com.vebops.store.dto.UserDto;
 import com.vebops.store.exception.UnauthorizedException;
+import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.service.AdminService;
@@ -81,8 +84,14 @@ public class AdminController {
         @RequestParam(name = "startsWith", required = false) List<String> prefixes,
         @RequestParam(name = "allocation", required = false) String allocation
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
         return adminService.searchProjects(search, prefixes, allocation, page, size);
+    }
+
+    @GetMapping("/projects/{id}")
+    public ProjectDetailsDto projectDetails(@PathVariable Long id) {
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
+        return adminService.getProjectDetails(id);
     }
 
     @GetMapping("/projects/search")
@@ -98,7 +107,7 @@ public class AdminController {
 
     @PostMapping("/projects")
     public ProjectDto createProject(@Valid @RequestBody CreateProjectRequest request) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
         return adminService.createProject(request);
     }
 
@@ -107,14 +116,23 @@ public class AdminController {
         @PathVariable Long id,
         @Valid @RequestBody UpdateProjectRequest request
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
         return adminService.updateProject(id, request);
     }
 
     @DeleteMapping("/projects/{id}")
     public void deleteProject(@PathVariable Long id) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
         adminService.deleteProject(id);
+    }
+
+    @PutMapping("/projects/{id}/team")
+    public ProjectDetailsDto updateProjectTeam(
+            @PathVariable Long id,
+            @Valid @RequestBody List<ProjectTeamAssignmentRequest> assignments
+    ) {
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
+        return adminService.updateProjectTeam(id, assignments);
     }
 
     @GetMapping("/users")
@@ -126,7 +144,7 @@ public class AdminController {
         @RequestParam(name = "accessType", required = false) List<String> accessTypes,
         @RequestParam(name = "projectId", required = false) List<String> projectIds
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.USER_MANAGEMENT);
         return adminService.searchUsers(authService, search, roles, accessTypes, projectIds, page, size);
     }
 
@@ -144,7 +162,7 @@ public class AdminController {
 
     @PostMapping("/users")
     public UserDto createUser(@Valid @RequestBody CreateUserRequest request) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.USER_MANAGEMENT);
         return adminService.createUser(request, authService);
     }
 
@@ -153,25 +171,25 @@ public class AdminController {
         @PathVariable Long id,
         @Valid @RequestBody UpdateUserRequest request
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.USER_MANAGEMENT);
         return adminService.updateUser(id, request, authService);
     }
 
     @DeleteMapping("/users/{id}")
     public void deleteUser(@PathVariable Long id) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.USER_MANAGEMENT);
         adminService.deleteUser(id);
     }
 
     @GetMapping("/analytics")
     public AnalyticsDto analytics() {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.ADMIN_ACCESS);
         return adminService.analytics();
     }
 
     @GetMapping("/project-activity")
     public List<ProjectActivityDto> projectActivity() {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.ADMIN_ACCESS);
         return adminService.projectActivityOverview();
     }
 }

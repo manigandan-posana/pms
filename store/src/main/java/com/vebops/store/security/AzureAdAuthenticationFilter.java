@@ -53,6 +53,7 @@ public class AzureAdAuthenticationFilter extends OncePerRequestFilter {
                     request.setAttribute("userId", user.getId());
                     request.setAttribute("userEmail", user.getEmail());
                     request.setAttribute("userRole", user.getRole().name());
+                    request.setAttribute("userPermissions", user.getPermissions());
                 } else {
                     // Valid Microsoft token but user not in database
                     // Mark as unauthenticated for session endpoint to handle
