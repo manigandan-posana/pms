@@ -47,6 +47,7 @@ export interface AdminUser {
   role?: string;
   accessType?: string;
   projects?: string[];
+  permissions?: string[];
   // extend with more fields as needed
   [key: string]: any;
 }

@@ -1,12 +1,14 @@
 package com.vebops.store.security;
 
 import com.vebops.store.model.AccessType;
+import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.EnumSet;
 
 /**
  * Service for managing Azure AD user provisioning and role assignment.
@@ -42,6 +44,13 @@ public class AzureAdUserService {
                     if (adminEmail.equalsIgnoreCase(email) && existingUser.getRole() != Role.ADMIN) {
                         existingUser.setRole(Role.ADMIN);
                         existingUser.setAccessType(AccessType.ALL);
+                        existingUser.setPermissions(EnumSet.allOf(Permission.class));
+                        return userRepository.save(existingUser);
+                    }
+                    if (existingUser.getRole() == Role.ADMIN
+                        && (existingUser.getPermissions() == null
+                            || existingUser.getPermissions().size() != Permission.values().length)) {
+                        existingUser.setPermissions(EnumSet.allOf(Permission.class));
                         return userRepository.save(existingUser);
                     }
                     return existingUser;
@@ -66,6 +75,7 @@ public class AzureAdUserService {
         user.setPasswordHash("$2a$10$AZURE_AD_ADMIN_NO_PASSWORD_NEEDED");
         user.setRole(Role.ADMIN);
         user.setAccessType(AccessType.ALL);
+        user.setPermissions(EnumSet.allOf(Permission.class));
         return userRepository.save(user);
     }
 
