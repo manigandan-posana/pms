@@ -6,7 +6,10 @@ import com.vebops.store.dto.CreateUserRequest;
 import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.dto.ProjectActivityDto;
 import com.vebops.store.dto.ProjectActivityEntryDto;
+import com.vebops.store.dto.ProjectDetailsDto;
 import com.vebops.store.dto.ProjectDto;
+import com.vebops.store.dto.ProjectTeamAssignmentRequest;
+import com.vebops.store.dto.ProjectTeamMemberDto;
 import com.vebops.store.dto.UpdateProjectRequest;
 import com.vebops.store.dto.UpdateUserRequest;
 import com.vebops.store.dto.UserDto;
@@ -14,6 +17,9 @@ import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.NotFoundException;
 import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Project;
+import com.vebops.store.model.ProjectRole;
+import com.vebops.store.model.ProjectTeamMember;
+import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.BomLineRepository;
@@ -21,6 +27,7 @@ import com.vebops.store.repository.InwardRecordRepository;
 import com.vebops.store.repository.MaterialRepository;
 import com.vebops.store.repository.OutwardRecordRepository;
 import com.vebops.store.repository.ProjectRepository;
+import com.vebops.store.repository.ProjectTeamMemberRepository;
 import com.vebops.store.repository.TransferRecordRepository;
 import com.vebops.store.repository.UserRepository;
 import jakarta.persistence.criteria.Join;
@@ -28,6 +35,8 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +62,7 @@ public class AdminService {
     private final InwardRecordRepository inwardRecordRepository;
     private final OutwardRecordRepository outwardRecordRepository;
     private final TransferRecordRepository transferRecordRepository;
+    private final ProjectTeamMemberRepository projectTeamMemberRepository;
     private final PasswordEncoder passwordEncoder;
 
     private static final int MAX_RECENT_ITEMS = 5;
@@ -66,6 +76,7 @@ public class AdminService {
             InwardRecordRepository inwardRecordRepository,
             OutwardRecordRepository outwardRecordRepository,
             TransferRecordRepository transferRecordRepository,
+            ProjectTeamMemberRepository projectTeamMemberRepository,
             PasswordEncoder passwordEncoder) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -74,6 +85,7 @@ public class AdminService {
         this.inwardRecordRepository = inwardRecordRepository;
         this.outwardRecordRepository = outwardRecordRepository;
         this.transferRecordRepository = transferRecordRepository;
+        this.projectTeamMemberRepository = projectTeamMemberRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -161,6 +173,9 @@ public class AdminService {
         Project project = new Project();
         project.setCode(code);
         project.setName(request.name().trim());
+        if (StringUtils.hasText(request.projectManager())) {
+            project.setProjectManager(request.projectManager().trim());
+        }
         return toProjectDto(projectRepository.save(project));
     }
 
@@ -193,7 +208,66 @@ public class AdminService {
         if (StringUtils.hasText(request.name())) {
             project.setName(request.name().trim());
         }
+        if (request.projectManager() != null) {
+            String trimmedManager = request.projectManager().trim();
+            project.setProjectManager(StringUtils.hasText(trimmedManager) ? trimmedManager : null);
+        }
         return toProjectDto(projectRepository.save(project));
+    }
+
+    public ProjectDetailsDto getProjectDetails(Long id) {
+        Project project = projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found"));
+        List<ProjectTeamMemberDto> team = projectTeamMemberRepository
+                .findByProjectId(id)
+                .stream()
+                .map(this::toTeamDto)
+                .toList();
+        return new ProjectDetailsDto(
+                project.getId().toString(),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager(),
+                team);
+    }
+
+    public ProjectDetailsDto updateProjectTeam(Long projectId, List<ProjectTeamAssignmentRequest> assignments) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+        List<ProjectTeamAssignmentRequest> safeAssignments = assignments == null
+                ? List.of()
+                : assignments;
+
+        projectTeamMemberRepository.deleteByProjectId(projectId);
+
+        List<ProjectTeamMember> saved = new ArrayList<>();
+        Set<UserAccount> usersNeedingProjectAccess = new HashSet<>();
+        for (ProjectTeamAssignmentRequest assignment : safeAssignments) {
+            if (assignment == null || assignment.userId() == null || assignment.role() == null) {
+                continue;
+            }
+            UserAccount user = userRepository.findById(assignment.userId())
+                    .orElseThrow(() -> new NotFoundException("User not found for team assignment"));
+            user.getProjects().add(project);
+            usersNeedingProjectAccess.add(user);
+            ProjectTeamMember member = new ProjectTeamMember();
+            member.setProject(project);
+            member.setUser(user);
+            member.setRole(assignment.role());
+            saved.add(projectTeamMemberRepository.save(member));
+        }
+
+        if (!usersNeedingProjectAccess.isEmpty()) {
+            userRepository.saveAll(usersNeedingProjectAccess);
+        }
+
+        List<ProjectTeamMemberDto> team = saved.stream().map(this::toTeamDto).toList();
+        return new ProjectDetailsDto(
+                project.getId().toString(),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager(),
+                team);
     }
 
     public void deleteProject(Long id) {
@@ -304,13 +378,10 @@ public class AdminService {
 
         // Validate that project-scoped roles have at least one project assigned
         Role role = Role.valueOf(request.role());
-        boolean requiresProjects = (role == Role.USER);
-        if (requiresProjects && (request.projectIds() == null || request.projectIds().isEmpty())) {
-            throw new BadRequestException("At least one project must be assigned for this role");
-        }
+        AccessType accessType = resolveAccessType(role, request.accessType());
 
         UserAccount user = new UserAccount();
-        applyUserFields(user, request.name(), request.role(), request.accessType());
+        applyUserFields(user, request.name(), role, accessType, request.permissions(), null);
         user.setEmail(request.email().trim());
         // For Microsoft-authenticated users, no local password is stored. Use a fixed
         // placeholder so the NOT NULL constraint is satisfied but never used.
@@ -326,13 +397,9 @@ public class AdminService {
             user.setName(request.name().trim());
         }
         // Ignore password updates entirely for Microsoft-authenticated users.
-        Role nextRole = user.getRole();
-        if (StringUtils.hasText(request.role())) {
-            nextRole = Role.valueOf(request.role());
-            user.setRole(nextRole);
-        }
+        Role nextRole = StringUtils.hasText(request.role()) ? Role.valueOf(request.role()) : user.getRole();
         AccessType nextAccess = resolveAccessType(nextRole, request.accessType());
-        user.setAccessType(nextAccess);
+        applyUserFields(user, user.getName(), nextRole, nextAccess, request.permissions(), user.getPermissions());
         if (request.projectIds() != null) {
             assignProjects(user, request.projectIds());
         }
@@ -488,20 +555,46 @@ public class AdminService {
         }
     }
 
-    private void applyUserFields(UserAccount user, String name, String role, String accessType) {
+    private void applyUserFields(UserAccount user, String name, Role role, AccessType accessType, List<String> permissions, Set<Permission> currentPermissions) {
         user.setName(name.trim());
-        Role resolvedRole = StringUtils.hasText(role) ? Role.valueOf(role) : Role.USER;
-        user.setRole(resolvedRole);
-        user.setAccessType(resolveAccessType(resolvedRole, accessType));
+        user.setRole(role);
+        user.setAccessType(accessType);
+        user.setPermissions(resolvePermissions(role, permissions, currentPermissions));
     }
 
     private AccessType resolveAccessType(Role role, String requestedAccessType) {
         return switch (role) {
             case ADMIN -> AccessType.ALL;
-            case USER ->
-                StringUtils.hasText(requestedAccessType) ? AccessType.valueOf(requestedAccessType)
-                        : AccessType.PROJECTS;
+            case USER_PLUS -> StringUtils.hasText(requestedAccessType)
+                    ? AccessType.valueOf(requestedAccessType)
+                    : AccessType.PROJECTS;
+            case USER -> AccessType.PROJECTS;
+            default -> throw new IllegalStateException("Unhandled role: " + role);
         };
+    }
+
+    private Set<Permission> resolvePermissions(Role role, List<String> requestedPermissions, Set<Permission> currentPermissions) {
+        if (role == Role.ADMIN) {
+            return EnumSet.allOf(Permission.class);
+        }
+        if (role == Role.USER) {
+            return EnumSet.noneOf(Permission.class);
+        }
+        EnumSet<Permission> resolved = currentPermissions != null ? EnumSet.copyOf(currentPermissions) : EnumSet.noneOf(Permission.class);
+        if (requestedPermissions != null) {
+            resolved.clear();
+            for (String value : requestedPermissions) {
+                if (!StringUtils.hasText(value)) {
+                    continue;
+                }
+                try {
+                    resolved.add(Permission.valueOf(value));
+                } catch (IllegalArgumentException ex) {
+                    throw new BadRequestException("Unknown permission: " + value);
+                }
+            }
+        }
+        return resolved;
     }
 
     private void assignProjects(UserAccount user, List<String> projectIds) {
@@ -520,7 +613,20 @@ public class AdminService {
     }
 
     private ProjectDto toProjectDto(Project project) {
-        return new ProjectDto(String.valueOf(project.getId()), project.getCode(), project.getName());
+        return new ProjectDto(
+                String.valueOf(project.getId()),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager());
+    }
+
+    private ProjectTeamMemberDto toTeamDto(ProjectTeamMember member) {
+        return new ProjectTeamMemberDto(
+                member.getId() != null ? member.getId().toString() : null,
+                member.getUser() != null && member.getUser().getId() != null ? member.getUser().getId().toString() : null,
+                member.getUser() != null ? member.getUser().getName() : null,
+                member.getUser() != null ? member.getUser().getEmail() : null,
+                member.getRole() != null ? member.getRole().name() : null);
     }
 
     private int normalizePage(int page) {

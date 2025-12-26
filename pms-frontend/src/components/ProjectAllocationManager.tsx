@@ -403,25 +403,37 @@ interface ProjectAllocationManagerProps {
   projects?: Project[];
   materials?: Material[];
   defaultProjectId?: string | number | null;
+  selectedProjectId?: string | number | null;
   onBack?: () => void;
   onProjectBomUpdate?: (projectId: string) => void;
   onCreateMaterial?: () => void;
   showMultiAllocator?: boolean;
   showAllocationTable?: boolean;
+  allowProjectSelection?: boolean;
 }
 
 const emptyFormState: AllocationFormState = { open: false, mode: "create", materialId: "", quantity: "", saving: false, line: null };
 
 
 const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
-  token, projects = [], materials = [], defaultProjectId, onBack: _onBack, onProjectBomUpdate, onCreateMaterial: _onCreateMaterial, showMultiAllocator = true, showAllocationTable = true,
+  token,
+  projects = [],
+  materials = [],
+  defaultProjectId,
+  selectedProjectId: controlledProjectId,
+  onBack: _onBack,
+  onProjectBomUpdate,
+  onCreateMaterial: _onCreateMaterial,
+  showMultiAllocator = true,
+  showAllocationTable = true,
+  allowProjectSelection = true,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const storeToken = useSelector((state: RootState) => state.auth.token);
 
   const resolvedToken = token || storeToken || undefined;
 
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => normalizeId(defaultProjectId ?? projects[0]?.id));
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => normalizeId(controlledProjectId ?? defaultProjectId ?? projects[0]?.id));
   const [search, setSearch] = useState<string>("");
   const [filteredAllocations, setFilteredAllocations] = useState<AllocationWithMaterial[]>([]);
 
@@ -432,10 +444,15 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
   const sortedProjects = useMemo(() => [...projects].sort((a, b) => (a.code || "").localeCompare(b.code || "")), [projects]);
 
   useEffect(() => {
-    if (sortedProjects.length > 0 && !selectedProjectId) setSelectedProjectId(normalizeId(sortedProjects[0].id));
-  }, [sortedProjects, selectedProjectId]);
-
-  useEffect(() => { if (defaultProjectId) setSelectedProjectId(normalizeId(defaultProjectId)); }, [defaultProjectId]);
+    if (controlledProjectId !== undefined) {
+      setSelectedProjectId(normalizeId(controlledProjectId));
+      return;
+    }
+    if (!selectedProjectId) {
+      const fallback = normalizeId(defaultProjectId ?? sortedProjects[0]?.id);
+      setSelectedProjectId(fallback);
+    }
+  }, [controlledProjectId, defaultProjectId, selectedProjectId, sortedProjects]);
 
   const materialsMap = useMemo(() => {
     const map = new Map<string, Material>();
@@ -549,18 +566,41 @@ const ProjectAllocationManager: React.FC<ProjectAllocationManagerProps> = ({
     }
   ], [handleDelete, handleEditAllocation]);
 
+  const selectedProject = useMemo(() =>
+    sortedProjects.find((p) => normalizeId(p.id) === selectedProjectId),
+    [selectedProjectId, sortedProjects]
+  );
+
+  if (!selectedProjectId) {
+    return (
+      <div className="bg-white border border-amber-100 text-amber-800 rounded-lg p-4 shadow-sm">
+        <h3 className="text-sm font-semibold mb-1">Select a project to manage allocations</h3>
+        <p className="text-xs text-amber-700">Use the project selector in the top bar to pick a project.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4 justify-between">
-        <div className="flex flex-col gap-1 min-w-[300px] flex-1 max-w-md">
-          <CustomSelect
-            label="Select Project"
-            value={selectedProjectId}
-            options={sortedProjects.map(p => ({ label: `${p.code} - ${p.name}`, value: String(p.id) }))}
-            onChange={(value) => setSelectedProjectId(value)}
-            size="small"
-          />
-        </div>
+        {allowProjectSelection ? (
+          <div className="flex flex-col gap-1 min-w-[300px] flex-1 max-w-md">
+            <CustomSelect
+              label="Select Project"
+              value={selectedProjectId}
+              options={sortedProjects.map(p => ({ label: `${p.code} - ${p.name}`, value: String(p.id) }))}
+              onChange={(value) => setSelectedProjectId(value)}
+              size="small"
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1 min-w-[250px] flex-1 max-w-md">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Project</p>
+            <div className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800">
+              {selectedProject?.code ? `${selectedProject.code} - ${selectedProject.name}` : selectedProject?.name || 'Selected project'}
+            </div>
+          </div>
+        )}
         {showAllocationTable && (
           <div className="flex items-center gap-2 flex-1 max-w-sm">
             <CustomTextField

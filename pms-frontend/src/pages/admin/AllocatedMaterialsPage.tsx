@@ -8,6 +8,7 @@ import {
   loadAllocationData,
 } from "../../store/slices/adminAllocationsSlice";
 import type { RootState, AppDispatch } from "../../store/store";
+import { type WorkspaceState } from "../../store/slices/workspaceSlice";
 
 interface AllocatedMaterialsPageProps {
   onRequestReload?: () => void;
@@ -22,6 +23,7 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
   const { projects, materials, status, error } = useSelector(
     (state: RootState) => state.adminAllocations
   );
+  const { selectedProjectId } = useSelector<RootState, WorkspaceState>((state) => state.workspace as WorkspaceState);
 
   useEffect(() => {
     if (token) {
@@ -62,6 +64,8 @@ const AllocatedMaterialsPage: React.FC<AllocatedMaterialsPageProps> = ({
           projects={projects as any}
           materials={materials as any}
           onProjectBomUpdate={onRequestReload}
+          selectedProjectId={selectedProjectId || undefined}
+          allowProjectSelection={false}
           showMultiAllocator={false}
           showAllocationTable
         />

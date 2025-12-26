@@ -2,8 +2,10 @@ package com.vebops.store.util;
 
 import com.vebops.store.exception.ForbiddenException;
 import com.vebops.store.exception.UnauthorizedException;
+import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Set;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -51,6 +53,31 @@ public class AuthUtils {
         if (role == null || !role.equals(Role.ADMIN.name())) {
             throw new ForbiddenException("Admin access required");
         }
+    }
+
+    /**
+     * Requires either ADMIN role or at least one of the provided permissions.
+     */
+    public static void requireAdminOrPermission(Permission... required) {
+        String role = getUserRole();
+        if (Role.ADMIN.name().equals(role)) {
+            return;
+        }
+        if (required == null || required.length == 0) {
+            throw new ForbiddenException("Insufficient permissions");
+        }
+        HttpServletRequest request = getCurrentRequest();
+        @SuppressWarnings("unchecked")
+        Set<Permission> permissions = (Set<Permission>) request.getAttribute("userPermissions");
+        if (permissions == null) {
+            throw new UnauthorizedException("Authentication required");
+        }
+        for (Permission permission : required) {
+            if (permissions.contains(permission)) {
+                return;
+            }
+        }
+        throw new ForbiddenException("Insufficient permissions");
     }
 
     /**
