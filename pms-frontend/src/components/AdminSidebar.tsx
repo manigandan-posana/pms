@@ -16,6 +16,7 @@ import {
 import type { Theme, CSSObject } from "@mui/material";
 import {
   FaLayerGroup,
+  FaHome,
   FaProjectDiagram,
   FaUsers,
   FaSignOutAlt,
@@ -44,6 +45,7 @@ interface MenuItem {
 }
 
 const ADMIN_MENU: MenuItem[] = [
+  { label: "Workspace", to: "/workspace/dashboard", icon: FaHome },
   { label: "Project Management", to: "/admin/project-details", icon: FaProjectDiagram, permission: "PROJECT_MANAGEMENT" },
   { label: "Inventory", to: "/admin/inventory", icon: FaLayerGroup, permission: "MATERIAL_MANAGEMENT" },
   { label: "User Management", to: "/admin/users", icon: FaUsers, permission: "USER_MANAGEMENT" },

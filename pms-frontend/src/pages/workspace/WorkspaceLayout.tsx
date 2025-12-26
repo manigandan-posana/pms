@@ -25,6 +25,7 @@ interface WorkspaceLayoutProps {
   currentUser?: WorkspaceUser | null;
   onLogout?: () => void;
   onOpenAdmin?: () => void;
+  canAccessAdmin?: boolean;
 }
 
 // Helper to get page heading based on route
@@ -54,6 +55,7 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   currentUser,
   onLogout,
   onOpenAdmin,
+  canAccessAdmin,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -95,7 +97,7 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       userRole={currentUser?.role as string}
       userName={currentUser?.name as string}
       onLogout={onLogout}
-      onOpenAdmin={onOpenAdmin}
+      onOpenAdmin={canAccessAdmin ? onOpenAdmin : undefined}
       pageHeading={pageHeading}
       showProjectSelector={true}
     >

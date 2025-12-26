@@ -39,6 +39,7 @@ export interface SidebarLayoutProps {
   userName?: string;
   onLogout?: () => void;
   onOpenAdmin?: () => void;
+  canAccessAdmin?: boolean;
   pageHeading?: string;
   showProjectSelector?: boolean;
 }
@@ -167,13 +168,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   userName: _userName,
   onLogout,
   onOpenAdmin,
+  canAccessAdmin = false,
   pageHeading = "Inventory",
   showProjectSelector = false,
 }) => {
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
 
-  const isAdmin = userRole === "ADMIN" || userRole === "USER_PLUS";
   const open = !collapsed;
 
   const navItems: NavItem[] = useMemo(() => {
@@ -220,7 +221,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
         </List>
 
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
-          {onOpenAdmin && !isAdmin && (
+          {onOpenAdmin && canAccessAdmin && (
             <ListItem disablePadding sx={{ display: 'block', mb: 0.25 }}>
               <Tooltip title={!open ? "Admin" : ""} placement="right">
                 <StyledListItemButton

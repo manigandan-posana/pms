@@ -16,7 +16,6 @@ import {
 import {
   adminBasePath,
   adminDashboardPath,
-  adminMaterialsPath,
   loginPath,
   workspacePath,
   workspaceRoutes,
@@ -41,14 +40,6 @@ function RequireAdmin({ canAccessAdmin }: { canAccessAdmin: boolean }) {
   const location = useLocation();
   if (!canAccessAdmin) {
     return <Navigate to={workspacePath} replace state={{ from: location }} />;
-  }
-  return <Outlet />;
-}
-
-function RequireNonAdmin({ canAccessAdmin }: { canAccessAdmin: boolean }) {
-  const location = useLocation();
-  if (canAccessAdmin) {
-    return <Navigate to={adminMaterialsPath} replace state={{ from: location }} />;
   }
   return <Outlet />;
 }
@@ -123,7 +114,13 @@ export default function App() {
       setLoadingTimeout(false);
     }
   }, [isAuthenticated, role, navigate]);
-  const canAccessAdmin = role === "ADMIN" || (permissions || []).includes("ADMIN_ACCESS");
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true;
+    if (role === "ADMIN") return true;
+    return (permissions || []).includes(permission);
+  };
+
+  const canAccessAdmin = hasPermission("ADMIN_ACCESS");
 
   // Compute default route without hooks to avoid hook-order issues with early returns
   const defaultProtectedRoute = canAccessAdmin
@@ -184,44 +181,50 @@ export default function App() {
       <Routes>
         {/* Protected routes */}
         <Route element={<RequireAuth isAuthenticated={isAuthenticated} />}> 
-          {/* Workspace layout with nested routes - only for non-admin users */}
-          <Route element={<RequireNonAdmin canAccessAdmin={canAccessAdmin} />}>
-            <Route
-              path={workspacePath}
-              element={
-                <WorkspaceLayout
-                  token={accessToken || idToken}
-                  currentUser={
-                    name || email
-                      ? {
-                          id: "user",
-                          name: name || email,
-                          role: role,
-                        }
-                      : null
-                  }
-                  onLogout={logoutUser}
-                />
-              }
-            >
-              {workspaceRoutes.map(({ path, component: Component }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={<RouteComponent component={Component} />}
-                />
-              ))}
-            </Route>
+          {/* Workspace layout available to all authenticated users */}
+          <Route
+            path={workspacePath}
+            element={
+              <WorkspaceLayout
+                token={accessToken || idToken}
+                currentUser={
+                  name || email
+                    ? {
+                        id: "user",
+                        name: name || email,
+                        role: role,
+                      }
+                    : null
+                }
+                canAccessAdmin={canAccessAdmin}
+                onOpenAdmin={() => navigate(adminDashboardPath)}
+                onLogout={logoutUser}
+              />
+            }
+          >
+            {workspaceRoutes.map(({ path, component: Component }) => (
+              <Route
+                key={path}
+                path={path}
+                element={<RouteComponent component={Component} />}
+              />
+            ))}
           </Route>
 
           {/* Admin routes (only for the ADMIN role) */}
           <Route element={<RequireAdmin canAccessAdmin={canAccessAdmin} />}>
             <Route path={adminBasePath} element={<AdminDashboard />}>
-              {adminRoutes.map(({ path, component: Component }) => (
+              {adminRoutes.map(({ path, component: Component, requiredPermission }) => (
                 <Route
                   key={path}
                   path={path}
-                  element={<RouteComponent component={Component} />}
+                  element={
+                    hasPermission(requiredPermission) ? (
+                      <RouteComponent component={Component} />
+                    ) : (
+                      <Navigate to={defaultProtectedRoute} replace />
+                    )
+                  }
                 />
               ))}
             </Route>
