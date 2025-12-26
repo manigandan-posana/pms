@@ -5,5 +5,6 @@ import jakarta.validation.constraints.Size;
 
 public record CreateProjectRequest(
     @Size(max = 40, message = "Project code is too long") String code,
-    @NotBlank(message = "Project name is required") @Size(max = 255, message = "Project name is too long") String name
+    @NotBlank(message = "Project name is required") @Size(max = 255, message = "Project name is too long") String name,
+    @Size(max = 255, message = "Project manager name is too long") String projectManager
 ) {}

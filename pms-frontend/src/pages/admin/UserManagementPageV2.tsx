@@ -13,7 +13,7 @@ import type { RootState, AppDispatch } from "../../store/store";
 import AdminDataTable from "../../components/AdminDataTable";
 import AdminFormModal from "../../components/AdminFormModal";
 
-export type UserRole = "ADMIN" | "USER";
+export type UserRole = "ADMIN" | "USER_PLUS" | "USER";
 export type AccessType = "ALL" | "PROJECTS";
 
 interface User {
@@ -28,6 +28,7 @@ interface User {
 
 const roleOptions = [
   { label: "Admin", value: "ADMIN" },
+  { label: "User Plus", value: "USER_PLUS" },
   { label: "User", value: "USER" },
 ];
 
@@ -198,7 +199,7 @@ export const UserManagementPage: React.FC = () => {
         <Chip
           label={row.role}
           size="small"
-          color={row.role === "ADMIN" ? "error" : "primary"}
+          color={row.role === "ADMIN" ? "error" : row.role === "USER_PLUS" ? "warning" : "primary"}
           sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }}
         />
       ),

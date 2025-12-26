@@ -8,7 +8,9 @@ import com.vebops.store.dto.OutwardRequest;
 import com.vebops.store.dto.OutwardUpdateRequest;
 import com.vebops.store.dto.TransferRequest;
 import com.vebops.store.exception.BadRequestException;
+import com.vebops.store.exception.ForbiddenException;
 import com.vebops.store.exception.NotFoundException;
+import com.vebops.store.model.AccessType;
 import com.vebops.store.model.BomLine;
 import com.vebops.store.model.InwardLine;
 import com.vebops.store.model.InwardRecord;
@@ -19,6 +21,7 @@ import com.vebops.store.model.OutwardRecord;
 import com.vebops.store.model.Project;
 import com.vebops.store.model.TransferLine;
 import com.vebops.store.model.TransferRecord;
+import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.BomLineRepository;
 import com.vebops.store.repository.InwardLineRepository;
 import com.vebops.store.repository.InwardRecordRepository;
@@ -86,11 +89,12 @@ public class InventoryService {
     }
 
     @Transactional
-    public void registerInward(InwardRequest request) {
+    public void registerInward(UserAccount user, InwardRequest request) {
         log.info("registerInward: Processing inward request for projectId={}, lines={}",
                 request.projectId(), request.lines() != null ? request.lines().size() : 0);
 
         Project project = requireProject(request.projectId());
+        assertProjectAccess(user, project);
         if (request.lines() == null || request.lines().isEmpty()) {
             log.warn("registerInward: No inward lines provided");
             throw new BadRequestException("At least one inward line is required");
@@ -212,12 +216,13 @@ public class InventoryService {
     }
 
     @Transactional
-    public void registerOutward(OutwardRequest request) {
+    public void registerOutward(UserAccount user, OutwardRequest request) {
         if (request.lines() == null || request.lines().isEmpty()) {
             throw new BadRequestException("At least one outward line is required");
         }
 
         Project project = requireProject(request.projectId());
+        assertProjectAccess(user, project);
         LocalDate requestedDate = parseDate(request.date());
         final LocalDate entryDate = requestedDate != null ? requestedDate : LocalDate.now();
 
@@ -515,12 +520,14 @@ public class InventoryService {
     }
 
     @Transactional
-    public void registerTransfer(TransferRequest request) {
+    public void registerTransfer(UserAccount user, TransferRequest request) {
         if (!StringUtils.hasText(request.toProjectId())) {
             throw new BadRequestException("Destination project is required");
         }
         Project fromProject = requireProject(request.fromProjectId());
         Project toProject = requireProject(request.toProjectId());
+        assertProjectAccess(user, fromProject);
+        assertProjectAccess(user, toProject);
 
         if (request.lines() == null || request.lines().isEmpty()) {
             throw new BadRequestException("At least one transfer line is required");
@@ -590,6 +597,7 @@ public class InventoryService {
         // transfer
         // Bypass closed check to allow transfers even when outward register is closed
         registerOutward(
+                user,
                 new OutwardRequest(
                         null,
                         request.fromProjectId(),
@@ -602,6 +610,7 @@ public class InventoryService {
                 ));
 
         registerInward(
+                user,
                 new InwardRequest(
                         null,
                         request.toProjectId(),
@@ -631,6 +640,21 @@ public class InventoryService {
     private String buildDailyCode(String prefix, LocalDate date, long sequence) {
         long safeSequence = Math.max(1, sequence);
         return String.format("%s-%s-%03d", prefix, CODE_DATE.format(date), safeSequence);
+    }
+
+    private void assertProjectAccess(UserAccount user, Project project) {
+        if (user == null) {
+            throw new ForbiddenException("Authentication required");
+        }
+        if (user.getAccessType() == AccessType.ALL) {
+            return;
+        }
+        boolean allowed = user.getProjects()
+                .stream()
+                .anyMatch(assigned -> assigned.getId().equals(project.getId()));
+        if (!allowed) {
+            throw new ForbiddenException("You do not have access to this project");
+        }
     }
 
     private Project requireProject(String id) {

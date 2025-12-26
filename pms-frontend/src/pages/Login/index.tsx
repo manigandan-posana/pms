@@ -9,10 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { jwtDecode } from "../../utils/jwtDecode";
 import { setUser } from "../../store/slices/authSlice";
-import {
-  adminDashboardPath,
-  workspacePath,
-} from "../../routes/route";
+import { workspacePath } from "../../routes/route";
 
 /*
  * Login page with Microsoft authentication.
@@ -156,10 +153,8 @@ export default function Login() {
         console.log("User role:", userSession.role);
 
         // Determine landing page based on database role
-        let target = workspacePath;
-        if (userSession.role === "ADMIN") {
-          target = adminDashboardPath;
-        } else if (userSession.role !== "USER") {
+        const target = `${workspacePath}/dashboard`;
+        if (userSession.role !== "USER" && userSession.role !== "USER_PLUS" && userSession.role !== "ADMIN") {
           throw new Error("User does not have a supported role");
         }
 
@@ -175,6 +170,7 @@ export default function Login() {
             accessToken: bearerToken,
             roles: [userSession.role],
             role: userSession.role,
+            permissions: userSession.permissions || [],
           })
         );
 

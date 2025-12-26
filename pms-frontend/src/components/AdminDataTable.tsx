@@ -37,6 +37,7 @@ interface AdminDataTableProps<T extends DataRow = DataRow> {
   scrollable?: boolean;
   scrollHeight?: string;
   className?: string;
+  onRowClick?: (row: T) => void;
 }
 
 export const AdminDataTable = <T extends DataRow = DataRow>({
@@ -54,6 +55,7 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
   rows = 10,
   onPageChange,
   className = "",
+  onRowClick,
 }: AdminDataTableProps<T>) => {
   const [filterText, setFilterText] = useState("");
 
@@ -166,6 +168,7 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
         }}
         rowsPerPageOptions={[10, 20, 50]}
         emptyMessage="No records found."
+        onRowClick={onRowClick as any}
       />
     </div>
   );
