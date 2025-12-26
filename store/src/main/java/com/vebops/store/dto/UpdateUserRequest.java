@@ -14,5 +14,6 @@ public record UpdateUserRequest(
     @Size(min = 6, max = 64, message = "Password must be between 6 and 64 characters") String password,
     @NotBlank(message = "Role is required") String role,
     @NotBlank(message = "Access type is required") String accessType,
-    List<String> projectIds
+    List<String> projectIds,
+    List<String> permissions
 ) {}

@@ -36,6 +36,7 @@ export interface IRouteConfig {
   path: string;              // path relative to parent (for nested routes)
   component: ElementType;
   layout?: ElementType;      // optional layout wrapper, if you want to use it later
+  requiredPermission?: string; // optional permission required to view the route
 }
 
 // ----- Path constants -----
@@ -77,15 +78,15 @@ export const workspaceRoutes: IRouteConfig[] = [
 // ----- Admin nested routes (/admin/...) -----
 
 export const adminRoutes: IRouteConfig[] = [
-  { path: "project-details", component: UnifiedProjectDetailsPage },
-  { path: "inward/:id", component: AdminInwardDetailPage },
-  { path: "outward/:id", component: AdminOutwardDetailPage },
-  { path: "transfer/:id", component: AdminTransferDetailPage },
-  { path: "inventory", component: AdminInventoryPage },
-  { path: "inventory/materials", component: AdminInventoryPage },
-  { path: "inventory/allocations", component: AdminInventoryPage },
-  { path: "inventory/allocated", component: AdminInventoryPage },
-  { path: "allocated-materials", component: AllocatedMaterialsManagementPage },
-  { path: "projects", component: ProjectManagementPage },
-  { path: "users", component: UserManagementPage },
+  { path: "project-details", component: UnifiedProjectDetailsPage, requiredPermission: "ADMIN_ACCESS" },
+  { path: "inward/:id", component: AdminInwardDetailPage, requiredPermission: "ADMIN_ACCESS" },
+  { path: "outward/:id", component: AdminOutwardDetailPage, requiredPermission: "ADMIN_ACCESS" },
+  { path: "transfer/:id", component: AdminTransferDetailPage, requiredPermission: "ADMIN_ACCESS" },
+  { path: "inventory", component: AdminInventoryPage, requiredPermission: "MATERIAL_MANAGEMENT" },
+  { path: "inventory/materials", component: AdminInventoryPage, requiredPermission: "MATERIAL_MANAGEMENT" },
+  { path: "inventory/allocations", component: AdminInventoryPage, requiredPermission: "MATERIAL_ALLOCATION" },
+  { path: "inventory/allocated", component: AdminInventoryPage, requiredPermission: "ALLOCATED_MATERIALS_VIEW" },
+  { path: "allocated-materials", component: AllocatedMaterialsManagementPage, requiredPermission: "ALLOCATED_MATERIALS_VIEW" },
+  { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
+  { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },
 ];

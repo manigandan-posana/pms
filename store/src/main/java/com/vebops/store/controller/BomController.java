@@ -5,7 +5,7 @@ import com.vebops.store.dto.BomAllocationRequest;
 import com.vebops.store.dto.BomLineDto;
 import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.exception.BadRequestException;
-import com.vebops.store.model.Role;
+import com.vebops.store.model.Permission;
 import com.vebops.store.service.AuthService;
 import com.vebops.store.service.BomService;
 import com.vebops.store.util.AuthUtils;
@@ -52,7 +52,7 @@ public class BomController {
         @RequestParam(name = "search", required = false) String search,
         @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
         return bomService.listLines(projectId, page, size, search, inStockOnly);
     }
 
@@ -60,7 +60,7 @@ public class BomController {
     public List<AllocationOverviewDto> listAllocations(
         @RequestParam(name = "search", required = false) String search
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.ALLOCATED_MATERIALS_VIEW, Permission.MATERIAL_ALLOCATION);
         return bomService.listAllocations(search);
     }
 
@@ -69,7 +69,7 @@ public class BomController {
         @PathVariable String projectId,
         @RequestBody BomAllocationRequest request
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
         double quantity = request != null ? request.quantity() : 0d;
         String resolvedProjectId = (request != null && StringUtils.hasText(request.projectId())) ? request.projectId() : projectId;
         String resolvedMaterialId = request != null ? request.materialId() : null;
@@ -85,7 +85,7 @@ public class BomController {
         @PathVariable String materialId,
         @RequestBody BomAllocationRequest request
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
         double quantity = request != null ? request.quantity() : 0d;
         String resolvedProjectId = (request != null && StringUtils.hasText(request.projectId())) ? request.projectId() : projectId;
         String resolvedMaterialId = (request != null && StringUtils.hasText(request.materialId())) ? request.materialId() : materialId;
@@ -97,7 +97,7 @@ public class BomController {
         @PathVariable String projectId,
         @PathVariable String materialId
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
         bomService.deleteLine(projectId, materialId);
     }
 }

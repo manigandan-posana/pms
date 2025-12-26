@@ -4,6 +4,7 @@ import com.vebops.store.dto.InventoryCodesResponse;
 import com.vebops.store.dto.InwardRequest;
 import com.vebops.store.dto.OutwardRequest;
 import com.vebops.store.dto.TransferRequest;
+import com.vebops.store.model.UserAccount;
 import com.vebops.store.service.AuthService;
 import com.vebops.store.service.InventoryService;
 import com.vebops.store.util.AuthUtils;
@@ -41,8 +42,9 @@ public class InventoryController {
         @RequestBody InwardRequest request
     ) {
         log.info("createInward: Received inward request with projectId={}", request.projectId());
-        AuthUtils.requireUserId();
-        inventoryService.registerInward(request);
+        Long userId = AuthUtils.requireUserId();
+        UserAccount user = authService.getUserById(userId);
+        inventoryService.registerInward(user, request);
         log.info("createInward: Successfully created inward record");
         return ResponseEntity.ok().build();
     }
@@ -53,8 +55,9 @@ public class InventoryController {
     ) {
         log.info("createOutward: Received outward request with projectId={}, issueTo={}, status={}, lines={}",
                 request.projectId(), request.issueTo(), request.status(), request.lines() != null ? request.lines().size() : 0);
-        AuthUtils.requireUserId();
-        inventoryService.registerOutward(request);
+        Long userId = AuthUtils.requireUserId();
+        UserAccount user = authService.getUserById(userId);
+        inventoryService.registerOutward(user, request);
         log.info("createOutward: Successfully created outward record");
         return ResponseEntity.ok().build();
     }
@@ -63,8 +66,9 @@ public class InventoryController {
     public ResponseEntity<Void> createTransfer(
         @RequestBody TransferRequest request
     ) {
-        AuthUtils.requireUserId();
-        inventoryService.registerTransfer(request);
+        Long userId = AuthUtils.requireUserId();
+        UserAccount user = authService.getUserById(userId);
+        inventoryService.registerTransfer(user, request);
         return ResponseEntity.ok().build();
     }
 }
