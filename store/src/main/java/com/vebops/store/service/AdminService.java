@@ -14,6 +14,7 @@ import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.NotFoundException;
 import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Project;
+import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.BomLineRepository;
@@ -28,6 +29,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -161,6 +163,9 @@ public class AdminService {
         Project project = new Project();
         project.setCode(code);
         project.setName(request.name().trim());
+        if (StringUtils.hasText(request.projectManager())) {
+            project.setProjectManager(request.projectManager().trim());
+        }
         return toProjectDto(projectRepository.save(project));
     }
 
@@ -192,6 +197,10 @@ public class AdminService {
         }
         if (StringUtils.hasText(request.name())) {
             project.setName(request.name().trim());
+        }
+        if (request.projectManager() != null) {
+            String trimmedManager = request.projectManager().trim();
+            project.setProjectManager(StringUtils.hasText(trimmedManager) ? trimmedManager : null);
         }
         return toProjectDto(projectRepository.save(project));
     }
@@ -304,13 +313,10 @@ public class AdminService {
 
         // Validate that project-scoped roles have at least one project assigned
         Role role = Role.valueOf(request.role());
-        boolean requiresProjects = (role == Role.USER);
-        if (requiresProjects && (request.projectIds() == null || request.projectIds().isEmpty())) {
-            throw new BadRequestException("At least one project must be assigned for this role");
-        }
+        AccessType accessType = resolveAccessType(role, request.accessType());
 
         UserAccount user = new UserAccount();
-        applyUserFields(user, request.name(), request.role(), request.accessType());
+        applyUserFields(user, request.name(), role, accessType, request.permissions(), null);
         user.setEmail(request.email().trim());
         // For Microsoft-authenticated users, no local password is stored. Use a fixed
         // placeholder so the NOT NULL constraint is satisfied but never used.
@@ -326,13 +332,9 @@ public class AdminService {
             user.setName(request.name().trim());
         }
         // Ignore password updates entirely for Microsoft-authenticated users.
-        Role nextRole = user.getRole();
-        if (StringUtils.hasText(request.role())) {
-            nextRole = Role.valueOf(request.role());
-            user.setRole(nextRole);
-        }
+        Role nextRole = StringUtils.hasText(request.role()) ? Role.valueOf(request.role()) : user.getRole();
         AccessType nextAccess = resolveAccessType(nextRole, request.accessType());
-        user.setAccessType(nextAccess);
+        applyUserFields(user, user.getName(), nextRole, nextAccess, request.permissions(), user.getPermissions());
         if (request.projectIds() != null) {
             assignProjects(user, request.projectIds());
         }
@@ -488,20 +490,46 @@ public class AdminService {
         }
     }
 
-    private void applyUserFields(UserAccount user, String name, String role, String accessType) {
+    private void applyUserFields(UserAccount user, String name, Role role, AccessType accessType, List<String> permissions, Set<Permission> currentPermissions) {
         user.setName(name.trim());
-        Role resolvedRole = StringUtils.hasText(role) ? Role.valueOf(role) : Role.USER;
-        user.setRole(resolvedRole);
-        user.setAccessType(resolveAccessType(resolvedRole, accessType));
+        user.setRole(role);
+        user.setAccessType(accessType);
+        user.setPermissions(resolvePermissions(role, permissions, currentPermissions));
     }
 
     private AccessType resolveAccessType(Role role, String requestedAccessType) {
         return switch (role) {
             case ADMIN -> AccessType.ALL;
-            case USER ->
-                StringUtils.hasText(requestedAccessType) ? AccessType.valueOf(requestedAccessType)
-                        : AccessType.PROJECTS;
+            case USER_PLUS -> StringUtils.hasText(requestedAccessType)
+                    ? AccessType.valueOf(requestedAccessType)
+                    : AccessType.PROJECTS;
+            case USER -> AccessType.PROJECTS;
+            default -> throw new IllegalStateException("Unhandled role: " + role);
         };
+    }
+
+    private Set<Permission> resolvePermissions(Role role, List<String> requestedPermissions, Set<Permission> currentPermissions) {
+        if (role == Role.ADMIN) {
+            return EnumSet.allOf(Permission.class);
+        }
+        if (role == Role.USER) {
+            return EnumSet.noneOf(Permission.class);
+        }
+        EnumSet<Permission> resolved = currentPermissions != null ? EnumSet.copyOf(currentPermissions) : EnumSet.noneOf(Permission.class);
+        if (requestedPermissions != null) {
+            resolved.clear();
+            for (String value : requestedPermissions) {
+                if (!StringUtils.hasText(value)) {
+                    continue;
+                }
+                try {
+                    resolved.add(Permission.valueOf(value));
+                } catch (IllegalArgumentException ex) {
+                    throw new BadRequestException("Unknown permission: " + value);
+                }
+            }
+        }
+        return resolved;
     }
 
     private void assignProjects(UserAccount user, List<String> projectIds) {
@@ -520,7 +548,11 @@ public class AdminService {
     }
 
     private ProjectDto toProjectDto(Project project) {
-        return new ProjectDto(String.valueOf(project.getId()), project.getCode(), project.getName());
+        return new ProjectDto(
+                String.valueOf(project.getId()),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager());
     }
 
     private int normalizePage(int page) {

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { Box, Typography, Paper, Chip, Alert } from '@mui/material';
+import { Box, Typography, Paper, Chip, Alert, MenuItem } from '@mui/material';
 import AdminDataTable from '../../components/AdminDataTable';
 import CustomModal from '../../widgets/CustomModal';
 import CustomTextField from '../../widgets/CustomTextField';
@@ -13,11 +13,13 @@ import {
   updateProject,
   deleteProject,
 } from '../../store/slices/adminProjectsSlice';
+import { searchUsers } from '../../store/slices/adminUsersSlice';
 
 interface Project {
   id: string | number;
   code?: string;
   name: string;
+  projectManager?: string;
 }
 
 const getStatusColor = (status?: string) => {
@@ -35,27 +37,46 @@ export const ProjectManagementPage: React.FC = () => {
   const { items: projects, totalItems, status, error } = useSelector(
     (state: RootState) => state.adminProjects
   );
+  const availableUsers = useSelector((state: RootState) => (state as any).adminUsers?.items || []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [projectManager, setProjectManager] = useState('');
   const [saving, setSaving] = useState(false);
 
   const loading = status === 'loading';
 
   useEffect(() => {
     dispatch(searchProjects({ page: 1, size: 100 }));
+    dispatch(searchUsers({ page: 1, size: 200 }));
   }, [dispatch]);
+
+  const projectManagerOptions = useMemo(
+    () =>
+      (availableUsers || []).map((user: any) => {
+        const displayLabel = user.name || user.email || `User ${user.id}`;
+        return { label: `${displayLabel}${user.email && user.name ? ` (${user.email})` : ''}`, value: displayLabel };
+      }),
+    [availableUsers]
+  );
+
+  const hasManagerOption = useMemo(
+    () => projectManager && projectManagerOptions.some((option) => option.value === projectManager),
+    [projectManager, projectManagerOptions]
+  );
 
   const handleOpenCreate = () => {
     setEditingProject(null);
     setProjectName('');
+    setProjectManager('');
     setModalOpen(true);
   };
 
   const handleOpenEdit = (project: Project) => {
     setEditingProject(project);
     setProjectName(project.name);
+    setProjectManager(project.projectManager || '');
     setModalOpen(true);
   };
 
@@ -63,6 +84,7 @@ export const ProjectManagementPage: React.FC = () => {
     setModalOpen(false);
     setEditingProject(null);
     setProjectName('');
+    setProjectManager('');
   };
 
   const handleSave = async () => {
@@ -77,13 +99,13 @@ export const ProjectManagementPage: React.FC = () => {
         await dispatch(
           updateProject({
             projectId: editingProject.id,
-            payload: { name: projectName.trim() },
+            payload: { name: projectName.trim(), projectManager: projectManager.trim() },
           })
         ).unwrap();
         toast.success('Project updated successfully');
       } else {
         await dispatch(
-          createProject({ name: projectName.trim() })
+          createProject({ name: projectName.trim(), projectManager: projectManager.trim() })
         ).unwrap();
         toast.success('Project created successfully');
       }
@@ -134,6 +156,18 @@ export const ProjectManagementPage: React.FC = () => {
       body: (row: Project) => (
         <Typography variant="caption" sx={{ fontWeight: 500 }}>
           {row.name}
+        </Typography>
+      ),
+    },
+    {
+      field: 'projectManager',
+      header: 'Project Manager',
+      sortable: true,
+      filterable: true,
+      width: '30%',
+      body: (row: Project) => (
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {row.projectManager || '—'}
         </Typography>
       ),
     },
@@ -199,6 +233,26 @@ export const ProjectManagementPage: React.FC = () => {
             required
             autoFocus
           />
+          <CustomTextField
+            label="Project Manager"
+            value={projectManager}
+            onChange={(e) => setProjectManager(e.target.value)}
+            className="mt-3"
+            select
+            SelectProps={{ displayEmpty: true }}
+          >
+            <MenuItem value="">
+              <em>No manager assigned</em>
+            </MenuItem>
+            {!hasManagerOption && projectManager ? (
+              <MenuItem value={projectManager}>{projectManager}</MenuItem>
+            ) : null}
+            {projectManagerOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </CustomTextField>
           {editingProject && (
             <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
               Project Code: {editingProject.code || 'Will be auto-generated'}

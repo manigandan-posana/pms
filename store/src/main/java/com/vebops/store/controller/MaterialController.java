@@ -3,7 +3,7 @@ package com.vebops.store.controller;
 import com.vebops.store.dto.MaterialDto;
 import com.vebops.store.dto.MaterialRequest;
 import com.vebops.store.dto.PaginatedResponse;
-import com.vebops.store.model.Role;
+import com.vebops.store.model.Permission;
 import com.vebops.store.service.AuthService;
 import com.vebops.store.service.MaterialService;
 import com.vebops.store.util.AuthUtils;
@@ -70,7 +70,7 @@ public class MaterialController {
 
     @PostMapping
     public MaterialDto create(@Valid @RequestBody MaterialRequest request) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_MANAGEMENT);
         return materialService.create(request);
     }
 
@@ -79,19 +79,19 @@ public class MaterialController {
         @PathVariable Long id,
         @Valid @RequestBody MaterialRequest request
     ) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_MANAGEMENT);
         return materialService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_MANAGEMENT);
         materialService.delete(id);
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<MaterialDto> importMaterials(@RequestParam("file") MultipartFile file) {
-        AuthUtils.requireAdmin();
+        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_MANAGEMENT);
         return materialService.importMaterials(file);
     }
 

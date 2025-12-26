@@ -14,10 +14,6 @@ const getAdminPageHeading = (pathname: string): string => {
   if (pathname.includes("/admin/inward/")) return "Inward Transaction Details";
   if (pathname.includes("/admin/outward/")) return "Outward Transaction Details";
   if (pathname.includes("/admin/transfer/")) return "Transfer Transaction Details";
-  if (pathname.includes("/admin/inventory")) return "Inventory Management";
-  if (pathname.includes("/admin/allocated-materials")) return "Allocated Materials";
-  if (pathname.includes("/admin/projects")) return "Project Management";
-  if (pathname.includes("/admin/users")) return "User Management";
   return "Admin";
 };
 
@@ -26,7 +22,7 @@ const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const store = useStore();
   const { instance } = useMsal();
-  const { name, email, role } = useSelector((state: any) => state.auth);
+  const { name, email, role, permissions } = useSelector((state: any) => state.auth);
   const [collapsed, setCollapsed] = useState(false);
 
   const pageHeading = useMemo(() => getAdminPageHeading(location.pathname), [location.pathname]);
@@ -45,6 +41,7 @@ const AdminDashboard: React.FC = () => {
         onLogout={handleLogout}
         userName={name || email}
         userRole={role}
+        permissions={permissions}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
       />

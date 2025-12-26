@@ -21,6 +21,9 @@ public class Project {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "project_manager")
+    private String projectManager;
+
     public Long getId() {
         return id;
     }
@@ -39,5 +42,13 @@ public class Project {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getProjectManager() {
+        return projectManager;
+    }
+
+    public void setProjectManager(String projectManager) {
+        this.projectManager = projectManager;
     }
 }

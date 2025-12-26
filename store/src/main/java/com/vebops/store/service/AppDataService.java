@@ -234,7 +234,11 @@ public class AppDataService {
         }
 
         private ProjectDto toProjectDto(Project project) {
-                return new ProjectDto(String.valueOf(project.getId()), project.getCode(), project.getName());
+                return new ProjectDto(
+                                String.valueOf(project.getId()),
+                                project.getCode(),
+                                project.getName(),
+                                project.getProjectManager());
         }
 
         private MaterialDto toMaterialDto(Material material) {
