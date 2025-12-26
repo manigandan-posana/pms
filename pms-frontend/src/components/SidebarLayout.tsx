@@ -173,7 +173,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
 
-  const isAdmin = userRole === "ADMIN";
+  const isAdmin = userRole === "ADMIN" || userRole === "USER_PLUS";
   const open = !collapsed;
 
   const navItems: NavItem[] = useMemo(() => {

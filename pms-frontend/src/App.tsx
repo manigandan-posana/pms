@@ -59,7 +59,7 @@ export default function App() {
   const { instance } = useMsal();
   const store = useStore();
   const navigate = useNavigate();
-  const { accessToken, idToken, role, name, email } = useSelector(
+  const { accessToken, idToken, role, name, email, permissions } = useSelector(
     (state: any) => state.auth
   );
   const [loadingTimeout, setLoadingTimeout] = useState(false);
@@ -123,7 +123,7 @@ export default function App() {
       setLoadingTimeout(false);
     }
   }, [isAuthenticated, role, navigate]);
-  const canAccessAdmin = role === "ADMIN";
+  const canAccessAdmin = role === "ADMIN" || (permissions || []).includes("ADMIN_ACCESS");
 
   // Compute default route without hooks to avoid hook-order issues with early returns
   const defaultProtectedRoute = canAccessAdmin
