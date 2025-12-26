@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,9 +14,11 @@ import {
   Divider,
   Stack,
   IconButton,
-  CardHeader
+  CardHeader,
+  ToggleButtonGroup,
+  ToggleButton
 } from "@mui/material";
-import { BarChart, PieChart, SparkLineChart } from "@mui/x-charts";
+import { LineChart, PieChart } from "@mui/x-charts";
 import {
   MdArrowUpward as ArrowUpIcon,
   MdArrowDownward as ArrowDownIcon,
@@ -47,7 +49,7 @@ const extractList = (data: any): any[] => {
 
 // --- Components ---
 
-const CompactMetricCard = ({ title, value, subtitle, icon, color, trend, trendValue, onClick, sparklineData }: any) => (
+const CompactMetricCard = ({ title, value, subtitle, icon, color, trend, trendValue, onClick }: any) => (
   <Card
     variant="outlined"
     sx={{
@@ -100,21 +102,7 @@ const CompactMetricCard = ({ title, value, subtitle, icon, color, trend, trendVa
         </Box>
       </Stack>
 
-      {sparklineData && (
-        <Box sx={{ flex: 1, minHeight: 40, mx: -1, mb: -1, opacity: 0.8 }}>
-          <SparkLineChart
-            data={sparklineData}
-            height={50}
-            curve="natural"
-            area
-            showHighlight
-            showTooltip
-            sx={{ '& .MuiSparkLineChart-area': { fill: color, fillOpacity: 0.1 }, '& .MuiSparkLineChart-line': { stroke: color, strokeWidth: 1.5 } }}
-          />
-        </Box>
-      )}
-
-      {subtitle && !sparklineData && (
+      {subtitle && (
         <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ mt: 'auto', fontSize: '0.7rem' }}>
           {subtitle}
         </Typography>
@@ -135,6 +123,7 @@ const SectionHeading = ({ title, action }: any) => (
 const UserDashboardPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | '3months' | '6months' | 'year'>('month');
 
   const { selectedProjectId } = useSelector((state: RootState) => state.workspace);
   const { vehicles, fuelEntries, dailyLogs } = useSelector((state: RootState) => state.vehicles);
@@ -190,20 +179,85 @@ const UserDashboardPage: React.FC = () => {
   }, [inwardArray, outwardArray, transferArray, vehicles, fuelEntries, dailyLogs]);
 
   const inventoryTrendData = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentYear = new Date().getFullYear();
-    const inwardData = new Array(12).fill(0);
-    const outwardData = new Array(12).fill(0);
-    const transferData = new Array(12).fill(0);
-    const fuelData = new Array(12).fill(0);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+
+    let labels: string[] = [];
+    let dataPoints = 0;
+    let startDate = new Date();
+
+    // Determine time range
+    switch (timeRange) {
+      case 'week':
+        dataPoints = 7;
+        startDate = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+        labels = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+          return d.toLocaleDateString('en-US', { weekday: 'short' });
+        });
+        break;
+      case 'month':
+        dataPoints = 30;
+        startDate = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+        labels = Array.from({ length: 30 }, (_, i) => {
+          const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+          return `${d.getDate()}`;
+        });
+        break;
+      case '3months':
+        dataPoints = 12;
+        startDate = new Date(currentYear, currentMonth - 2, 1);
+        labels = Array.from({ length: 12 }, (_, i) => {
+          const d = new Date(currentYear, currentMonth - 2, 1 + i * 7);
+          return `W${i + 1}`;
+        });
+        break;
+      case '6months':
+        dataPoints = 6;
+        startDate = new Date(currentYear, currentMonth - 5, 1);
+        labels = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(currentYear, currentMonth - 5 + i, 1);
+          return d.toLocaleDateString('en-US', { month: 'short' });
+        });
+        break;
+      case 'year':
+        dataPoints = 12;
+        startDate = new Date(currentYear, 0, 1);
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        break;
+    }
+
+    const inwardData = new Array(dataPoints).fill(0);
+    const outwardData = new Array(dataPoints).fill(0);
+    const transferData = new Array(dataPoints).fill(0);
+    const fuelData = new Array(dataPoints).fill(0);
+
+    const getIndex = (date: Date) => {
+      if (timeRange === 'week') {
+        const diff = Math.floor((date.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+        return diff >= 0 && diff < 7 ? diff : -1;
+      } else if (timeRange === 'month') {
+        const diff = Math.floor((date.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+        return diff >= 0 && diff < 30 ? diff : -1;
+      } else if (timeRange === '3months') {
+        const weeksDiff = Math.floor((date.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+        return weeksDiff >= 0 && weeksDiff < 12 ? weeksDiff : -1;
+      } else if (timeRange === '6months') {
+        const monthsDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + date.getMonth() - startDate.getMonth();
+        return monthsDiff >= 0 && monthsDiff < 6 ? monthsDiff : -1;
+      } else {
+        return date.getMonth();
+      }
+    };
 
     const processDate = (curr: any, arr: number[], value?: number) => {
       const d = new Date(curr.date || curr.entryDate || curr.createdAt);
-      if (!isNaN(d.getTime()) && d.getFullYear() === currentYear) {
-        if (value !== undefined) {
-          arr[d.getMonth()] += value;
-        } else {
-          arr[d.getMonth()] += 1;
+      if (!isNaN(d.getTime()) && d >= startDate && d <= now) {
+        const idx = getIndex(d);
+        if (idx >= 0 && idx < dataPoints) {
+          arr[idx] += value !== undefined ? value : 1;
         }
       }
     };
@@ -213,18 +267,14 @@ const UserDashboardPage: React.FC = () => {
     transferArray.forEach(t => processDate(t, transferData));
     fuelEntries.forEach(f => processDate(f, fuelData, f.totalCost || 0));
 
-    const currentMonth = new Date().getMonth();
-    const start = Math.max(0, currentMonth - 5);
-    const range = currentMonth + 1;
-
     return {
-      xAxis: months.slice(start, range),
-      inward: inwardData.slice(start, range),
-      outward: outwardData.slice(start, range),
-      transfer: transferData.slice(start, range),
-      fuel: fuelData.slice(start, range)
+      xAxis: labels,
+      inward: inwardData,
+      outward: outwardData,
+      transfer: transferData,
+      fuel: fuelData
     };
-  }, [inwardArray, outwardArray, transferArray, fuelEntries]);
+  }, [inwardArray, outwardArray, transferArray, fuelEntries, timeRange]);
 
   const categoryData = useMemo(() => {
     return [
@@ -234,31 +284,80 @@ const UserDashboardPage: React.FC = () => {
     ].filter(d => d.value > 0);
   }, [metrics]);
 
-  const topEntities = useMemo(() => {
-    // Top Suppliers
-    const supplierCounts: Record<string, number> = {};
-    inwardArray.forEach(i => {
-      const name = i.supplierName || 'Unknown';
-      supplierCounts[name] = (supplierCounts[name] || 0) + 1;
-    });
-    const suppliers = Object.entries(supplierCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({ label: name, count }));
+  const vehicleChartData = useMemo(() => {
+    const now = new Date();
+    let labels: string[] = [];
+    let dataPoints = 0;
+    let startDate = new Date();
 
-    // Top Receivers
-    const receiverCounts: Record<string, number> = {};
-    outwardArray.forEach(o => {
-      const name = o.issueTo || 'Unknown';
-      receiverCounts[name] = (receiverCounts[name] || 0) + 1;
-    });
-    const receivers = Object.entries(receiverCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({ label: name, count }));
+    // Use same time range logic
+    switch (timeRange) {
+      case 'week':
+        dataPoints = 7;
+        startDate = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+        labels = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+          return d.toLocaleDateString('en-US', { weekday: 'short' });
+        });
+        break;
+      case 'month':
+        dataPoints = 30;
+        startDate = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+        labels = Array.from({ length: 30 }, (_, i) => {
+          const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+          return `${d.getDate()}`;
+        });
+        break;
+      case '3months':
+        dataPoints = 12;
+        startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        labels = Array.from({ length: 12 }, (_, i) => `W${i + 1}`);
+        break;
+      case '6months':
+        dataPoints = 6;
+        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        labels = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+          return d.toLocaleDateString('en-US', { month: 'short' });
+        });
+        break;
+      case 'year':
+        dataPoints = 12;
+        startDate = new Date(now.getFullYear(), 0, 1);
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        break;
+    }
 
-    return { suppliers, receivers };
-  }, [inwardArray, outwardArray]);
+    // Vehicle Status over time
+    const activeData = new Array(dataPoints).fill(0);
+    const inactiveData = new Array(dataPoints).fill(0);
+    const plannedData = new Array(dataPoints).fill(0);
+
+    // Fuel Type over time
+    const petrolData = new Array(dataPoints).fill(0);
+    const dieselData = new Array(dataPoints).fill(0);
+    const electricData = new Array(dataPoints).fill(0);
+
+    // For simplicity, we'll show current counts across all time points
+    // In a real scenario, you'd track historical changes
+    vehicles.forEach(v => {
+      for (let i = 0; i < dataPoints; i++) {
+        if (v.status === 'ACTIVE') activeData[i]++;
+        else if (v.status === 'INACTIVE') inactiveData[i]++;
+        else if (v.status === 'PLANNED') plannedData[i]++;
+
+        if (v.fuelType === 'PETROL') petrolData[i]++;
+        else if (v.fuelType === 'DIESEL') dieselData[i]++;
+        else if (v.fuelType === 'ELECTRIC') electricData[i]++;
+      }
+    });
+
+    return {
+      labels,
+      statusData: { active: activeData, inactive: inactiveData, planned: plannedData },
+      fuelData: { petrol: petrolData, diesel: dieselData, electric: electricData }
+    };
+  }, [vehicles, timeRange]);
 
   if (!selectedProjectId) {
     return (
@@ -284,7 +383,37 @@ const UserDashboardPage: React.FC = () => {
             Real-time operations overview
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+          <ToggleButtonGroup
+            value={timeRange}
+            exclusive
+            onChange={(_, newValue) => newValue && setTimeRange(newValue)}
+            size="small"
+            sx={{
+              bgcolor: 'background.paper',
+              '& .MuiToggleButton-root': {
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                textTransform: 'none',
+                border: '1px solid',
+                borderColor: 'divider',
+                '&.Mui-selected': {
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark'
+                  }
+                }
+              }
+            }}
+          >
+            <ToggleButton value="week">Week</ToggleButton>
+            <ToggleButton value="month">Month</ToggleButton>
+            <ToggleButton value="3months">3M</ToggleButton>
+            <ToggleButton value="6months">6M</ToggleButton>
+            <ToggleButton value="year">Year</ToggleButton>
+          </ToggleButtonGroup>
           <Button
             variant="contained"
             size="small"
@@ -361,24 +490,59 @@ const UserDashboardPage: React.FC = () => {
         {/* Charts Section */}
         <Grid size={{ xs: 12, lg: 8 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
-            <SectionHeading
-              title="Inventory Activity"
-              action={
-                <Chip label="6 Months" size="small" variant="outlined" sx={{ borderRadius: 1, height: 20, fontSize: '0.65rem' }} />
-              }
-            />
-            <Box sx={{ width: '100%', height: 250 }}>
-              <BarChart
-                xAxis={[{ scaleType: 'band', data: inventoryTrendData.xAxis, disableLine: true, disableTicks: true, categoryGapRatio: 0.4 }]}
+            <SectionHeading title="Inventory Activity" />
+            <Box sx={{ width: '100%', height: 280 }}>
+              <LineChart
+                xAxis={[{ scaleType: 'point', data: inventoryTrendData.xAxis }]}
                 series={[
-                  { data: inventoryTrendData.inward, label: 'Inwards', color: '#6366f1', stack: 'total' },
-                  { data: inventoryTrendData.outward, label: 'Outwards', color: '#f97316', stack: 'total' },
-                  { data: inventoryTrendData.transfer, label: 'Transfers', color: '#a855f7', stack: 'total' },
+                  {
+                    data: inventoryTrendData.inward,
+                    label: 'Inwards',
+                    color: '#6366f1',
+                    curve: 'natural',
+                    showMark: true,
+                    area: true
+                  },
+                  {
+                    data: inventoryTrendData.outward,
+                    label: 'Outwards',
+                    color: '#f97316',
+                    curve: 'natural',
+                    showMark: true,
+                    area: true
+                  },
+                  {
+                    data: inventoryTrendData.transfer,
+                    label: 'Transfers',
+                    color: '#a855f7',
+                    curve: 'natural',
+                    showMark: true,
+                    area: true
+                  },
                 ]}
-                margin={{ left: 30, right: 10, top: 10, bottom: 20 }}
-                slotProps={{ legend: { position: { vertical: 'top', horizontal: 'end' }, itemMarkWidth: 8, itemMarkHeight: 8, labelStyle: { fontSize: 10 } } } as any}
-                borderRadius={2}
-                height={250}
+                margin={{ left: 40, right: 20, top: 20, bottom: 30 }}
+                slotProps={{
+                  legend: {
+                    position: { vertical: 'top', horizontal: 'right' },
+                    itemMarkWidth: 12,
+                    itemMarkHeight: 12,
+                    labelStyle: { fontSize: 11, fontWeight: 600 },
+                    padding: { top: 0, bottom: 10, left: 10, right: 10 }
+                  }
+                } as any}
+                height={280}
+                sx={{
+                  '& .MuiLineElement-root': {
+                    strokeWidth: 2.5
+                  },
+                  '& .MuiAreaElement-root': {
+                    fillOpacity: 0.1
+                  },
+                  '& .MuiMarkElement-root': {
+                    scale: '0.8',
+                    strokeWidth: 2
+                  }
+                }}
               />
             </Box>
           </Paper>
@@ -387,22 +551,29 @@ const UserDashboardPage: React.FC = () => {
         <Grid size={{ xs: 12, lg: 4 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
             <SectionHeading title="Transaction Mix" />
-            <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <PieChart
                 series={[{
                   data: categoryData,
-                  innerRadius: 60,
-                  outerRadius: 80,
-                  paddingAngle: 2,
-                  cornerRadius: 2,
+                  innerRadius: 55,
+                  outerRadius: 85,
+                  paddingAngle: 3,
+                  cornerRadius: 5,
+                  highlightScope: { fade: 'global', highlight: 'item' },
                 }]}
                 margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
                 slotProps={{ legend: { hidden: true } as any }}
-                height={180}
-                width={180}
+                height={200}
+                width={200}
+                sx={{
+                  '& .MuiPieArc-root': {
+                    stroke: '#fff',
+                    strokeWidth: 2,
+                  }
+                }}
               />
               <Box sx={{ position: 'absolute', textAlign: 'center', pointerEvents: 'none' }}>
-                <Typography variant="h5" fontWeight={700} color="text.primary">
+                <Typography variant="h4" fontWeight={700} color="text.primary">
                   {metrics.totalTransactions}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} textTransform="uppercase" sx={{ fontSize: '0.65rem' }}>
@@ -410,10 +581,10 @@ const UserDashboardPage: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-            <Stack direction="row" spacing={1.5} justifyContent="center" mt={2} flexWrap="wrap">
+            <Stack direction="row" spacing={1.5} justifyContent="center" mt={1} flexWrap="wrap">
               {categoryData.map(d => (
                 <Box key={d.id} textAlign="center">
-                  <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: d.color, mx: 'auto', mb: 0.5 }} />
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: d.color, mx: 'auto', mb: 0.5 }} />
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{d.label}</Typography>
                   <Typography variant="body2" fontWeight={700}>{d.value}</Typography>
                 </Box>
@@ -422,24 +593,67 @@ const UserDashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Top Suppliers & Receivers */}
+        {/* Vehicle Analytics Charts */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%', minHeight: 300 }}>
-            <SectionHeading title="Top Suppliers" />
-            {topEntities.suppliers.length > 0 ? (
-              <BarChart
-                layout="horizontal"
-                dataset={topEntities.suppliers}
-                yAxis={[{ scaleType: 'band', dataKey: 'label', tickLabelStyle: { fontSize: 10 } }]}
-                series={[{ dataKey: 'count', label: 'Inwards', color: '#4f46e5' }]}
-                height={250}
-                margin={{ left: 80, right: 10, top: 10, bottom: 20 }}
-                slotProps={{ legend: { hidden: true } as any }}
-                borderRadius={2}
-              />
+            <SectionHeading title="Vehicle Status Over Time" />
+            {vehicles.length > 0 ? (
+              <Box sx={{ width: '100%', height: 280 }}>
+                <LineChart
+                  xAxis={[{ scaleType: 'point', data: vehicleChartData.labels }]}
+                  series={[
+                    {
+                      data: vehicleChartData.statusData.active,
+                      label: 'Active',
+                      color: '#10b981',
+                      curve: 'natural',
+                      showMark: true,
+                      area: true
+                    },
+                    {
+                      data: vehicleChartData.statusData.inactive,
+                      label: 'Inactive',
+                      color: '#ef4444',
+                      curve: 'natural',
+                      showMark: true,
+                      area: true
+                    },
+                    {
+                      data: vehicleChartData.statusData.planned,
+                      label: 'Planned',
+                      color: '#f59e0b',
+                      curve: 'natural',
+                      showMark: true,
+                      area: true
+                    },
+                  ]}
+                  margin={{ left: 40, right: 20, top: 20, bottom: 30 }}
+                  slotProps={{
+                    legend: {
+                      position: { vertical: 'top', horizontal: 'right' },
+                      itemMarkWidth: 10,
+                      itemMarkHeight: 10,
+                      labelStyle: { fontSize: 10, fontWeight: 600 }
+                    }
+                  } as any}
+                  height={280}
+                  sx={{
+                    '& .MuiLineElement-root': {
+                      strokeWidth: 2.5
+                    },
+                    '& .MuiAreaElement-root': {
+                      fillOpacity: 0.1
+                    },
+                    '& .MuiMarkElement-root': {
+                      scale: '0.8',
+                      strokeWidth: 2
+                    }
+                  }}
+                />
+              </Box>
             ) : (
               <Box display="flex" justifyContent="center" alignItems="center" height={200}>
-                <Typography variant="caption" color="text.secondary">No data available</Typography>
+                <Typography variant="caption" color="text.secondary">No vehicles available</Typography>
               </Box>
             )}
           </Paper>
@@ -447,77 +661,428 @@ const UserDashboardPage: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%', minHeight: 300 }}>
-            <SectionHeading title="Top Receivers" />
-            {topEntities.receivers.length > 0 ? (
-              <BarChart
-                layout="horizontal"
-                dataset={topEntities.receivers}
-                yAxis={[{ scaleType: 'band', dataKey: 'label', tickLabelStyle: { fontSize: 10 } }]}
-                series={[{ dataKey: 'count', label: 'Outwards', color: '#ea580c' }]}
-                height={250}
-                margin={{ left: 80, right: 10, top: 10, bottom: 20 }}
-                slotProps={{ legend: { hidden: true } as any }}
-                borderRadius={2}
-              />
+            <SectionHeading title="Fuel Type Distribution Over Time" />
+            {vehicles.length > 0 ? (
+              <Box sx={{ width: '100%', height: 280 }}>
+                <LineChart
+                  xAxis={[{ scaleType: 'point', data: vehicleChartData.labels }]}
+                  series={[
+                    {
+                      data: vehicleChartData.fuelData.petrol,
+                      label: 'Petrol',
+                      color: '#3b82f6',
+                      curve: 'natural',
+                      showMark: true,
+                      area: true
+                    },
+                    {
+                      data: vehicleChartData.fuelData.diesel,
+                      label: 'Diesel',
+                      color: '#f97316',
+                      curve: 'natural',
+                      showMark: true,
+                      area: true
+                    },
+                    {
+                      data: vehicleChartData.fuelData.electric,
+                      label: 'Electric',
+                      color: '#10b981',
+                      curve: 'natural',
+                      showMark: true,
+                      area: true
+                    },
+                  ]}
+                  margin={{ left: 40, right: 20, top: 20, bottom: 30 }}
+                  slotProps={{
+                    legend: {
+                      position: { vertical: 'top', horizontal: 'right' },
+                      itemMarkWidth: 10,
+                      itemMarkHeight: 10,
+                      labelStyle: { fontSize: 10, fontWeight: 600 }
+                    }
+                  } as any}
+                  height={280}
+                  sx={{
+                    '& .MuiLineElement-root': {
+                      strokeWidth: 2.5
+                    },
+                    '& .MuiAreaElement-root': {
+                      fillOpacity: 0.1
+                    },
+                    '& .MuiMarkElement-root': {
+                      scale: '0.8',
+                      strokeWidth: 2
+                    }
+                  }}
+                />
+              </Box>
             ) : (
               <Box display="flex" justifyContent="center" alignItems="center" height={200}>
-                <Typography variant="caption" color="text.secondary">No data available</Typography>
+                <Typography variant="caption" color="text.secondary">No vehicles available</Typography>
               </Box>
             )}
           </Paper>
         </Grid>
 
-        {/* Recent Lists */}
-        {[
-          { title: "Recent Inwards", data: inwardArray, icon: <InventoryIcon />, path: '/workspace/inventory/inwards', type: 'inward' },
-          { title: "Recent Outwards", data: outwardArray, icon: <OutboundIcon />, path: '/workspace/inventory/outwards', type: 'outward' },
-        ].map((section, idx) => (
-          <Grid size={{ xs: 12, md: 6, lg: 6 }} key={idx}>
-            <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
-              <CardHeader
-                title={section.title}
-                titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700 }}
-                sx={{ py: 1.5, px: 2 }}
-                action={
-                  <IconButton size="small" onClick={() => navigate(section.path)}>
-                    <ArrowUpIcon style={{ transform: 'rotate(45deg)', fontSize: 16 }} />
-                  </IconButton>
-                }
-              />
-              <Divider />
-              <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-                {section.data.slice(0, 5).map((item: any, i: number) => (
-                  <Box key={i} sx={{ p: 1.5, display: 'flex', gap: 1.5, '&:hover': { bgcolor: 'action.hover' }, cursor: 'pointer', borderBottom: '1px solid', borderColor: 'divider' }} onClick={() => navigate(section.type === 'inward' ? `/workspace/inward/detail/${item.id}` : `/workspace/outward/detail/${item.id}`)}>
-                    <Avatar variant="rounded" sx={{ bgcolor: section.type === 'inward' ? 'primary.lighter' : 'warning.lighter', color: section.type === 'inward' ? 'primary.main' : 'warning.main', width: 32, height: 32, fontSize: '0.75rem' }}>
-                      {section.type === 'inward' ? (item.supplierName?.[0] || 'S') : (item.issueTo?.[0] || 'O')}
-                    </Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={600} noWrap>
-                        {section.type === 'inward' ? (item.supplierName || 'Unknown') : (item.issueTo || 'Unknown')}
+        {/* Recent Activity Lists */}
+        {/* Recent Transfers */}
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
+            <CardHeader
+              title="Recent Transfers"
+              titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700 }}
+              sx={{ py: 1.5, px: 2 }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/inventory/transfers')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)', fontSize: 16 }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+              {transferArray.slice(0, 5).map((item: any, i: number) => (
+                <Box
+                  key={i}
+                  sx={{
+                    p: 1.5,
+                    display: 'flex',
+                    gap: 1.5,
+                    '&:hover': { bgcolor: 'action.hover' },
+                    cursor: 'pointer',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                  onClick={() => navigate(`/workspace/transfer/detail/${item.id}`)}
+                >
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      bgcolor: 'purple.lighter',
+                      color: 'purple.main',
+                      width: 32,
+                      height: 32
+                    }}
+                  >
+                    <TransferIcon style={{ fontSize: '1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      Transfer #{item.id}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip
+                        label={item.status || 'PENDING'}
+                        size="small"
+                        sx={{
+                          height: 16,
+                          fontSize: '0.6rem',
+                          bgcolor: item.status === 'COMPLETED' ? 'success.lighter' : 'warning.lighter',
+                          color: item.status === 'COMPLETED' ? 'success.main' : 'warning.main'
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
                       </Typography>
-                      <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
-                        <Chip
-                          label={section.type === 'inward' ? (item.type || 'SUPPLY') : (item.status || 'OPEN')}
-                          size="small"
-                          sx={{
-                            height: 16,
-                            fontSize: '0.6rem',
-                            bgcolor: section.type === 'inward' ? (item.type === 'RETURN' ? 'error.lighter' : 'primary.lighter') : (item.status === 'CLOSED' ? 'success.lighter' : 'warning.lighter'),
-                            color: section.type === 'inward' ? (item.type === 'RETURN' ? 'error.main' : 'primary.main') : (item.status === 'CLOSED' ? 'success.main' : 'warning.main')
-                          }}
-                        />
-                        <Typography variant="caption" color="text.secondary">
-                          {item.items || 0} items • {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
-                        </Typography>
-                      </Stack>
-                    </Box>
+                    </Stack>
                   </Box>
-                ))}
-                {section.data.length === 0 && <Box p={2} textAlign="center"><Typography variant="caption" color="text.secondary">No data</Typography></Box>}
-              </Box>
-            </Card>
-          </Grid>
-        ))}
+                </Box>
+              ))}
+              {transferArray.length === 0 && (
+                <Box p={2} textAlign="center">
+                  <Typography variant="caption" color="text.secondary">No transfers yet</Typography>
+                </Box>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+
+        {/* Recent Fuel Entries */}
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
+            <CardHeader
+              title="Recent Fuel Entries"
+              titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700 }}
+              sx={{ py: 1.5, px: 2 }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/vehicles')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)', fontSize: 16 }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+              {fuelEntries.slice(0, 5).map((item: any, i: number) => (
+                <Box
+                  key={i}
+                  sx={{
+                    p: 1.5,
+                    display: 'flex',
+                    gap: 1.5,
+                    '&:hover': { bgcolor: 'action.hover' },
+                    cursor: 'pointer',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                  onClick={() => navigate('/workspace/vehicles')}
+                >
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      bgcolor: 'error.lighter',
+                      color: 'error.main',
+                      width: 32,
+                      height: 32,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <FuelIcon style={{ fontSize: '1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {item.vehicleName || item.vehicleNumber}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip
+                        label={item.status || 'OPEN'}
+                        size="small"
+                        sx={{
+                          height: 16,
+                          fontSize: '0.6rem',
+                          bgcolor: item.status === 'CLOSED' ? 'success.lighter' : 'warning.lighter',
+                          color: item.status === 'CLOSED' ? 'success.main' : 'warning.main'
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.litres}L • ₹{item.totalCost}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {fuelEntries.length === 0 && (
+                <Box p={2} textAlign="center">
+                  <Typography variant="caption" color="text.secondary">No fuel entries yet</Typography>
+                </Box>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+
+        {/* Recent Daily Logs */}
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
+            <CardHeader
+              title="Recent Daily Logs"
+              titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700 }}
+              sx={{ py: 1.5, px: 2 }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/vehicles')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)', fontSize: 16 }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+              {dailyLogs.slice(0, 5).map((item: any, i: number) => (
+                <Box
+                  key={i}
+                  sx={{
+                    p: 1.5,
+                    display: 'flex',
+                    gap: 1.5,
+                    '&:hover': { bgcolor: 'action.hover' },
+                    cursor: 'pointer',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                  onClick={() => navigate('/workspace/vehicles')}
+                >
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      bgcolor: 'info.lighter',
+                      color: 'info.main',
+                      width: 32,
+                      height: 32,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <TruckIcon style={{ fontSize: '1rem' }} />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {item.vehicleName || item.vehicleNumber}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip
+                        label={item.status || 'OPEN'}
+                        size="small"
+                        sx={{
+                          height: 16,
+                          fontSize: '0.6rem',
+                          bgcolor: item.status === 'CLOSED' ? 'success.lighter' : 'warning.lighter',
+                          color: item.status === 'CLOSED' ? 'success.main' : 'warning.main'
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.distance ? `${item.distance} km` : `${item.openingKm} km`}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {dailyLogs.length === 0 && (
+                <Box p={2} textAlign="center">
+                  <Typography variant="caption" color="text.secondary">No daily logs yet</Typography>
+                </Box>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+
+        {/* Recent Inwards */}
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
+            <CardHeader
+              title="Recent Inwards"
+              titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700 }}
+              sx={{ py: 1.5, px: 2 }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/inventory/inwards')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)', fontSize: 16 }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+              {inwardArray.slice(0, 5).map((item: any, i: number) => (
+                <Box
+                  key={i}
+                  sx={{
+                    p: 1.5,
+                    display: 'flex',
+                    gap: 1.5,
+                    '&:hover': { bgcolor: 'action.hover' },
+                    cursor: 'pointer',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                  onClick={() => navigate(`/workspace/inward/detail/${item.id}`)}
+                >
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      bgcolor: 'primary.lighter',
+                      color: 'primary.main',
+                      width: 32,
+                      height: 32,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    {item.supplierName?.[0] || 'S'}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {item.supplierName || 'Unknown Supplier'}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip
+                        label={item.type || 'SUPPLY'}
+                        size="small"
+                        sx={{
+                          height: 16,
+                          fontSize: '0.6rem',
+                          bgcolor: item.type === 'RETURN' ? 'error.lighter' : 'primary.lighter',
+                          color: item.type === 'RETURN' ? 'error.main' : 'primary.main'
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.items || 0} items • {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {inwardArray.length === 0 && (
+                <Box p={2} textAlign="center">
+                  <Typography variant="caption" color="text.secondary">No inwards yet</Typography>
+                </Box>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+
+        {/* Recent Outwards */}
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Card variant="outlined" sx={{ borderRadius: 2, height: '100%', borderColor: 'divider' }}>
+            <CardHeader
+              title="Recent Outwards"
+              titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700 }}
+              sx={{ py: 1.5, px: 2 }}
+              action={
+                <IconButton size="small" onClick={() => navigate('/workspace/inventory/outwards')}>
+                  <ArrowUpIcon style={{ transform: 'rotate(45deg)', fontSize: 16 }} />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+              {outwardArray.slice(0, 5).map((item: any, i: number) => (
+                <Box
+                  key={i}
+                  sx={{
+                    p: 1.5,
+                    display: 'flex',
+                    gap: 1.5,
+                    '&:hover': { bgcolor: 'action.hover' },
+                    cursor: 'pointer',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                  onClick={() => navigate(`/workspace/outward/detail/${item.id}`)}
+                >
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      bgcolor: 'warning.lighter',
+                      color: 'warning.main',
+                      width: 32,
+                      height: 32,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    {item.issueTo?.[0] || 'O'}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {item.issueTo || 'Unknown Receiver'}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                      <Chip
+                        label={item.status || 'OPEN'}
+                        size="small"
+                        sx={{
+                          height: 16,
+                          fontSize: '0.6rem',
+                          bgcolor: item.status === 'CLOSED' ? 'success.lighter' : 'warning.lighter',
+                          color: item.status === 'CLOSED' ? 'success.main' : 'warning.main'
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {item.items || 0} items • {item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Box>
+              ))}
+              {outwardArray.length === 0 && (
+                <Box p={2} textAlign="center">
+                  <Typography variant="caption" color="text.secondary">No outwards yet</Typography>
+                </Box>
+              )}
+            </Box>
+          </Card>
+        </Grid>
       </Grid>
     </Box>
   );
