@@ -152,6 +152,9 @@ export default function Login() {
 
         console.log("User role:", userSession.role);
 
+        const canAccessAdmin =
+          userSession.role === "ADMIN" || (userSession.permissions || []).includes("ADMIN_ACCESS");
+
         // Determine landing page based on database role
         const target = `${workspacePath}/dashboard`;
         if (userSession.role !== "USER" && userSession.role !== "USER_PLUS" && userSession.role !== "ADMIN") {
