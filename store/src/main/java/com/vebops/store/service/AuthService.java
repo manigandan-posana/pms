@@ -160,7 +160,14 @@ public class AuthService {
             user
                 .getProjects()
                 .stream()
-                .map(p -> new com.vebops.store.dto.ProjectDto(String.valueOf(p.getId()), p.getCode(), p.getName()))
+                .map(p ->
+                    new com.vebops.store.dto.ProjectDto(
+                        String.valueOf(p.getId()),
+                        p.getCode(),
+                        p.getName(),
+                        p.getProjectManager()
+                    )
+                )
                 .collect(Collectors.toList()),
             user.getPermissions().stream().map(Enum::name).toList()
         );
