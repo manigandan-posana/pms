@@ -5,12 +5,14 @@ import com.vebops.store.dto.LoginResponse;
 import com.vebops.store.dto.UserDto;
 import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.UnauthorizedException;
+import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.UserRepository;
 import com.vebops.store.security.AzureAdJwtValidator;
 import com.vebops.store.security.AzureAdUserService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -63,6 +65,7 @@ public class AuthService {
         if (claims != null) {
             UserAccount user = azureAdUserService.getOrCreateUser(claims);
             if (user != null) {
+                storeRequestUser(user);
                 return user;
             }
 
@@ -78,9 +81,11 @@ public class AuthService {
         if (userId == null) {
             throw new UnauthorizedException("Invalid token");
         }
-        return userRepository
+        UserAccount resolvedUser = userRepository
             .findById(userId)
             .orElseThrow(() -> new UnauthorizedException("User not found for token"));
+        storeRequestUser(resolvedUser);
+        return resolvedUser;
     }
 
     /**
@@ -156,7 +161,24 @@ public class AuthService {
                 .getProjects()
                 .stream()
                 .map(p -> new com.vebops.store.dto.ProjectDto(String.valueOf(p.getId()), p.getCode(), p.getName()))
-                .collect(Collectors.toList())
+                .collect(Collectors.toList()),
+            user.getPermissions().stream().map(Enum::name).toList()
         );
+    }
+
+    private void storeRequestUser(UserAccount user) {
+        try {
+            ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                request.setAttribute("userId", user.getId());
+                request.setAttribute("userEmail", user.getEmail());
+                request.setAttribute("userRole", user.getRole().name());
+                request.setAttribute("userPermissions", Collections.unmodifiableSet(user.getPermissions()));
+            }
+        } catch (Exception ignored) {
+            // Best-effort cache; authorization flows will still fall back to database lookups
+        }
     }
 }

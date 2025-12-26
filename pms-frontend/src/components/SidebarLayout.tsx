@@ -21,6 +21,8 @@ import {
   FiBarChart2,
   FiTruck,
   FiSettings,
+  FiDatabase,
+  FiUsers,
 } from "react-icons/fi";
 import {
   FaChevronLeft,
@@ -39,8 +41,10 @@ export interface SidebarLayoutProps {
   userName?: string;
   onLogout?: () => void;
   onOpenAdmin?: () => void;
+  canAccessAdmin?: boolean;
   pageHeading?: string;
   showProjectSelector?: boolean;
+  permissions?: string[];
 }
 
 interface NavItem {
@@ -49,6 +53,7 @@ interface NavItem {
   path: string;
   icon: React.ComponentType<{ size?: number }>;
   children?: NavItem[];
+  requiredPermission?: string;
 }
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -167,20 +172,29 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   userName: _userName,
   onLogout,
   onOpenAdmin,
+  canAccessAdmin = false,
   pageHeading = "Inventory",
   showProjectSelector = false,
+  permissions,
 }) => {
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
 
-  const isAdmin = userRole === "ADMIN";
   const open = !collapsed;
+
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true;
+    if (userRole === "ADMIN") return true;
+    return (permissions || []).includes(permission);
+  };
 
   const navItems: NavItem[] = useMemo(() => {
     return [
       { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
+      { id: "materials", label: "Material Directory", icon: FiDatabase, path: "/workspace/materials", requiredPermission: "MATERIAL_MANAGEMENT" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
+      { id: "suppliers", label: "Suppliers", icon: FiUsers, path: "/workspace/suppliers" },
     ];
   }, []);
 
@@ -209,7 +223,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
         <Divider />
 
         <List sx={{ px: 1, py: 1, flexGrow: 1 }}>
-          {navItems.map((item) => (
+          {navItems.filter((item) => hasPermission(item.requiredPermission)).map((item) => (
             <SidebarItem
               key={item.id}
               item={item}
@@ -220,7 +234,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
         </List>
 
         <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
-          {onOpenAdmin && !isAdmin && (
+          {onOpenAdmin && canAccessAdmin && (
             <ListItem disablePadding sx={{ display: 'block', mb: 0.25 }}>
               <Tooltip title={!open ? "Admin" : ""} placement="right">
                 <StyledListItemButton
