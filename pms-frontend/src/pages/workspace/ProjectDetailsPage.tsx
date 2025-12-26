@@ -25,6 +25,7 @@ import {
 import { searchUsers } from "../../store/slices/adminUsersSlice";
 import CustomButton from "../../widgets/CustomButton";
 import CustomLoader from "../../widgets/CustomLoader";
+import BomPage from "./BomPage";
 
 type RoleValue =
   | "DEPUTY_PROJECT_MANAGER"
@@ -51,6 +52,7 @@ const tabConfig = [
   { value: "team", label: "Project Team" },
   { value: "details", label: "Project Details" },
   { value: "tree", label: "Project Team Tree" },
+  { value: "bom", label: "Bill of Materials" },
 ];
 
 interface UserOption {
@@ -289,8 +291,8 @@ const ProjectDetailsPage: React.FC = () => {
                         role.color === "primary"
                           ? theme.palette.primary.main
                           : role.color === "secondary"
-                          ? theme.palette.secondary.main
-                          : theme.palette.grey[500],
+                            ? theme.palette.secondary.main
+                            : theme.palette.grey[500],
                       boxShadow: 2,
                     }}
                   />
@@ -397,6 +399,11 @@ const ProjectDetailsPage: React.FC = () => {
           {activeTab === "team" && renderTeamTab()}
           {activeTab === "details" && renderDetailsTab()}
           {activeTab === "tree" && renderTreeTab()}
+          {activeTab === "bom" && (
+            <Box sx={{ mt: 2 }}>
+              <BomPage projectId={projectId} />
+            </Box>
+          )}
         </>
       )}
     </Box>

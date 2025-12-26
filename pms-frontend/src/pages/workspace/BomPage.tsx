@@ -39,28 +39,41 @@ export interface WorkspaceSliceState {
 
 // ---- Main page ---- //
 
-const BomPage: React.FC = () => {
-  const { selectedProjectId } = useSelector<
+interface BomPageProps {
+  projectId?: string | number;
+}
+
+const BomPage: React.FC<BomPageProps> = ({ projectId: propProjectId }) => {
+  const { selectedProjectId: reduxProjectId } = useSelector<
     RootState,
     WorkspaceSliceState
   >((state) => state.workspace as unknown as WorkspaceSliceState);
+
+  // Use the prop if provided, otherwise fall back to the global selection
+  const activeProjectId = propProjectId || reduxProjectId;
 
   const [search, setSearch] = useState<string>("");
   const [rows, setRows] = useState<BomRow[]>([]);
 
   useEffect(() => {
     const loadBom = async () => {
-      if (!selectedProjectId) {
+      // If no project is identified, clear the rows and return
+      if (!activeProjectId) {
         setRows([]);
         return;
       }
-      const response = await Get<BomRow[]>(`/app/projects/${selectedProjectId}/bom`, {
-        search: search.trim() || undefined,
-      });
-      setRows(Array.isArray(response) ? response : []);
+      try {
+        const response = await Get<BomRow[]>(`/app/projects/${activeProjectId}/bom`, {
+          search: search.trim() || undefined,
+        });
+        setRows(Array.isArray(response) ? response : []);
+      } catch (err) {
+        console.error("Failed to load BOM", err);
+        setRows([]);
+      }
     };
     loadBom();
-  }, [search, selectedProjectId]);
+  }, [search, activeProjectId]);
 
   const columns: ColumnDef<BomRow>[] = [
     {
