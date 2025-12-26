@@ -31,8 +31,6 @@ export interface InwardFormState {
   vehicleNo: string;
   supplierName: string;
   remarks: string;
-  type: string;
-  outwardId: string;
   selectedLines: InwardSelectedLines;
   modalLine: any | null;
   modalValues: InwardModalValues;
@@ -108,8 +106,6 @@ const createEmptyInward = (): InwardFormState => ({
   vehicleNo: "",
   supplierName: "",
   remarks: "",
-  type: "SUPPLY",
-  outwardId: "",
   selectedLines: {},
   modalLine: null,
   modalValues: { orderedQty: "", receivedQty: "" },

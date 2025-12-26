@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Get } from "../../utils/apiService";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiCheckCircle, FiCircle, FiSave } from "react-icons/fi";
 import { Box, Stack, Typography, Paper, Grid } from "@mui/material";
@@ -72,8 +71,6 @@ export interface InwardUiState {
   vehicleNo: string;
   supplierName: string;
   remarks: string;
-  type: string;
-  outwardId: string;
   saving: boolean;
   selectedLines: Record<string, InwardSelectedLineValues>;
   modalLine: AllocatedMaterial | null;
@@ -93,15 +90,13 @@ interface WorkspaceStateSlice {
 interface QuantityModalProps {
   line: AllocatedMaterial | null;
   values: InwardModalValues;
-  type: string;
   onChange: (values: InwardModalValues) => void;
   onSave: () => void;
   onClose: () => void;
 }
 
-const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, type, onChange, onSave, onClose }) => {
+const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, onChange, onSave, onClose }) => {
   if (!line) return null;
-  const isReturn = type === "RETURN";
 
   return (
     <CustomModal
@@ -120,31 +115,24 @@ const QuantityModal: React.FC<QuantityModalProps> = ({ line, values, type, onCha
           <Box component="span" fontWeight={600}>{line.unit}</Box>
           {" \u00b7 "}
           Allocated: <Box component="span" fontWeight={600} color="text.primary">{line.allocatedQty ?? (line as any).qty ?? 0}</Box>
-          {!isReturn && (
-            <>
-              {" \u00b7 "}
-              Ordered: <Box component="span" fontWeight={600} color="text.primary">{(line as any).orderedQty ?? 0}</Box>
-            </>
-          )}
           {" \u00b7 "}
-          {isReturn ? "Returned: " : "Received: "}
+          Ordered: <Box component="span" fontWeight={600} color="text.primary">{(line as any).orderedQty ?? 0}</Box>
+          {" \u00b7 Received: "}
           <Box component="span" fontWeight={600} color="text.primary">{(line as any).receivedQty ?? 0}</Box>
         </Typography>
       </Box>
       <Grid container spacing={2}>
-        {!isReturn && (
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <CustomTextField
-              label="Ordered Qty"
-              type="number"
-              value={values.orderedQty}
-              onChange={(e) => onChange({ ...values, orderedQty: e.target.value })}
-            />
-          </Grid>
-        )}
-        <Grid size={{ xs: 12, sm: isReturn ? 12 : 6 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <CustomTextField
-            label={isReturn ? "Returned Qty *" : "Received Qty *"}
+            label="Ordered Qty"
+            type="number"
+            value={values.orderedQty}
+            onChange={(e) => onChange({ ...values, orderedQty: e.target.value })}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <CustomTextField
+            label="Received Qty *"
             type="number"
             value={values.receivedQty}
             onChange={(e) => onChange({ ...values, receivedQty: e.target.value })}
@@ -183,71 +171,20 @@ const InwardCreatePage: React.FC = () => {
     vehicleNo,
     supplierName,
     remarks,
-    type,
-    outwardId,
     saving,
     selectedLines,
     modalLine,
     modalValues,
   } = inwardUi;
 
-  const [outwardRecords, setOutwardRecords] = useState<any[]>([]);
-  const [outwardItems, setOutwardItems] = useState<any[]>([]);
-
-  // Load outward records when entering RETURN mode
-  useEffect(() => {
-    if (type === "RETURN" && projectId) {
-      Get(`/outwards/project/${projectId}`)
-        .then((data: any) => {
-          setOutwardRecords(Array.isArray(data) ? data : []);
-        })
-        .catch((err) => {
-          console.error("Failed to load outward records", err);
-          toast.error("Failed to load outward records");
-        });
-    } else {
-      setOutwardRecords([]);
-    }
-  }, [projectId, type]);
-
-  // Update outward items when an outward record is selected
-  useEffect(() => {
-    if (type === "RETURN" && outwardId && outwardRecords.length > 0) {
-      const selected = outwardRecords.find((r) => String(r.id) === String(outwardId));
-      if (selected) {
-        setOutwardItems(selected.lines || []);
-      } else {
-        setOutwardItems([]);
-      }
-    } else {
-      setOutwardItems([]);
-    }
-  }, [outwardId, outwardRecords, type]);
-
   const allocatedMaterials: AllocatedMaterial[] = useMemo(() => {
     if (!projectId) return [];
-
-    if (type === "RETURN") {
-      // Logic for Return mode: map outward items
-      return outwardItems.map((item) => ({
-        id: item.materialId, // Using materialId as unique key for table row
-        materialId: item.materialId,
-        code: item.code,
-        name: item.name,
-        unit: item.unit,
-        allocatedQty: item.issueQty, // Show issue qty
-        qty: item.issueQty,
-        orderedQty: 0,
-        receivedQty: 0,
-      })) as AllocatedMaterial[];
-    }
-
     const bomLines = bomByProject?.[projectId] ?? [];
     return bomLines.map((line) => ({
       ...line,
       materialId: String(line.materialId ?? line.id ?? ""),
     })) as AllocatedMaterial[];
-  }, [bomByProject, projectId, type, outwardItems]);
+  }, [bomByProject, projectId]);
 
   // Pagination state for materials table
   const [page, setPage] = useState<number>(0);
@@ -342,7 +279,6 @@ const InwardCreatePage: React.FC = () => {
   };
 
   const columns: ColumnDef<any>[] = useMemo(() => {
-    const isReturn = type === "RETURN";
     const cols: ColumnDef<any>[] = [
       {
         field: "_selected",
@@ -401,7 +337,7 @@ const InwardCreatePage: React.FC = () => {
 
     cols.push({
       field: "_receivedQty",
-      header: isReturn ? "Returned Qty" : "Received",
+      header: "Received",
       align: "right",
       width: "120px",
       body: (row) => (
@@ -416,13 +352,13 @@ const InwardCreatePage: React.FC = () => {
     });
 
     return cols;
-  }, [type, handleCheckboxClick]);
+  }, [handleCheckboxClick]);
 
   const handleSubmit = async () => {
     const selectedLinesArray = Object.entries(selectedLines)
       .map(([lineMaterialId, values]: [string, InwardSelectedLineValues]) => ({
         materialId: String(lineMaterialId),
-        orderedQty: type === "RETURN" ? 0 : Number(values.orderedQty || 0),
+        orderedQty: Number(values.orderedQty || 0),
         receivedQty: Number(values.receivedQty || 0),
       }))
       .filter((line) => line.receivedQty > 0 || line.orderedQty > 0);
@@ -438,8 +374,6 @@ const InwardCreatePage: React.FC = () => {
         submitInward({
           code: codes.inward,
           projectId: String(projectId),
-          type: type || "SUPPLY",
-          outwardId: type === "RETURN" ? outwardId : null,
           invoiceNo: invoiceNo || null,
           invoiceDate: invoiceDate || null,
           deliveryDate: deliveryDate || null,
@@ -458,9 +392,6 @@ const InwardCreatePage: React.FC = () => {
       dispatch(setInwardField({ field: "vehicleNo", value: "" }));
       dispatch(setInwardField({ field: "supplierName", value: "" }));
       dispatch(setInwardField({ field: "remarks", value: "" }));
-      // outwardId, type usually persist or reset? Resetting outwardId is safe.
-      dispatch(setInwardField({ field: "outwardId", value: "" }));
-      dispatch(setInwardField({ field: "type", value: "SUPPLY" }));
       dispatch(clearInwardSelections());
       navigate('/workspace/inventory/inwards');
     } catch (err) {
@@ -540,96 +471,44 @@ const InwardCreatePage: React.FC = () => {
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
-                <CustomSelect
-                  label="Type *"
-                  value={type || "SUPPLY"}
-                  options={[
-                    { label: "Supply", value: "SUPPLY" },
-                    { label: "Return", value: "RETURN" },
-                  ]}
-                  onChange={(value) => {
-                    dispatch(setInwardField({ field: 'type', value: String(value) }));
-                    // Reset outwardId when type changes
-                    if (value !== 'RETURN') {
-                      dispatch(setInwardField({ field: 'outwardId', value: "" }));
-                    }
-                  }}
+                <CustomTextField
+                  label="Invoice No."
+                  value={invoiceNo}
+                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
                 />
               </Grid>
-
-              {type === "RETURN" ? (
-                <>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomSelect
-                      label="Outward Record *"
-                      value={outwardId || ""}
-                      options={outwardRecords.map((r) => ({
-                        label: `${r.code} — ${r.date} — ${r.issueTo || 'Unknown'}`,
-                        value: String(r.id)
-                      }))}
-                      onChange={(value) => dispatch(setInwardField({ field: 'outwardId', value: String(value) }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Return Date *"
-                      type="date"
-                      value={invoiceDate}
-                      onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Return By *"
-                      value={supplierName}
-                      onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
-                    />
-                  </Grid>
-                </>
-              ) : (
-                <>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Invoice No."
-                      value={invoiceNo}
-                      onChange={(e) => dispatch(setInwardField({ field: 'invoiceNo', value: e.target.value }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Invoice Date"
-                      type="date"
-                      value={invoiceDate}
-                      onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Delivery Date"
-                      type="date"
-                      value={deliveryDate}
-                      onChange={(e) => dispatch(setInwardField({ field: 'deliveryDate', value: e.target.value }))}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Vehicle No."
-                      value={vehicleNo}
-                      onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomTextField
-                      label="Supplier Name"
-                      value={supplierName}
-                      onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
-                    />
-                  </Grid>
-                </>
-              )}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CustomTextField
+                  label="Invoice Date"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => dispatch(setInwardField({ field: 'invoiceDate', value: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CustomTextField
+                  label="Delivery Date"
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => dispatch(setInwardField({ field: 'deliveryDate', value: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CustomTextField
+                  label="Vehicle No."
+                  value={vehicleNo}
+                  onChange={(e) => dispatch(setInwardField({ field: 'vehicleNo', value: e.target.value }))}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CustomTextField
+                  label="Supplier Name"
+                  value={supplierName}
+                  onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
+                />
+              </Grid>
 
               <Grid size={{ xs: 12 }}>
                 <CustomTextField
@@ -671,7 +550,6 @@ const InwardCreatePage: React.FC = () => {
       <QuantityModal
         line={modalLine}
         values={modalValues}
-        type={type}
         onChange={(values) => dispatch(setInwardModalValues(values))}
         onSave={saveModalLine}
         onClose={() => dispatch(setInwardModalLine(null))}

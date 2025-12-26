@@ -13,6 +13,7 @@ import com.vebops.store.dto.TransferLineDto;
 import com.vebops.store.dto.TransferRecordDto;
 import com.vebops.store.dto.UserDto;
 import com.vebops.store.exception.BadRequestException;
+import com.vebops.store.exception.ForbiddenException;
 import com.vebops.store.model.AccessType;
 import com.vebops.store.model.BomLine;
 import com.vebops.store.model.InwardLine;
@@ -20,6 +21,7 @@ import com.vebops.store.model.InwardRecord;
 import com.vebops.store.model.Material;
 import com.vebops.store.model.OutwardRecord;
 import com.vebops.store.model.Project;
+import com.vebops.store.model.Role;
 import com.vebops.store.model.TransferRecord;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.BomLineRepository;
@@ -198,7 +200,7 @@ public class AppDataService {
                         return List.of();
                 }
                 if (!hasProjectAccess(user, projectId)) {
-                        return List.of();
+                        throw new ForbiddenException("You do not have access to this project");
                 }
                 List<BomLineDto> lines = bomLineRepository
                                 .findByProjectId(projectId)
@@ -227,7 +229,10 @@ public class AppDataService {
         }
 
         private boolean hasProjectAccess(UserAccount user, Long projectId) {
-                if (user.getAccessType() == AccessType.ALL) {
+                if (user == null || projectId == null) {
+                        return false;
+                }
+                if (user.getRole() == Role.ADMIN || user.getAccessType() == AccessType.ALL) {
                         return true;
                 }
                 return user.getProjects().stream().anyMatch(project -> project.getId().equals(projectId));

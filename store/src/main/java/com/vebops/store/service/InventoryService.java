@@ -103,10 +103,7 @@ public class InventoryService {
         InwardRecord record = new InwardRecord();
         record.setCode(resolveOrGenerateCode(request.code(), () -> generateCodes().inwardCode()));
         record.setProject(project);
-        record.setType(
-                StringUtils.hasText(request.type())
-                        ? InwardType.valueOf(request.type())
-                        : InwardType.SUPPLY);
+        record.setType(InwardType.SUPPLY);
         record.setInvoiceNo(request.invoiceNo());
         record.setInvoiceDate(parseDate(request.invoiceDate()));
         record.setDeliveryDate(parseDate(request.deliveryDate()));
@@ -115,8 +112,6 @@ public class InventoryService {
         record.setSupplierName(request.supplierName());
         record.setEntryDate(
                 record.getDeliveryDate() != null ? record.getDeliveryDate() : LocalDate.now());
-
-        // Outward record linking removed - RETURN type no longer supported
 
         List<InwardLine> lines = new ArrayList<>();
 
@@ -131,8 +126,6 @@ public class InventoryService {
             // Sanitize quantities (no negative qty)
             double orderedQty = Math.max(0d, lineReq.orderedQty());
             double receivedQty = Math.max(0d, lineReq.receivedQty());
-
-            // Return logic removed - RETURN type no longer supported
 
             // Ignore completely empty lines
             if (orderedQty <= 0d && receivedQty <= 0d) {
@@ -614,14 +607,12 @@ public class InventoryService {
                 new InwardRequest(
                         null,
                         request.toProjectId(),
-                        InwardType.SUPPLY.name(),
                         null,
                         null,
                         null,
                         null,
                         "Transfer from " + fromProject.getCode(),
                         fromProject.getName(),
-                        null, // outwardId is null for transfers
                         inwardLines));
     }
 
