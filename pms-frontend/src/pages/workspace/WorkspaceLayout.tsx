@@ -41,10 +41,11 @@ const getPageHeading = (pathname: string): string => {
   if (pathname.includes("/workspace/transfer/create")) return "Create Transfer";
   if (pathname.includes("/workspace/transfer/detail")) return "Transfer Details";
   if (pathname.includes("/workspace/transfer")) return "Transfer Register";
+  if (pathname.includes("/workspace/materials")) return "Material Directory";
   if (pathname.includes("/workspace/vehicles/directory")) return "Vehicle Directory";
   if (pathname.includes("/workspace/vehicles/fuel")) return "Fuel Management";
   if (pathname.includes("/workspace/vehicles/daily-log")) return "Daily Logs";
-  if (pathname.includes("/workspace/vehicles/suppliers")) return "Supplier Management";
+  if (pathname.includes("/workspace/vehicles/suppliers") || pathname.includes("/workspace/suppliers")) return "Supplier Management";
   if (pathname.includes("/workspace/vehicles/details")) return "Vehicle Details";
   if (pathname.includes("/workspace/vehicles")) return "Vehicle Management";
   return "Workspace";
@@ -63,6 +64,7 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   const authToken = useSelector(
     (state: RootState) => state.auth.accessToken || state.auth.idToken
   );
+  const { permissions } = useSelector((state: RootState) => state.auth);
   const token = tokenProp || authToken;
 
   const pageHeading = useMemo(() => getPageHeading(location.pathname), [location.pathname]);
@@ -100,6 +102,7 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       onOpenAdmin={canAccessAdmin ? onOpenAdmin : undefined}
       pageHeading={pageHeading}
       showProjectSelector={true}
+      permissions={permissions}
     >
       {status === "loading" && <GlobalLoader />}
       <Outlet />

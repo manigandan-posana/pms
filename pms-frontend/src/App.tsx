@@ -212,11 +212,17 @@ export default function App() {
               />
             }
           >
-            {workspaceRoutes.map(({ path, component: Component }) => (
+            {workspaceRoutes.map(({ path, component: Component, requiredPermission }) => (
               <Route
                 key={path}
                 path={path}
-                element={<RouteComponent component={Component} />}
+                element={
+                  hasPermission(requiredPermission) ? (
+                    <RouteComponent component={Component} />
+                  ) : (
+                    <Navigate to={`${workspacePath}/dashboard`} replace />
+                  )
+                }
               />
             ))}
           </Route>

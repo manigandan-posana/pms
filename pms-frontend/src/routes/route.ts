@@ -18,6 +18,8 @@ const TransferCreatePage = lazy(() => import("../pages/workspace/TransferCreateP
 const TransferDetailPage = lazy(() => import("../pages/workspace/TransferDetailPage"));
 const VehicleManagementPageNew = lazy(() => import("../pages/workspace/VehicleManagementPageNew"));
 const VehicleDetailsPage = lazy(() => import("../pages/workspace/VehicleDetailsPage"));
+const SupplierManagementPage = lazy(() => import("../pages/workspace/SupplierManagementPage"));
+const MaterialDirectoryPage = lazy(() => import("../pages/admin/MaterialDirectoryPage"));
 const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPage"));
 
 // Lazy‑loaded admin pages
@@ -57,6 +59,9 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "inventory/inwards", component: InventoryPage },
   { path: "inventory/outwards", component: InventoryPage },
   { path: "inventory/transfers", component: InventoryPage },
+  { path: "inventory/allocations", component: InventoryPage, requiredPermission: "MATERIAL_ALLOCATION" },
+  { path: "inventory/allocated", component: InventoryPage, requiredPermission: "ALLOCATED_MATERIALS_VIEW" },
+  { path: "materials", component: MaterialDirectoryPage, requiredPermission: "MATERIAL_MANAGEMENT" },
   { path: "bom", component: BomPage },
   { path: "inward", component: InwardPage },
   { path: "inward/create", component: InwardCreatePage },
@@ -71,7 +76,8 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "vehicles/directory", component: VehicleManagementPageNew },
   { path: "vehicles/fuel", component: VehicleManagementPageNew },
   { path: "vehicles/daily-log", component: VehicleManagementPageNew },
-  { path: "vehicles/suppliers", component: VehicleManagementPageNew },
+  { path: "vehicles/suppliers", component: SupplierManagementPage },
+  { path: "suppliers", component: SupplierManagementPage },
   { path: "vehicles/details/:vehicleId", component: VehicleDetailsPage },
 ];
 
