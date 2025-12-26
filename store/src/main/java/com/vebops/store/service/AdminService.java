@@ -36,6 +36,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -240,17 +241,24 @@ public class AdminService {
         projectTeamMemberRepository.deleteByProjectId(projectId);
 
         List<ProjectTeamMember> saved = new ArrayList<>();
+        Set<UserAccount> usersNeedingProjectAccess = new HashSet<>();
         for (ProjectTeamAssignmentRequest assignment : safeAssignments) {
             if (assignment == null || assignment.userId() == null || assignment.role() == null) {
                 continue;
             }
             UserAccount user = userRepository.findById(assignment.userId())
                     .orElseThrow(() -> new NotFoundException("User not found for team assignment"));
+            user.getProjects().add(project);
+            usersNeedingProjectAccess.add(user);
             ProjectTeamMember member = new ProjectTeamMember();
             member.setProject(project);
             member.setUser(user);
             member.setRole(assignment.role());
             saved.add(projectTeamMemberRepository.save(member));
+        }
+
+        if (!usersNeedingProjectAccess.isEmpty()) {
+            userRepository.saveAll(usersNeedingProjectAccess);
         }
 
         List<ProjectTeamMemberDto> team = saved.stream().map(this::toTeamDto).toList();

@@ -211,48 +211,155 @@ const ProjectDetailsPage: React.FC = () => {
     </Card>
   );
 
-  const renderTreeTab = () => (
-    <Card variant="outlined" sx={{ mt: 2, borderRadius: 1 }}>
-      <CardContent>
-        <Stack spacing={2}>
-          {ROLE_OPTIONS.map((role) => {
-            const members = (currentProject?.teamMembers || []).filter(
-              (member) => member.role === role.value
-            );
-            return (
-              <Box key={role.value}>
-                <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
-                  <Chip label={role.label} size="small" color={role.color} />
-                  <Typography variant="caption" color="text.secondary">
-                    {members.length} member{members.length === 1 ? "" : "s"}
-                  </Typography>
-                </Stack>
-                {members.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No users assigned.
-                  </Typography>
-                ) : (
-                  <Stack spacing={0.5} pl={1.5}>
-                    {members.map((member) => (
-                      <Box key={`${member.role}-${member.userId}-${member.id}`}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {member.userName || member.userEmail || "Unknown user"}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {member.userEmail || ""}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                )}
-                <Divider sx={{ my: 1 }} />
+  const renderTreeTab = () => {
+    const grouped = ROLE_OPTIONS.map((role) => ({
+      role,
+      members: (currentProject?.teamMembers || []).filter(
+        (member) => member.role === role.value
+      ),
+    }));
+
+    return (
+      <Card variant="outlined" sx={{ mt: 2, borderRadius: 1 }}>
+        <CardContent>
+          <Box
+            sx={{
+              position: "relative",
+              px: { xs: 1, md: 2 },
+              py: 1,
+              "&:before": {
+                content: '""',
+                position: "absolute",
+                left: 24,
+                top: 12,
+                bottom: 12,
+                width: 2,
+                bgcolor: "divider",
+                opacity: 0.6,
+              },
+            }}
+          >
+            <Stack spacing={2} sx={{ position: "relative" }}>
+              <Box sx={{ position: "relative", pl: 6 }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: 16,
+                    top: 16,
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    bgcolor: "primary.main",
+                    boxShadow: 3,
+                  }}
+                />
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    background:
+                      "linear-gradient(135deg, rgba(33,150,243,0.08), rgba(156,39,176,0.08))",
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Project
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      {currentProject?.name || "Project"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {currentProject?.code}
+                    </Typography>
+                  </CardContent>
+                </Card>
               </Box>
-            );
-          })}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
+
+              {grouped.map(({ role, members }) => (
+                <Box key={role.value} sx={{ position: "relative", pl: 6 }}>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      left: 16,
+                      top: 22,
+                      width: 14,
+                      height: 14,
+                      borderRadius: "50%",
+                      bgcolor: (theme) =>
+                        role.color === "primary"
+                          ? theme.palette.primary.main
+                          : role.color === "secondary"
+                          ? theme.palette.secondary.main
+                          : theme.palette.grey[500],
+                      boxShadow: 2,
+                    }}
+                  />
+                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        alignItems={{ xs: "flex-start", md: "center" }}
+                        justifyContent="space-between"
+                        spacing={1}
+                        mb={1}
+                      >
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Chip label={role.label} size="small" color={role.color} />
+                          <Typography variant="caption" color="text.secondary">
+                            {members.length} member{members.length === 1 ? "" : "s"}
+                          </Typography>
+                        </Stack>
+                        <Divider flexItem orientation="horizontal" sx={{ display: { md: "none" } }} />
+                      </Stack>
+
+                      {members.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          No users assigned to this role yet.
+                        </Typography>
+                      ) : (
+                        <Grid container spacing={1.5}>
+                          {members.map((member) => (
+                            <Grid
+                              item
+                              xs={12}
+                              sm={6}
+                              md={4}
+                              key={`${member.role}-${member.userId}-${member.id}`}
+                            >
+                              <Box
+                                sx={{
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  borderRadius: 2,
+                                  p: 1.25,
+                                  backgroundColor: (theme) =>
+                                    theme.palette.mode === "light"
+                                      ? "#f9fbff"
+                                      : "rgba(255,255,255,0.03)",
+                                  boxShadow: 1,
+                                }}
+                              >
+                                <Typography variant="body2" fontWeight={700} noWrap>
+                                  {member.userName || member.userEmail || "Unknown user"}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  {member.userEmail || ""}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <Box sx={{ p: 1 }}>
