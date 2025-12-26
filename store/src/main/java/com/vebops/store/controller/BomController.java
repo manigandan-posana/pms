@@ -5,7 +5,12 @@ import com.vebops.store.dto.BomAllocationRequest;
 import com.vebops.store.dto.BomLineDto;
 import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.exception.BadRequestException;
+import com.vebops.store.exception.ForbiddenException;
+import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Permission;
+import com.vebops.store.model.Project;
+import com.vebops.store.model.Role;
+import com.vebops.store.model.UserAccount;
 import com.vebops.store.service.AuthService;
 import com.vebops.store.service.BomService;
 import com.vebops.store.util.AuthUtils;
@@ -52,7 +57,8 @@ public class BomController {
         @RequestParam(name = "search", required = false) String search,
         @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly
     ) {
-        AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
+        UserAccount user = requireUser();
+        requireProjectAccess(user, projectId);
         return bomService.listLines(projectId, page, size, search, inStockOnly);
     }
 
@@ -69,9 +75,11 @@ public class BomController {
         @PathVariable String projectId,
         @RequestBody BomAllocationRequest request
     ) {
+        UserAccount user = requireUser();
         AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
         double quantity = request != null ? request.quantity() : 0d;
         String resolvedProjectId = (request != null && StringUtils.hasText(request.projectId())) ? request.projectId() : projectId;
+        requireProjectAccess(user, resolvedProjectId);
         String resolvedMaterialId = request != null ? request.materialId() : null;
         if (!StringUtils.hasText(resolvedMaterialId)) {
             throw new BadRequestException("Material id is required");
@@ -85,10 +93,12 @@ public class BomController {
         @PathVariable String materialId,
         @RequestBody BomAllocationRequest request
     ) {
+        UserAccount user = requireUser();
         AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
         double quantity = request != null ? request.quantity() : 0d;
         String resolvedProjectId = (request != null && StringUtils.hasText(request.projectId())) ? request.projectId() : projectId;
         String resolvedMaterialId = (request != null && StringUtils.hasText(request.materialId())) ? request.materialId() : materialId;
+        requireProjectAccess(user, resolvedProjectId);
         return bomService.assignQuantity(resolvedProjectId, resolvedMaterialId, quantity);
     }
 
@@ -97,7 +107,34 @@ public class BomController {
         @PathVariable String projectId,
         @PathVariable String materialId
     ) {
+        UserAccount user = requireUser();
         AuthUtils.requireAdminOrPermission(Permission.MATERIAL_ALLOCATION);
+        requireProjectAccess(user, projectId);
         bomService.deleteLine(projectId, materialId);
+    }
+
+    private UserAccount requireUser() {
+        Long userId = AuthUtils.requireUserId();
+        return authService.getUserById(userId);
+    }
+
+    private void requireProjectAccess(UserAccount user, String projectId) {
+        if (user == null || !StringUtils.hasText(projectId)) {
+            throw new ForbiddenException("You do not have access to this project");
+        }
+        if (Role.ADMIN.equals(user.getRole())) {
+            return;
+        }
+        if (AccessType.ALL.equals(user.getAccessType())) {
+            return;
+        }
+        boolean allowed = user.getProjects()
+            .stream()
+            .map(Project::getId)
+            .map(String::valueOf)
+            .anyMatch(id -> id.equals(projectId));
+        if (!allowed) {
+            throw new ForbiddenException("You do not have access to this project");
+        }
     }
 }
