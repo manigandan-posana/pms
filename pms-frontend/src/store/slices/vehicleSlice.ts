@@ -429,6 +429,25 @@ const vehicleSlice = createSlice({
         state.error = action.payload || "Failed to delete fuel entry";
       });
 
+    // Refill fuel entry
+    builder
+      .addCase(refillFuelEntry.fulfilled, (state, action) => {
+        // The refill creates a new entry and closes the old one
+        // Find and update the old entry to CLOSED status
+        const oldEntryIndex = state.fuelEntries.findIndex(
+          (f) => f.vehicleId === action.payload.vehicleId && f.status === "OPEN"
+        );
+        if (oldEntryIndex !== -1) {
+          state.fuelEntries[oldEntryIndex].status = "CLOSED";
+        }
+        // Add the new entry
+        state.fuelEntries.push(action.payload);
+      })
+      .addCase(refillFuelEntry.rejected, (state, action) => {
+        state.error = action.payload || "Failed to refill fuel entry";
+      });
+
+
     // Fetch suppliers
     builder
       .addCase(fetchSuppliersByProject.fulfilled, (state, action) => {

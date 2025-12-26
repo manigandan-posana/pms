@@ -59,15 +59,14 @@ public class AdminService {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public AdminService(
-        ProjectRepository projectRepository,
-        UserRepository userRepository,
-        MaterialRepository materialRepository,
-        BomLineRepository bomLineRepository,
-        InwardRecordRepository inwardRecordRepository,
-        OutwardRecordRepository outwardRecordRepository,
-        TransferRecordRepository transferRecordRepository,
-        PasswordEncoder passwordEncoder
-    ) {
+            ProjectRepository projectRepository,
+            UserRepository userRepository,
+            MaterialRepository materialRepository,
+            BomLineRepository bomLineRepository,
+            InwardRecordRepository inwardRecordRepository,
+            OutwardRecordRepository outwardRecordRepository,
+            TransferRecordRepository transferRecordRepository,
+            PasswordEncoder passwordEncoder) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.materialRepository = materialRepository;
@@ -79,12 +78,11 @@ public class AdminService {
     }
 
     public PaginatedResponse<ProjectDto> searchProjects(
-        String search,
-        List<String> prefixes,
-        String allocationFilter,
-        int page,
-        int size
-    ) {
+            String search,
+            List<String> prefixes,
+            String allocationFilter,
+            int page,
+            int size) {
         int safePage = normalizePage(page);
         int safeSize = normalizeSize(size);
         Specification<Project> spec = Specification.where(null);
@@ -98,11 +96,11 @@ public class AdminService {
         }
         if (prefixes != null && !prefixes.isEmpty()) {
             Set<String> normalized = prefixes
-                .stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .map(prefix -> prefix.substring(0, 1).toUpperCase())
-                .collect(Collectors.toSet());
+                    .stream()
+                    .filter(StringUtils::hasText)
+                    .map(String::trim)
+                    .map(prefix -> prefix.substring(0, 1).toUpperCase())
+                    .collect(Collectors.toSet());
             if (!normalized.isEmpty()) {
                 spec = spec.and((root, q, cb) -> cb.upper(cb.substring(root.get("code"), 1, 1)).in(normalized));
             }
@@ -123,50 +121,49 @@ public class AdminService {
         Page<Project> result = projectRepository.findAll(spec, pageable);
         List<ProjectDto> items = result.stream().map(this::toProjectDto).toList();
         List<String> prefixOptions = projectRepository
-            .distinctCodePrefixes()
-            .stream()
-            .filter(StringUtils::hasText)
-            .map(String::trim)
-            .map(prefix -> prefix.substring(0, 1))
-            .sorted()
-            .toList();
+                .distinctCodePrefixes()
+                .stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(prefix -> prefix.substring(0, 1))
+                .sorted()
+                .toList();
         Map<String, List<String>> filters = Map.of("prefixes", prefixOptions);
         return new PaginatedResponse<>(
-            items,
-            result.getTotalElements(),
-            Math.max(1, result.getTotalPages()),
-            result.getSize(),
-            result.getNumber(),
-            result.hasNext(),
-            result.hasPrevious(),
-            filters
-        );
+                items,
+                result.getTotalElements(),
+                Math.max(1, result.getTotalPages()),
+                result.getSize(),
+                result.getNumber(),
+                result.hasNext(),
+                result.hasPrevious(),
+                filters);
     }
 
     public ProjectDto createProject(CreateProjectRequest request) {
         if (request == null || !StringUtils.hasText(request.name())) {
             throw new BadRequestException("Project name is required");
         }
-        
+
         String code;
         if (StringUtils.hasText(request.code())) {
             code = request.code().trim();
             projectRepository
-                .findByCodeIgnoreCase(code)
-                .ifPresent(existing -> {
-                    throw new BadRequestException("Project code already exists");
-                });
+                    .findByCodeIgnoreCase(code)
+                    .ifPresent(existing -> {
+                        throw new BadRequestException("Project code already exists");
+                    });
         } else {
             // Auto-generate short unique code
             code = generateProjectCode();
         }
-        
+
         Project project = new Project();
         project.setCode(code);
         project.setName(request.name().trim());
         return toProjectDto(projectRepository.save(project));
     }
-    
+
     private String generateProjectCode() {
         long count = projectRepository.count();
         String code;
@@ -185,12 +182,12 @@ public class AdminService {
         if (StringUtils.hasText(request.code())) {
             String nextCode = request.code().trim();
             projectRepository
-                .findByCodeIgnoreCase(nextCode)
-                .ifPresent(existing -> {
-                    if (!existing.getId().equals(id)) {
-                        throw new BadRequestException("Project code already exists");
-                    }
-                });
+                    .findByCodeIgnoreCase(nextCode)
+                    .ifPresent(existing -> {
+                        if (!existing.getId().equals(id)) {
+                            throw new BadRequestException("Project code already exists");
+                        }
+                    });
             project.setCode(nextCode);
         }
         if (StringUtils.hasText(request.name())) {
@@ -207,14 +204,13 @@ public class AdminService {
     }
 
     public PaginatedResponse<UserDto> searchUsers(
-        AuthService authService,
-        String search,
-        List<String> roles,
-        List<String> accessTypes,
-        List<String> projectIds,
-        int page,
-        int size
-    ) {
+            AuthService authService,
+            String search,
+            List<String> roles,
+            List<String> accessTypes,
+            List<String> projectIds,
+            int page,
+            int size) {
         int safePage = normalizePage(page);
         int safeSize = normalizeSize(size);
         Specification<UserAccount> spec = Specification.where(null);
@@ -229,35 +225,35 @@ public class AdminService {
         }
         if (roles != null && !roles.isEmpty()) {
             Set<Role> resolvedRoles = roles
-                .stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .map(String::toUpperCase)
-                .map(this::parseRoleValue)
-                .collect(Collectors.toSet());
+                    .stream()
+                    .filter(StringUtils::hasText)
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .map(this::parseRoleValue)
+                    .collect(Collectors.toSet());
             if (!resolvedRoles.isEmpty()) {
                 spec = spec.and((root, q, cb) -> root.get("role").in(resolvedRoles));
             }
         }
         if (accessTypes != null && !accessTypes.isEmpty()) {
             Set<AccessType> resolved = accessTypes
-                .stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .map(String::toUpperCase)
-                .map(this::parseAccessValue)
-                .collect(Collectors.toSet());
+                    .stream()
+                    .filter(StringUtils::hasText)
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .map(this::parseAccessValue)
+                    .collect(Collectors.toSet());
             if (!resolved.isEmpty()) {
                 spec = spec.and((root, q, cb) -> root.get("accessType").in(resolved));
             }
         }
         if (projectIds != null && !projectIds.isEmpty()) {
             Set<Long> resolved = projectIds
-                .stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .map(this::parseProjectId)
-                .collect(Collectors.toSet());
+                    .stream()
+                    .filter(StringUtils::hasText)
+                    .map(String::trim)
+                    .map(this::parseProjectId)
+                    .collect(Collectors.toSet());
             if (!resolved.isEmpty()) {
                 spec = spec.and((root, q, cb) -> {
                     q.distinct(true);
@@ -266,33 +262,32 @@ public class AdminService {
                 });
             }
         }
-        Pageable pageable = PageRequest.of(safePage - 1, safeSize, Sort.by("name").ascending().and(Sort.by("email").ascending()));
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize,
+                Sort.by("name").ascending().and(Sort.by("email").ascending()));
         Page<UserAccount> result = userRepository.findAll(spec, pageable);
         List<UserDto> items = result.stream().map(authService::toUserDto).toList();
         List<String> projectFilters = projectRepository
-            .findAll(Sort.by("code").ascending())
-            .stream()
-            .map(Project::getId)
-            .map(String::valueOf)
-            .toList();
+                .findAll(Sort.by("code").ascending())
+                .stream()
+                .map(Project::getId)
+                .map(String::valueOf)
+                .toList();
         Map<String, List<String>> filters = Map.of(
-            "roles",
-            Stream.of(Role.values()).map(Role::name).sorted().toList(),
-            "accessTypes",
-            Stream.of(AccessType.values()).map(AccessType::name).sorted().toList(),
-            "projects",
-            projectFilters
-        );
+                "roles",
+                Stream.of(Role.values()).map(Role::name).sorted().toList(),
+                "accessTypes",
+                Stream.of(AccessType.values()).map(AccessType::name).sorted().toList(),
+                "projects",
+                projectFilters);
         return new PaginatedResponse<>(
-            items,
-            result.getTotalElements(),
-            Math.max(1, result.getTotalPages()),
-            result.getSize(),
-            result.getNumber(),
-            result.hasNext(),
-            result.hasPrevious(),
-            filters
-        );
+                items,
+                result.getTotalElements(),
+                Math.max(1, result.getTotalPages()),
+                result.getSize(),
+                result.getNumber(),
+                result.hasNext(),
+                result.hasPrevious(),
+                filters);
     }
 
     public UserDto createUser(CreateUserRequest request, AuthService authService) {
@@ -300,27 +295,27 @@ public class AdminService {
         if (!StringUtils.hasText(request.name()) || !StringUtils.hasText(request.email())) {
             throw new BadRequestException("Name and email are required");
         }
-        
+
         userRepository
-            .findByEmailIgnoreCase(request.email())
-            .ifPresent(existing -> {
-                throw new BadRequestException("Email already in use");
-            });
-        
+                .findByEmailIgnoreCase(request.email())
+                .ifPresent(existing -> {
+                    throw new BadRequestException("Email already in use");
+                });
+
         // Validate that project-scoped roles have at least one project assigned
         Role role = Role.valueOf(request.role());
         boolean requiresProjects = (role == Role.USER);
         if (requiresProjects && (request.projectIds() == null || request.projectIds().isEmpty())) {
             throw new BadRequestException("At least one project must be assigned for this role");
         }
-        
+
         UserAccount user = new UserAccount();
         applyUserFields(user, request.name(), request.role(), request.accessType());
         user.setEmail(request.email().trim());
         // For Microsoft-authenticated users, no local password is stored. Use a fixed
         // placeholder so the NOT NULL constraint is satisfied but never used.
         user.setPasswordHash("$2a$10$AZURE_AD_USER_NO_PASSWORD_NEEDED");
-        
+
         assignProjects(user, request.projectIds());
         return authService.toUserDto(userRepository.save(user));
     }
@@ -375,14 +370,13 @@ public class AdminService {
                 int lineCount = record.getLines() != null ? record.getLines().size() : 0;
                 String status = record.isValidated() ? "Validated" : "Pending";
                 acc.addInward(new ProjectActivityEntryDto(
-                    record.getId() != null ? String.valueOf(record.getId()) : null,
-                    record.getCode(),
-                    date,
-                    record.getSupplierName(),
-                    status,
-                    lineCount,
-                    "INWARD"
-                ));
+                        record.getId() != null ? String.valueOf(record.getId()) : null,
+                        record.getCode(),
+                        date,
+                        record.getSupplierName(),
+                        status,
+                        lineCount,
+                        "INWARD"));
             }
         });
 
@@ -395,16 +389,15 @@ public class AdminService {
             if (acc != null) {
                 String date = record.getDate() != null ? DATE_FMT.format(record.getDate()) : null;
                 int lineCount = record.getLines() != null ? record.getLines().size() : 0;
-                String status = record.getStatus() != null ? record.getStatus().name() : (record.isValidated() ? "Validated" : "Pending");
+                String status = record.isValidated() ? "Validated" : "Pending";
                 acc.addOutward(new ProjectActivityEntryDto(
-                    record.getId() != null ? String.valueOf(record.getId()) : null,
-                    record.getCode(),
-                    date,
-                    record.getIssueTo(),
-                    status,
-                    lineCount,
-                    "OUTWARD"
-                ));
+                        record.getId() != null ? String.valueOf(record.getId()) : null,
+                        record.getCode(),
+                        date,
+                        record.getIssueTo(),
+                        status,
+                        lineCount,
+                        "OUTWARD"));
             }
         });
 
@@ -419,14 +412,13 @@ public class AdminService {
                 ProjectActivityAccumulator acc = byId.get(from.getId());
                 if (acc != null) {
                     acc.addTransfer(new ProjectActivityEntryDto(
-                        record.getId() != null ? String.valueOf(record.getId()) : null,
-                        record.getCode(),
-                        date,
-                        to != null ? to.getName() : "To project not set",
-                        "Dispatched",
-                        lineCount,
-                        direction
-                    ));
+                            record.getId() != null ? String.valueOf(record.getId()) : null,
+                            record.getCode(),
+                            date,
+                            to != null ? to.getName() : "To project not set",
+                            "Dispatched",
+                            lineCount,
+                            direction));
                 }
             }
 
@@ -434,14 +426,13 @@ public class AdminService {
                 ProjectActivityAccumulator acc = byId.get(to.getId());
                 if (acc != null) {
                     acc.addTransfer(new ProjectActivityEntryDto(
-                        record.getId() != null ? String.valueOf(record.getId()) : null,
-                        record.getCode(),
-                        date,
-                        from != null ? from.getName() : "From project not set",
-                        "Received",
-                        lineCount,
-                        direction
-                    ));
+                            record.getId() != null ? String.valueOf(record.getId()) : null,
+                            record.getCode(),
+                            date,
+                            from != null ? from.getName() : "From project not set",
+                            "Received",
+                            lineCount,
+                            direction));
                 }
             }
         });
@@ -479,16 +470,15 @@ public class AdminService {
 
         ProjectActivityDto toDto() {
             return new ProjectActivityDto(
-                project.getId(),
-                project.getCode(),
-                project.getName(),
-                inwardCount,
-                outwardCount,
-                transferCount,
-                recentInwards,
-                recentOutwards,
-                recentTransfers
-            );
+                    project.getId(),
+                    project.getCode(),
+                    project.getName(),
+                    inwardCount,
+                    outwardCount,
+                    transferCount,
+                    recentInwards,
+                    recentOutwards,
+                    recentTransfers);
         }
 
         private void addIfRoom(List<ProjectActivityEntryDto> items, ProjectActivityEntryDto dto) {
@@ -509,7 +499,8 @@ public class AdminService {
         return switch (role) {
             case ADMIN -> AccessType.ALL;
             case USER ->
-                StringUtils.hasText(requestedAccessType) ? AccessType.valueOf(requestedAccessType) : AccessType.PROJECTS;
+                StringUtils.hasText(requestedAccessType) ? AccessType.valueOf(requestedAccessType)
+                        : AccessType.PROJECTS;
         };
     }
 
@@ -519,11 +510,11 @@ public class AdminService {
             return;
         }
         Set<Project> projects = projectIds
-            .stream()
-            .filter(StringUtils::hasText)
-            .map(Long::valueOf)
-            .map(id -> projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found")))
-            .collect(Collectors.toSet());
+                .stream()
+                .filter(StringUtils::hasText)
+                .map(Long::valueOf)
+                .map(id -> projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found")))
+                .collect(Collectors.toSet());
         user.getProjects().clear();
         user.getProjects().addAll(projects);
     }

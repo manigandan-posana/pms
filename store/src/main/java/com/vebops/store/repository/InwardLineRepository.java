@@ -6,18 +6,30 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface InwardLineRepository extends JpaRepository<InwardLine, Long> {
-    @Query(
-        "select coalesce(sum(line.receivedQty), 0) from InwardLine line where line.record.project.id = :projectId and line.material.id = :materialId"
-    )
+    // Sum received qty for SUPPLY type only (excludes returns)
+    @Query("select coalesce(sum(line.receivedQty), 0) from InwardLine line " +
+            "where line.record.project.id = :projectId " +
+            "and line.material.id = :materialId " +
+            "and line.record.type = 'SUPPLY'")
     Double sumReceivedQtyByProjectAndMaterial(@Param("projectId") Long projectId, @Param("materialId") Long materialId);
-    // NEW: total ordered qty per project + material
-    @Query(
-        "select coalesce(sum(line.orderedQty), 0) " +
-        "from InwardLine line " +
-        "where line.record.project.id = :projectId and line.material.id = :materialId"
-    )
+
+    // Sum ordered qty for SUPPLY type only (excludes returns)
+    @Query("select coalesce(sum(line.orderedQty), 0) " +
+            "from InwardLine line " +
+            "where line.record.project.id = :projectId " +
+            "and line.material.id = :materialId " +
+            "and line.record.type = 'SUPPLY'")
     Double sumOrderedQtyByProjectAndMaterial(
-        @Param("projectId") Long projectId,
-        @Param("materialId") Long materialId
-    );
+            @Param("projectId") Long projectId,
+            @Param("materialId") Long materialId);
+
+    // Sum returned qty for RETURN type only
+    @Query("select coalesce(sum(line.receivedQty), 0) " +
+            "from InwardLine line " +
+            "where line.record.project.id = :projectId " +
+            "and line.material.id = :materialId " +
+            "and line.record.type = 'RETURN'")
+    Double sumReturnedQtyByProjectAndMaterial(
+            @Param("projectId") Long projectId,
+            @Param("materialId") Long materialId);
 }

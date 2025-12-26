@@ -30,7 +30,6 @@ export interface OutwardHistoryRecord {
   code?: string | null;
   projectName?: string | null;
   issueTo?: string | null;
-  status?: string | null;
   validated?: boolean | null;
   date?: string | null;
   items?: number | null;
@@ -143,24 +142,6 @@ const OutwardPage: React.FC = () => {
       header: 'Date',
       width: 90,
       body: (row) => row.date ? new Date(row.date).toLocaleDateString() : "—"
-    },
-    {
-      field: 'status',
-      header: 'Status',
-      width: 80,
-      body: (row) => (
-        <Chip
-          label={row.status || 'OPEN'}
-          size="small"
-          color={row.status === 'CLOSED' ? 'default' : 'success'}
-          sx={{
-            height: 18,
-            fontSize: '0.65rem',
-            fontWeight: 600,
-            '& .MuiChip-label': { px: 0.75, py: 0 }
-          }}
-        />
-      )
     },
     {
       field: 'items',

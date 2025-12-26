@@ -16,7 +16,6 @@ import com.vebops.store.model.InwardType;
 import com.vebops.store.model.Material;
 import com.vebops.store.model.OutwardLine;
 import com.vebops.store.model.OutwardRecord;
-import com.vebops.store.model.OutwardStatus;
 import com.vebops.store.model.Project;
 import com.vebops.store.model.TransferLine;
 import com.vebops.store.model.TransferRecord;
@@ -265,25 +264,9 @@ public class InventoryService {
         record.setCode(resolveOrGenerateCode(request.code(), () -> generateCodes().outwardCode()));
         record.setIssueTo(request.issueTo());
 
-        if (StringUtils.hasText(request.status())) {
-            OutwardStatus status = OutwardStatus.valueOf(request.status());
-            record.setStatus(status);
-            if (status == OutwardStatus.CLOSED) {
-                record.setCloseDate(LocalDate.now());
-            } else {
-                record.setCloseDate(parseDate(request.closeDate()));
-            }
-        } else {
-            record.setStatus(OutwardStatus.OPEN);
-            record.setCloseDate(null);
-        }
+        // Status management removed - outwards are always open
 
-        // Skip closed check if explicitly bypassed (e.g., for transfers)
-        boolean bypassClosedCheck = request.bypassClosedCheck() != null && request.bypassClosedCheck();
-        if (!bypassClosedCheck && record.getStatus() == OutwardStatus.CLOSED) {
-            throw new BadRequestException(
-                    "Cannot create outward with CLOSED status. Please create as OPEN and close it later after verification.");
-        }
+        // Status check removed - outwards are always editable
 
         List<OutwardLine> lines = new ArrayList<>();
 
@@ -392,31 +375,7 @@ public class InventoryService {
                 .findById(recordId)
                 .orElseThrow(() -> new NotFoundException("Outward record not found"));
 
-        // Allow closed records to be reopened by changing status to OPEN. If the
-        // incoming request does not explicitly specify OPEN then editing is
-        // disallowed. This supports an approval workflow where an admin can
-        // reopen a closed record but prevents accidental edits.
-        if (record.getStatus() == OutwardStatus.CLOSED) {
-            OutwardStatus desiredStatus = null;
-            if (StringUtils.hasText(request.status())) {
-                try {
-                    desiredStatus = OutwardStatus.valueOf(request.status());
-                } catch (IllegalArgumentException ex) {
-                    // ignore invalid status; will fall through to exception
-                }
-            }
-            if (desiredStatus != OutwardStatus.OPEN) {
-                throw new BadRequestException("Closed records cannot be edited");
-            }
-            // For reopen requests we skip quantity updates and simply mark as open
-            record.setStatus(OutwardStatus.OPEN);
-            record.setCloseDate(null);
-            if (StringUtils.hasText(request.issueTo())) {
-                record.setIssueTo(request.issueTo());
-            }
-            outwardRecordRepository.save(record);
-            return;
-        }
+        // Status check removed - all records are editable
 
         // 1) Index existing lines and capture current totals PER MATERIAL for this
         // record
@@ -582,14 +541,7 @@ public class InventoryService {
         record.getLines().clear();
         record.getLines().addAll(nextLines);
 
-        if (StringUtils.hasText(request.status())) {
-            record.setStatus(OutwardStatus.valueOf(request.status()));
-            if (record.getStatus() == OutwardStatus.CLOSED) {
-                record.setCloseDate(LocalDate.now());
-            } else {
-                record.setCloseDate(null);
-            }
-        }
+        // Status management removed
 
         if (StringUtils.hasText(request.issueTo())) {
             record.setIssueTo(request.issueTo());

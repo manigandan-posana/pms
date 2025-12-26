@@ -421,8 +421,6 @@ public class HistoryController {
                 record.getCode(),
                 record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
                 record.getIssueTo(),
-                record.getStatus() != null ? record.getStatus().name() : null,
-                record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
                 record.isValidated(),
                 lines.size(),
                 lines);

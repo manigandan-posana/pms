@@ -3,8 +3,6 @@ package com.vebops.store.model;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,14 +34,8 @@ public class OutwardRecord {
     private String issueTo;
     private String remarks;
     private String vehicleNo;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OutwardStatus status = OutwardStatus.OPEN;
-
-    private LocalDate closeDate;
     private LocalDate entryDate;
-    
+
     @Column(nullable = false)
     private boolean validated = false;
 
@@ -51,7 +43,7 @@ public class OutwardRecord {
     private List<OutwardLine> lines = new ArrayList<>();
 
     // Getters and Setters
-    
+
     public Long getId() {
         return id;
     }
@@ -102,22 +94,6 @@ public class OutwardRecord {
 
     public void setVehicleNo(String vehicleNo) {
         this.vehicleNo = vehicleNo;
-    }
-
-    public OutwardStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OutwardStatus status) {
-        this.status = status;
-    }
-
-    public LocalDate getCloseDate() {
-        return closeDate;
-    }
-
-    public void setCloseDate(LocalDate closeDate) {
-        this.closeDate = closeDate;
     }
 
     public LocalDate getEntryDate() {

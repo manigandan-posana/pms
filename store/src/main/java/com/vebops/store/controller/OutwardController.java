@@ -6,7 +6,6 @@ import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Material;
 import com.vebops.store.model.OutwardLine;
 import com.vebops.store.model.OutwardRecord;
-import com.vebops.store.model.OutwardStatus;
 import com.vebops.store.model.Project;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.MaterialRepository;
@@ -223,49 +222,6 @@ public class OutwardController {
         return ResponseEntity.ok(dto);
     }
 
-    /**
-     * Close an outward record.
-     * Sets the status to CLOSED and records the close date.
-     */
-    @PostMapping("/{id}/close")
-    public ResponseEntity<?> closeOutward(@PathVariable Long id) {
-        Long userId = AuthUtils.requireUserId();
-        UserAccount user = authService.getUserById(userId);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Unauthorized"));
-        }
-
-        OutwardRecord record = outwardRecordRepository.findWithLinesById(id).orElse(null);
-        if (record == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Outward record not found"));
-        }
-
-        // Check access
-        if (user.getAccessType() == AccessType.PROJECTS) {
-            Long projectId = record.getProject() != null ? record.getProject().getId() : null;
-            Set<Long> allowedProjectIds = user.getProjects().stream()
-                    .map(Project::getId)
-                    .collect(Collectors.toSet());
-            if (projectId == null || !allowedProjectIds.contains(projectId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Access denied to this project"));
-            }
-        }
-
-        if (record.getStatus() == OutwardStatus.CLOSED) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Outward already closed"));
-        }
-
-        record.setStatus(OutwardStatus.CLOSED);
-        record.setCloseDate(java.time.LocalDate.now());
-        OutwardRecord saved = outwardRecordRepository.save(record);
-        OutwardRegisterDto dto = convertToDto(saved, saved.getLines());
-        return ResponseEntity.ok(dto);
-    }
-
     private OutwardRegisterDto convertToDto(OutwardRecord record, List<OutwardLine> recordLines) {
         List<OutwardLineDto> lines = new ArrayList<>();
         for (OutwardLine line : recordLines) {
@@ -287,8 +243,6 @@ public class OutwardController {
                 record.getCode(),
                 record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
                 record.getIssueTo(),
-                record.getStatus() != null ? record.getStatus().name() : null,
-                record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
                 record.isValidated(),
                 lines.size(),
                 lines);

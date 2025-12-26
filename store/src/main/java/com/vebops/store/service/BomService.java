@@ -32,12 +32,11 @@ public class BomService {
     private final OutwardLineRepository outwardLineRepository;
 
     public BomService(
-        BomLineRepository bomLineRepository,
-        ProjectRepository projectRepository,
-        MaterialRepository materialRepository,
-        InwardLineRepository inwardLineRepository,
-        OutwardLineRepository outwardLineRepository
-    ) {
+            BomLineRepository bomLineRepository,
+            ProjectRepository projectRepository,
+            MaterialRepository materialRepository,
+            InwardLineRepository inwardLineRepository,
+            OutwardLineRepository outwardLineRepository) {
         this.bomLineRepository = bomLineRepository;
         this.projectRepository = projectRepository;
         this.materialRepository = materialRepository;
@@ -68,8 +67,8 @@ public class BomService {
      * size will be constrained between 1 and 100.
      *
      * @param projectId the id of the project whose BOM lines are requested
-     * @param page a 1‑based page number
-     * @param size the number of items per page
+     * @param page      a 1‑based page number
+     * @param size      the number of items per page
      * @return a paginated response containing BOM line DTOs
      */
     public PaginatedResponse<BomLineDto> listLines(String projectId, int page, int size) {
@@ -77,12 +76,11 @@ public class BomService {
     }
 
     public PaginatedResponse<BomLineDto> listLines(
-        String projectId,
-        int page,
-        int size,
-        String search,
-        boolean inStockOnly
-    ) {
+            String projectId,
+            int page,
+            int size,
+            String search,
+            boolean inStockOnly) {
         Project project = requireProject(projectId);
         int safePage = page < 1 ? 1 : page;
         int safeSize;
@@ -92,37 +90,33 @@ public class BomService {
             safeSize = Math.min(size, 100);
         }
         List<BomLineDto> allItems = bomLineRepository.findByProjectId(project.getId())
-            .stream()
-            .map(this::toDto)
-            .toList();
+                .stream()
+                .map(this::toDto)
+                .toList();
         Stream<BomLineDto> stream = allItems.stream();
         if (StringUtils.hasText(search)) {
             String term = search.trim().toLowerCase();
-            stream = stream.filter(item ->
-                (item.code() != null && item.code().toLowerCase().contains(term)) ||
-                (item.name() != null && item.name().toLowerCase().contains(term)) ||
-                (item.category() != null && item.category().toLowerCase().contains(term))
-            );
+            stream = stream.filter(item -> (item.code() != null && item.code().toLowerCase().contains(term)) ||
+                    (item.name() != null && item.name().toLowerCase().contains(term)) ||
+                    (item.category() != null && item.category().toLowerCase().contains(term)));
         }
         if (inStockOnly) {
             stream = stream.filter(item -> item.balanceQty() > 0);
         }
         List<BomLineDto> filtered = stream.toList();
         Page<BomLineDto> linesPage = new PageImpl<>(
-            paginate(filtered, safePage, safeSize),
-            PageRequest.of(safePage - 1, safeSize),
-            filtered.size()
-        );
+                paginate(filtered, safePage, safeSize),
+                PageRequest.of(safePage - 1, safeSize),
+                filtered.size());
         return new PaginatedResponse<>(
-            linesPage.getContent(),
-            linesPage.getTotalElements(),
-            Math.max(1, linesPage.getTotalPages()),
-            linesPage.getSize(),
-            linesPage.getNumber(),
-            linesPage.hasNext(),
-            linesPage.hasPrevious(),
-            java.util.Collections.emptyMap()
-        );
+                linesPage.getContent(),
+                linesPage.getTotalElements(),
+                Math.max(1, linesPage.getTotalPages()),
+                linesPage.getSize(),
+                linesPage.getNumber(),
+                linesPage.hasNext(),
+                linesPage.hasPrevious(),
+                java.util.Collections.emptyMap());
     }
 
     private <T> List<T> paginate(List<T> items, int page, int size) {
@@ -136,13 +130,13 @@ public class BomService {
             throw new BadRequestException("Quantity must be zero or greater");
         }
         BomLine line = bomLineRepository
-            .findByProjectIdAndMaterialId(project.getId(), material.getId())
-            .orElseGet(() -> {
-                BomLine created = new BomLine();
-                created.setProject(project);
-                created.setMaterial(material);
-                return created;
-            });
+                .findByProjectIdAndMaterialId(project.getId(), material.getId())
+                .orElseGet(() -> {
+                    BomLine created = new BomLine();
+                    created.setProject(project);
+                    created.setMaterial(material);
+                    return created;
+                });
         line.setQuantity(quantity);
         return bomLineRepository.save(line);
     }
@@ -161,38 +155,42 @@ public class BomService {
             stream = stream.filter(line -> {
                 Project project = line.getProject();
                 Material material = line.getMaterial();
-                return (project != null && project.getName() != null && project.getName().toLowerCase().contains(term)) ||
-                    (project != null && project.getCode() != null && project.getCode().toLowerCase().contains(term)) ||
-                    (material != null && material.getName() != null && material.getName().toLowerCase().contains(term)) ||
-                    (material != null && material.getCode() != null && material.getCode().toLowerCase().contains(term));
+                return (project != null && project.getName() != null && project.getName().toLowerCase().contains(term))
+                        ||
+                        (project != null && project.getCode() != null && project.getCode().toLowerCase().contains(term))
+                        ||
+                        (material != null && material.getName() != null
+                                && material.getName().toLowerCase().contains(term))
+                        ||
+                        (material != null && material.getCode() != null
+                                && material.getCode().toLowerCase().contains(term));
             });
         }
         return stream
-            .map(line -> {
-                Project project = line.getProject();
-                Material material = line.getMaterial();
-                double quantity = line.getQuantity();
-                return new AllocationOverviewDto(
-                    line.getId() != null ? String.valueOf(line.getId()) : null,
-                    project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
-                    project != null ? project.getName() : null,
-                    project != null ? project.getCode() : null,
-                    material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
-                    material != null ? material.getName() : null,
-                    material != null ? material.getCategory() : null,
-                    quantity,
-                    quantity,
-                    material != null ? material.getUnit() : null
-                );
-            })
-            .toList();
+                .map(line -> {
+                    Project project = line.getProject();
+                    Material material = line.getMaterial();
+                    double quantity = line.getQuantity();
+                    return new AllocationOverviewDto(
+                            line.getId() != null ? String.valueOf(line.getId()) : null,
+                            project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
+                            project != null ? project.getName() : null,
+                            project != null ? project.getCode() : null,
+                            material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
+                            material != null ? material.getName() : null,
+                            material != null ? material.getCategory() : null,
+                            quantity,
+                            quantity,
+                            material != null ? material.getUnit() : null);
+                })
+                .toList();
     }
 
     public double currentAllocation(Long projectId, Long materialId) {
         return bomLineRepository
-            .findByProjectIdAndMaterialId(projectId, materialId)
-            .map(BomLine::getQuantity)
-            .orElse(0d);
+                .findByProjectIdAndMaterialId(projectId, materialId)
+                .map(BomLine::getQuantity)
+                .orElse(0d);
     }
 
     public double currentAllocation(Project project, Material material) {
@@ -207,7 +205,8 @@ public class BomService {
     }
 
     private Material requireMaterial(String id) {
-        return materialRepository.findById(parseLong(id)).orElseThrow(() -> new NotFoundException("Material not found"));
+        return materialRepository.findById(parseLong(id))
+                .orElseThrow(() -> new NotFoundException("Material not found"));
     }
 
     private Long parseLong(String value) {
@@ -222,32 +221,31 @@ public class BomService {
         Project project = line.getProject();
         double allocation = line.getQuantity();
         double orderedQty = safeDouble(
-            inwardLineRepository.sumOrderedQtyByProjectAndMaterial(project.getId(), material.getId())
-        );
+                inwardLineRepository.sumOrderedQtyByProjectAndMaterial(project.getId(), material.getId()));
         double receivedQty = safeDouble(
-            inwardLineRepository.sumReceivedQtyByProjectAndMaterial(project.getId(), material.getId())
-        );
+                inwardLineRepository.sumReceivedQtyByProjectAndMaterial(project.getId(), material.getId()));
+        double returnedQty = safeDouble(
+                inwardLineRepository.sumReturnedQtyByProjectAndMaterial(project.getId(), material.getId()));
         double issuedQty = safeDouble(
-            outwardLineRepository.sumIssuedQtyByProjectAndMaterial(project.getId(), material.getId())
-        );
+                outwardLineRepository.sumIssuedQtyByProjectAndMaterial(project.getId(), material.getId()));
         double balanceQty = Math.max(0d, receivedQty - issuedQty);
         return new BomLineDto(
-            line.getId() != null ? String.valueOf(line.getId()) : null,
-            project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
-            material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
-            material != null ? material.getCode() : null,
-            material != null ? material.getName() : null,
-            material != null ? material.getPartNo() : null,
-            material != null ? material.getLineType() : null,
-            material != null ? material.getUnit() : null,
-            material != null ? material.getCategory() : null,
-            allocation,
-            allocation,
-            orderedQty,
-            receivedQty,
-            issuedQty,
-            balanceQty
-        );
+                line.getId() != null ? String.valueOf(line.getId()) : null,
+                project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
+                material != null && material.getId() != null ? String.valueOf(material.getId()) : null,
+                material != null ? material.getCode() : null,
+                material != null ? material.getName() : null,
+                material != null ? material.getPartNo() : null,
+                material != null ? material.getLineType() : null,
+                material != null ? material.getUnit() : null,
+                material != null ? material.getCategory() : null,
+                allocation,
+                allocation,
+                orderedQty,
+                receivedQty,
+                returnedQty,
+                issuedQty,
+                balanceQty);
     }
 
     private double safeDouble(Double value) {

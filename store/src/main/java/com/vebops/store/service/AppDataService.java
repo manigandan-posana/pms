@@ -207,10 +207,9 @@ public class AppDataService {
         Stream<BomLineDto> stream = lines.stream();
         if (StringUtils.hasText(search)) {
             String term = search.trim().toLowerCase();
-            stream = stream.filter(line ->
-                    (line.code() != null && line.code().toLowerCase().contains(term)) ||
-                            (line.name() != null && line.name().toLowerCase().contains(term)) ||
-                            (line.category() != null && line.category().toLowerCase().contains(term)));
+            stream = stream.filter(line -> (line.code() != null && line.code().toLowerCase().contains(term)) ||
+                    (line.name() != null && line.name().toLowerCase().contains(term)) ||
+                    (line.category() != null && line.category().toLowerCase().contains(term)));
         }
         if (inStockOnly) {
             stream = stream.filter(line -> line.balanceQty() > 0);
@@ -257,7 +256,7 @@ public class AppDataService {
         Project project = line.getProject();
         ProjectMaterialTotals totals = project != null && material != null
                 ? computeProjectMaterialTotals(project.getId(), material.getId())
-                : new ProjectMaterialTotals(0d, 0d, 0d, 0d);
+                : new ProjectMaterialTotals(0d, 0d, 0d, 0d, 0d);
         return new BomLineDto(
                 line.getId() != null ? String.valueOf(line.getId()) : null,
                 project != null && project.getId() != null ? String.valueOf(project.getId()) : null,
@@ -272,6 +271,7 @@ public class AppDataService {
                 line.getQuantity(),
                 totals.orderedQty(),
                 totals.receivedQty(),
+                totals.returnedQty(),
                 totals.issuedQty(),
                 totals.balanceQty());
     }
@@ -281,17 +281,20 @@ public class AppDataService {
                 inwardLineRepository.sumOrderedQtyByProjectAndMaterial(projectId, materialId));
         double receivedQty = safeDouble(
                 inwardLineRepository.sumReceivedQtyByProjectAndMaterial(projectId, materialId));
+        double returnedQty = safeDouble(
+                inwardLineRepository.sumReturnedQtyByProjectAndMaterial(projectId, materialId));
         double issuedQty = safeDouble(
                 outwardLineRepository.sumIssuedQtyByProjectAndMaterial(projectId, materialId));
         double balanceQty = Math.max(0d, receivedQty - issuedQty);
-        return new ProjectMaterialTotals(orderedQty, receivedQty, issuedQty, balanceQty);
+        return new ProjectMaterialTotals(orderedQty, receivedQty, returnedQty, issuedQty, balanceQty);
     }
 
     private double safeDouble(Double value) {
         return value != null ? value : 0d;
     }
 
-    private record ProjectMaterialTotals(double orderedQty, double receivedQty, double issuedQty, double balanceQty) {
+    private record ProjectMaterialTotals(double orderedQty, double receivedQty, double returnedQty, double issuedQty,
+            double balanceQty) {
     }
 
     private InwardHistoryDto toInwardRecordDto(InwardRecord record) {
@@ -359,8 +362,6 @@ public class AppDataService {
                 record.getCode(),
                 record.getDate() != null ? DATE_FMT.format(record.getDate()) : null,
                 record.getIssueTo(),
-                record.getStatus().name(),
-                record.getCloseDate() != null ? DATE_FMT.format(record.getCloseDate()) : null,
                 record.isValidated(),
                 lines.size(),
                 lines);

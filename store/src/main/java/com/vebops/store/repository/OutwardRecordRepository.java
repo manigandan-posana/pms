@@ -1,7 +1,6 @@
 package com.vebops.store.repository;
 
 import com.vebops.store.model.OutwardRecord;
-import com.vebops.store.model.OutwardStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -59,29 +58,6 @@ public interface OutwardRecordRepository extends JpaRepository<OutwardRecord, Lo
     Page<OutwardRecord> findByProjectIdInOrderByEntryDateDesc(Set<Long> projectIds, Pageable pageable);
 
     /**
-     * Return a page of outward records filtered by status, ordered by entry date
-     * descending.
-     *
-     * @param status   the status to filter by (OPEN or CLOSED)
-     * @param pageable the pagination information
-     * @return a page of outward records with the specified status
-     */
-    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
-    Page<OutwardRecord> findByStatusOrderByEntryDateDesc(OutwardStatus status, Pageable pageable);
-
-    /**
-     * Return a page of outward records for a project filtered by status.
-     *
-     * @param projectId the project id to filter by
-     * @param status    the status to filter by
-     * @param pageable  the pagination information
-     * @return a page of outward records
-     */
-    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
-    Page<OutwardRecord> findByProjectIdAndStatusOrderByEntryDateDesc(
-            Long projectId, OutwardStatus status, Pageable pageable);
-
-    /**
      * Find a single outward record by ID with all relationships eagerly loaded.
      * This method uses EntityGraph to fetch project, lines, and materials in a
      * single query.
@@ -96,12 +72,6 @@ public interface OutwardRecordRepository extends JpaRepository<OutwardRecord, Lo
      * Count outward records by entry date for code generation.
      */
     long countByEntryDate(LocalDate entryDate);
-
-    /**
-     * Find all open outward records for a project.
-     */
-    @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
-    List<OutwardRecord> findByProjectIdAndStatus(Long projectId, OutwardStatus status);
 
     @EntityGraph(attributePaths = { "project", "lines", "lines.material" })
     List<OutwardRecord> findByProjectIdOrderByEntryDateDesc(Long projectId);

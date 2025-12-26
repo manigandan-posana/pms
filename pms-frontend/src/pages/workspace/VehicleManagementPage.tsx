@@ -244,6 +244,7 @@ const VehicleManagementPage: React.FC = () => {
     fuelSearchQuery,
     fuelDateFrom,
     fuelDateTo,
+    fuelEntries, // Add this to refresh when Redux state updates
   ]);
 
   // Summary metrics

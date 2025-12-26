@@ -16,7 +16,7 @@ const OutwardDetailPage = lazy(() => import("../pages/workspace/OutwardDetailPag
 const TransferPage = lazy(() => import("../pages/workspace/TransferPage"));
 const TransferCreatePage = lazy(() => import("../pages/workspace/TransferCreatePage"));
 const TransferDetailPage = lazy(() => import("../pages/workspace/TransferDetailPage"));
-const VehicleManagementPage = lazy(() => import("../pages/workspace/VehicleManagementPage"));
+const VehicleManagementPageNew = lazy(() => import("../pages/workspace/VehicleManagementPageNew"));
 const VehicleDetailsPage = lazy(() => import("../pages/workspace/VehicleDetailsPage"));
 const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPage"));
 
@@ -66,8 +66,12 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "transfer", component: TransferPage },
   { path: "transfer/create", component: TransferCreatePage },
   { path: "transfer/detail/:id", component: TransferDetailPage },
-  { path: "vehicles", component: VehicleManagementPage },
-  { path: "vehicles/:vehicleId", component: VehicleDetailsPage },
+  { path: "vehicles", component: VehicleManagementPageNew },
+  { path: "vehicles/directory", component: VehicleManagementPageNew },
+  { path: "vehicles/fuel", component: VehicleManagementPageNew },
+  { path: "vehicles/daily-log", component: VehicleManagementPageNew },
+  { path: "vehicles/suppliers", component: VehicleManagementPageNew },
+  { path: "vehicles/details/:vehicleId", component: VehicleDetailsPage },
 ];
 
 // ----- Admin nested routes (/admin/...) -----

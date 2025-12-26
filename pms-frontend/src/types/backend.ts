@@ -54,6 +54,10 @@ export interface BomLineDto {
   unit?: string;
   quantity?: number;
   allocatedQty?: number;
+  orderedQty?: number;
+  receivedQty?: number;
+  returnedQty?: number;
+  utilizedQty?: number;
   balanceQty?: number;
 }
 

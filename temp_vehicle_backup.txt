@@ -1,0 +1,500 @@
+﻿import React, { useEffect, useState, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { FiPlus, FiTrash2, FiCheck, FiSlash, FiLock, FiUnlock, FiTruck } from "react-icons/fi";
+import {
+  Box,
+  Paper,
+  Typography,
+  Grid,
+  Stack,
+  Chip,
+  Button,
+  IconButton,
+  Divider,
+} from "@mui/material";
+
+import {
+  loadVehicleData,
+  createVehicle,
+  updateVehicleStatus,
+  deleteVehicle,
+  createFuelEntry,
+  closeFuelEntry,
+  refillFuelEntry,
+  createSupplier,
+  deleteSupplier,
+  createDailyLog,
+  closeDailyLog,
+} from "../../store/slices/vehicleSlice";
+import type { RootState, AppDispatch } from "../../store/store";
+import type { Vehicle, FuelEntry, Supplier, DailyLog, VehicleType, FuelType, VehicleStatus } from "../../types/vehicle";
+
+import CustomTable from "../../widgets/CustomTable";
+import type { ColumnDef } from "../../widgets/CustomTable";
+import CustomButton from "../../widgets/CustomButton";
+import CustomModal from "../../widgets/CustomModal";
+import CustomTextField from "../../widgets/CustomTextField";
+import CustomSelect from "../../widgets/CustomSelect";
+import CustomDateInput from "../../widgets/CustomDateInput";
+import CustomTabs from "../../widgets/CustomTabs";
+import { Get } from "../../utils/apiService";
+
+const VehicleManagementPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { selectedProjectId } = useSelector((state: RootState) => state.workspace);
+  const { vehicles, fuelEntries, suppliers, dailyLogs, status } = useSelector(
+    (state: RootState) => state.vehicles
+  );
+
+  const loading = status === "loading";
+
+  // Vehicle Dialog
+  const [showVehicleDialog, setShowVehicleDialog] = useState(false);
+  const [vehicleForm, setVehicleForm] = useState({
+    vehicleName: "",
+    vehicleNumber: "",
+    vehicleType: "OWN_VEHICLE" as VehicleType,
+    fuelType: "DIESEL" as FuelType,
+    status: "ACTIVE" as VehicleStatus,
+    startDate: new Date(),
+    endDate: null as Date | null,
+    rentPrice: null as number | null,
+    rentPeriod: "MONTHLY" as "MONTHLY" | "DAILY" | "HOURLY",
+  });
+
+  // Supplier Dialog
+  const [showSupplierDialog, setShowSupplierDialog] = useState(false);
+  const [supplierForm, setSupplierForm] = useState({
+    supplierName: "",
+    contactPerson: "",
+    phoneNumber: "",
+    address: "",
+  });
+
+  // Fuel Management View Mode and Fuel Type Filter
+  const [fuelViewMode, setFuelViewMode] = useState<"current" | "history">("current");
+  const [activeFuelType, setActiveFuelType] = useState<FuelType>("DIESEL");
+  const [fuelSearchQuery, setFuelSearchQuery] = useState<string>("");
+  const [fuelVehicleFilter, setFuelVehicleFilter] = useState<number | null>(null);
+  const [fuelSupplierFilter, setFuelSupplierFilter] = useState<number | null>(null);
+  const [fuelDateFrom, setFuelDateFrom] = useState<Date | null>(null);
+  const [fuelDateTo, setFuelDateTo] = useState<Date | null>(null);
+
+  // Fuel Entry Dialog
+  const [showFuelDialog, setShowFuelDialog] = useState(false);
+  const [fuelForm, setFuelForm] = useState({
+    date: new Date(),
+    vehicleId: "" as string | number, // CustomSelect uses string|number
+    supplierId: "" as string | number,
+    litres: "" as string | number,
+    openingKm: "" as string | number,
+    pricePerLitre: "" as string | number,
+  });
+
+  // Close Fuel Entry Dialog
+  const [showCloseFuelDialog, setShowCloseFuelDialog] = useState(false);
+  const [selectedFuelEntry, setSelectedFuelEntry] = useState<FuelEntry | null>(null);
+  const [closingKm, setClosingKm] = useState<string | number>("");
+
+  // Daily Log Dialog - Create
+  const [showDailyLogDialog, setShowDailyLogDialog] = useState(false);
+  const [createDate, setCreateDate] = useState<Date>(new Date());
+  const [createVehicleId, setCreateVehicleId] = useState<string | number>("");
+  const [createOpeningKm, setCreateOpeningKm] = useState<string | number>("");
+  const [createOpeningPhoto, setCreateOpeningPhoto] = useState<string>("");
+
+  // Daily Log Dialog - Close
+  const [showCloseDailyLogDialog, setShowCloseDailyLogDialog] = useState(false);
+  const [selectedDailyLog, setSelectedDailyLog] = useState<DailyLog | null>(null);
+  const [closeClosingKm, setCloseClosingKm] = useState<string | number>("");
+  const [closeClosingPhoto, setCloseClosingPhoto] = useState<string>("");
+
+  // Validation states
+  const [createFormErrors, setCreateFormErrors] = useState<{
+    vehicleId?: string;
+    openingKm?: string;
+  }>({});
+
+  const [closeFormErrors, setCloseFormErrors] = useState<{
+    closingKm?: string;
+  }>({});
+
+  useEffect(() => {
+    if (selectedProjectId) {
+      dispatch(loadVehicleData(Number(selectedProjectId)));
+    }
+  }, [selectedProjectId, dispatch]);
+
+  // Filter logs for current project and current date (for display)
+  const projectLogs = useMemo(() => {
+    const today = new Date().toDateString();
+    return dailyLogs.filter(
+      (log) =>
+        new Date(log.date).toDateString() === today
+    );
+  }, [dailyLogs]);
+
+  // Get the last closing km for the selected vehicle
+  const lastClosingKm = useMemo(() => {
+    if (!createVehicleId) return null;
+    const vId = Number(createVehicleId);
+
+    const vehicleLogs = dailyLogs
+      .filter((log) => log.vehicleId === vId && log.status === "CLOSED" && log.closingKm !== undefined)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return vehicleLogs.length > 0 ? vehicleLogs[0].closingKm : null;
+  }, [createVehicleId, dailyLogs]);
+
+  // Get open fuel entry for the selected vehicle
+  const openFuelEntry = useMemo(() => {
+    if (!createVehicleId) return null;
+    const vId = Number(createVehicleId);
+
+    return fuelEntries.find(
+      (entry) => entry.vehicleId === vId && entry.status === "OPEN"
+    );
+  }, [createVehicleId, fuelEntries]);
+
+  // Get vehicles that don't have an active (open) log currently
+  const availableVehicles = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const activeProjectVehicles = vehicles.filter(
+      (v) => {
+        if (v.status === "INACTIVE") return false;
+
+        // Check if start date is in the future (Planned)
+        if (v.startDate) {
+          const startDate = new Date(v.startDate);
+          startDate.setHours(0, 0, 0, 0);
+          if (startDate > today) return false;
+        }
+
+        return true;
+      }
+    );
+
+    // Find vehicle IDs that already have an OPEN log (global check, not just today)
+    const vehiclesWithOpenLog = new Set(
+      dailyLogs
+        .filter(log => log.status === "OPEN")
+        .map(log => log.vehicleId)
+    );
+
+    return activeProjectVehicles.filter(v => !vehiclesWithOpenLog.has(v.id));
+  }, [vehicles, dailyLogs]);
+
+  // Validate create form
+  const isCreateFormValid = useMemo(() => {
+    const km = Number(createOpeningKm);
+    if (!createVehicleId || isNaN(km) || km <= 0) return false;
+
+    // Check if opening km is valid compared to fuel entry
+    if (openFuelEntry && km < openFuelEntry.openingKm) return false;
+
+    // Check if opening km is valid compared to last closing km
+    if (lastClosingKm != null && km < lastClosingKm) return false;
+
+    return true;
+  }, [createVehicleId, createOpeningKm, openFuelEntry, lastClosingKm]);
+
+  // Validate close form
+  const isCloseFormValid = useMemo(() => {
+    const km = Number(closeClosingKm);
+    if (!selectedDailyLog || isNaN(km) || selectedDailyLog.openingKm == null) return false;
+    return km >= selectedDailyLog.openingKm;
+  }, [selectedDailyLog, closeClosingKm]);
+
+  const [filteredFuelEntries, setFilteredFuelEntries] = useState<FuelEntry[]>([]);
+
+  useEffect(() => {
+    const loadFilteredFuelEntries = async () => {
+      if (!selectedProjectId) {
+        setFilteredFuelEntries([]);
+        return;
+      }
+      const params: Record<string, any> = {
+        fuelType: activeFuelType,
+        status: fuelViewMode === "current" ? "OPEN" : "CLOSED",
+      };
+
+      if (fuelViewMode === "history") {
+        if (fuelVehicleFilter) params.vehicleId = fuelVehicleFilter;
+        if (fuelSupplierFilter) params.supplierId = fuelSupplierFilter;
+        if (fuelSearchQuery.trim()) params.search = fuelSearchQuery.trim();
+        if (fuelDateFrom) params.startDate = fuelDateFrom.toISOString().split("T")[0];
+        if (fuelDateTo) params.endDate = fuelDateTo.toISOString().split("T")[0];
+      }
+
+      const response = await Get<FuelEntry[]>(`/vehicles/fuel-entries/project/${selectedProjectId}`, params);
+      setFilteredFuelEntries(Array.isArray(response) ? response : []);
+    };
+    loadFilteredFuelEntries();
+  }, [
+    selectedProjectId,
+    activeFuelType,
+    fuelViewMode,
+    fuelVehicleFilter,
+    fuelSupplierFilter,
+    fuelSearchQuery,
+    fuelDateFrom,
+    fuelDateTo,
+  ]);
+
+  // Summary metrics
+  const fuelSummaryMetrics = useMemo(() => {
+    const totalQuantity = filteredFuelEntries.reduce((sum, e) => sum + e.litres, 0);
+    const totalCost = filteredFuelEntries.reduce((sum, e) => sum + (e.totalCost || 0), 0);
+    const totalDistance = filteredFuelEntries
+      .filter(e => e.status === "CLOSED")
+      .reduce((sum, e) => sum + (e.distance || 0), 0);
+    return { totalQuantity, totalCost, totalDistance };
+  }, [filteredFuelEntries]);
+
+  const handleAddVehicle = async () => {
+    if (!selectedProjectId || !vehicleForm.vehicleName || !vehicleForm.vehicleNumber) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await dispatch(createVehicle({
+        projectId: Number(selectedProjectId),
+        vehicleName: vehicleForm.vehicleName,
+        vehicleNumber: vehicleForm.vehicleNumber,
+        vehicleType: vehicleForm.vehicleType,
+        fuelType: vehicleForm.fuelType,
+        status: vehicleForm.status,
+        startDate: vehicleForm.startDate.toISOString().split('T')[0],
+        endDate: vehicleForm.endDate ? vehicleForm.endDate.toISOString().split('T')[0] : undefined,
+        rentPrice: vehicleForm.rentPrice || undefined,
+        rentPeriod: vehicleForm.rentPrice ? vehicleForm.rentPeriod : undefined,
+      })).unwrap();
+
+      toast.success("Vehicle added successfully");
+      setShowVehicleDialog(false);
+      resetVehicleForm();
+    } catch (error) {
+      toast.error("Failed to add vehicle");
+      console.error(error);
+    }
+  };
+
+  const handleDeleteVehicle = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this vehicle?")) return;
+
+    try {
+      await dispatch(deleteVehicle(id)).unwrap();
+      toast.success("Vehicle deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete vehicle");
+      console.error(error);
+    }
+  };
+
+  const handleAddSupplier = async () => {
+    if (!selectedProjectId || !supplierForm.supplierName) {
+      toast.error("Please enter supplier name");
+      return;
+    }
+
+    try {
+      await dispatch(createSupplier({
+        projectId: Number(selectedProjectId),
+        supplierName: supplierForm.supplierName,
+        contactPerson: supplierForm.contactPerson || undefined,
+        phoneNumber: supplierForm.phoneNumber || undefined,
+        address: supplierForm.address || undefined,
+      })).unwrap();
+
+      toast.success("Supplier added successfully");
+      setShowSupplierDialog(false);
+      resetSupplierForm();
+    } catch (error) {
+      toast.error("Failed to add supplier");
+      console.error(error);
+    }
+  };
+
+  const handleDeleteSupplier = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this supplier?")) return;
+
+    try {
+      await dispatch(deleteSupplier(id)).unwrap();
+      toast.success("Supplier deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete supplier");
+      console.error(error);
+    }
+  };
+
+  const handleAddFuelEntry = async () => {
+    if (!selectedProjectId || !fuelForm.vehicleId || !fuelForm.supplierId ||
+      !fuelForm.litres || !fuelForm.openingKm || !fuelForm.pricePerLitre) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const openingKm = Number(fuelForm.openingKm);
+
+    // Get the vehicle's daily logs to check if there are any open logs
+    const vehicleDailyLogs = dailyLogs.filter((log) => log.vehicleId === Number(fuelForm.vehicleId));
+    const openDailyLog = vehicleDailyLogs.find((log) => log.status === "OPEN");
+
+    if (openDailyLog) {
+      toast.error("Please close the open daily log before creating a new fuel entry");
+      return;
+    }
+
+    // Get the last closed daily log's closing KM
+    const closedDailyLogs = vehicleDailyLogs
+      .filter((log) => log.status === "CLOSED" && log.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const lastDailyLogClosingKm = closedDailyLogs.length > 0 ? closedDailyLogs[0].closingKm! : null;
+
+    // Get the last closed fuel entry's closing KM
+    const vehicleFuelEntries = fuelEntries.filter((entry) => entry.vehicleId === Number(fuelForm.vehicleId));
+    const closedFuelEntries = vehicleFuelEntries
+      .filter((entry) => entry.status === "CLOSED" && entry.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const lastFuelEntryClosingKm = closedFuelEntries.length > 0 ? closedFuelEntries[0].closingKm! : null;
+
+    // Enforce: opening km must be >= last closing km of previous daily log
+    if (lastDailyLogClosingKm !== null && openingKm < lastDailyLogClosingKm) {
+      toast.error(`Fuel entry opening km must be greater than or equal to the last daily log closing km (${lastDailyLogClosingKm.toFixed(1)} km)`);
+      return;
+    }
+    // Enforce: opening km must be >= last closing km of previous fuel entry
+    if (lastFuelEntryClosingKm !== null && openingKm < lastFuelEntryClosingKm) {
+      toast.error(`Fuel entry opening km must be greater than or equal to the last fuel entry closing km (${lastFuelEntryClosingKm.toFixed(1)} km)`);
+      return;
+    }
+
+    try {
+      await dispatch(createFuelEntry({
+        date: fuelForm.date.toISOString().split('T')[0],
+        projectId: Number(selectedProjectId),
+        vehicleId: Number(fuelForm.vehicleId),
+        supplierId: Number(fuelForm.supplierId),
+        litres: Number(fuelForm.litres),
+        openingKm: openingKm,
+        pricePerLitre: Number(fuelForm.pricePerLitre),
+      })).unwrap();
+
+      toast.success("Fuel entry added successfully");
+      setShowFuelDialog(false);
+      resetFuelForm();
+    } catch (error) {
+      toast.error("Failed to add fuel entry");
+      console.error(error);
+    }
+  };
+
+  const handleCloseFuelEntry = async () => {
+    const km = Number(closingKm);
+    if (!selectedFuelEntry || !closingKm) {
+      toast.error("Please enter closing km");
+      return;
+    }
+
+    if (km < selectedFuelEntry.openingKm) {
+      toast.error("Closing km cannot be less than opening km");
+      return;
+    }
+
+    const vehicleDailyLogs = dailyLogs
+      .filter((log) => log.vehicleId === selectedFuelEntry.vehicleId && log.status === "CLOSED" && log.closingKm)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const latestDailyLogClosingKm = vehicleDailyLogs.length > 0 ? vehicleDailyLogs[0].closingKm : null;
+
+    if (latestDailyLogClosingKm != null && km < latestDailyLogClosingKm) {
+      toast.error(`Fuel closing km (${km.toFixed(1)}) must be ÔëÑ daily log closing km (${latestDailyLogClosingKm.toFixed(1)} km)`);
+      return;
+    }
+
+    try {
+      await dispatch(closeFuelEntry({ id: selectedFuelEntry.id, data: { closingKm: km } })).unwrap();
+      toast.success("Fuel entry closed successfully");
+      setShowCloseFuelDialog(false);
+      setSelectedFuelEntry(null);
+      setClosingKm("");
+    } catch (error) {
+      toast.error("Failed to close fuel entry");
+      console.error(error);
+    }
+  };
+
+  // Refill Dialog
+  const [showRefillDialog, setShowRefillDialog] = useState(false);
+  const [refillForm, setRefillForm] = useState({
+    date: new Date(),
+    vehicleId: "" as string | number,
+    openingKm: "" as string | number,
+    supplierId: "" as string | number,
+    litres: "" as string | number,
+    pricePerLitre: "" as string | number,
+  });
+
+  const handleRefillFuelEntry = async () => {
+    if (!selectedProjectId || !refillForm.vehicleId || !refillForm.openingKm || !refillForm.supplierId || !refillForm.litres || !refillForm.pricePerLitre) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const openingKm = Number(refillForm.openingKm);
+    const vehicleDailyLogs = dailyLogs
+      .filter((log) => log.vehicleId === Number(refillForm.vehicleId) && log.status === "CLOSED" && log.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastDailyLogKm = vehicleDailyLogs.length > 0 ? vehicleDailyLogs[0].closingKm! : null;
+
+    const vehicleFuelEntries = fuelEntries
+      .filter((entry) => entry.vehicleId === Number(refillForm.vehicleId) && entry.status === "CLOSED" && entry.closingKm != null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastFuelEntryKm = vehicleFuelEntries.length > 0 ? vehicleFuelEntries[0].closingKm! : null;
+
+    const maxClosedKm = Math.max(lastDailyLogKm || 0, lastFuelEntryKm || 0);
+
+    const openEntry = fuelEntries.find(e => e.vehicleId === Number(refillForm.vehicleId) && e.status === "OPEN");
+    if (openEntry && openingKm < openEntry.openingKm) {
+      toast.error(`Refill KM cannot be less than current Open Entry KM (${openEntry.openingKm})`);
+      return;
+    }
+
+    if (openingKm < maxClosedKm) {
+      toast.error(`Refill KM cannot be less than last recorded KM (${maxClosedKm})`);
+      return;
+    }
+
+    try {
+      await dispatch(refillFuelEntry({
+        date: refillForm.date.toISOString().split('T')[0],
+        projectId: Number(selectedProjectId),
+        vehicleId: Number(refillForm.vehicleId),
+        openingKm: openingKm,
+        supplierId: Number(refillForm.supplierId),
+        litres: Number(refillForm.litres),
+        pricePerLitre: Number(refillForm.pricePerLitre),
+      })).unwrap();
+
+      toast.success("Refill recorded successfully");
+      setShowRefillDialog(false);
+      setRefillForm({
+        date: new Date(),
+        vehicleId: "",
+        openingKm: "",
+        supplierId: "",
+        litres: "",
+        pricePerLitre: "",
+      });
+    } catch (error) {
+      toast.error("Failed to record refill");
+      console.error(error);
+    }
