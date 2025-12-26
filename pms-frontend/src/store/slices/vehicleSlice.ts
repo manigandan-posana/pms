@@ -200,7 +200,7 @@ export const fetchSuppliersByProject = createAsyncThunk<
   { rejectValue: string }
 >("vehicles/fetchSuppliersByProject", async (projectId, { rejectWithValue }) => {
   try {
-    const data = await Get<Supplier[]>(`/vehicles/suppliers/project/${projectId}`);
+    const data = await Get<Supplier[]>(`/suppliers/project/${projectId}`);
     return data;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unable to fetch suppliers";
@@ -214,10 +214,24 @@ export const createSupplier = createAsyncThunk<
   { rejectValue: string }
 >("vehicles/createSupplier", async (payload, { rejectWithValue }) => {
   try {
-    const data = await Post<Supplier>("/vehicles/suppliers", payload);
+    const data = await Post<Supplier>("/suppliers", payload);
     return data;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unable to create supplier";
+    return rejectWithValue(message);
+  }
+});
+
+export const updateSupplier = createAsyncThunk<
+  Supplier,
+  { id: number; data: import("../../types/vehicle").UpdateSupplierRequest },
+  { rejectValue: string }
+>("vehicles/updateSupplier", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const result = await Put<Supplier>(`/suppliers/${id}`, data);
+    return result;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to update supplier";
     return rejectWithValue(message);
   }
 });
@@ -228,7 +242,7 @@ export const deleteSupplier = createAsyncThunk<
   { rejectValue: string }
 >("vehicles/deleteSupplier", async (id, { rejectWithValue }) => {
   try {
-    await Delete<void>(`/vehicles/suppliers/${id}`);
+    await Delete<void>(`/suppliers/${id}`);
     return id;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unable to delete supplier";
@@ -289,7 +303,7 @@ export const loadVehicleData = createAsyncThunk<
     const [vehicles, fuelEntries, suppliers, dailyLogs] = await Promise.all([
       Get<Vehicle[]>(`/vehicles/project/${projectId}`),
       Get<FuelEntry[]>(`/vehicles/fuel-entries/project/${projectId}`),
-      Get<Supplier[]>(`/vehicles/suppliers/project/${projectId}`),
+      Get<Supplier[]>(`/suppliers/project/${projectId}`),
       Get<DailyLog[]>(`/vehicles/daily-logs/project/${projectId}`),
     ]);
 
@@ -464,6 +478,18 @@ const vehicleSlice = createSlice({
       })
       .addCase(createSupplier.rejected, (state, action) => {
         state.error = action.payload || "Failed to create supplier";
+      });
+
+    // Update supplier
+    builder
+      .addCase(updateSupplier.fulfilled, (state, action) => {
+        const index = state.suppliers.findIndex((s) => s.id === action.payload.id);
+        if (index !== -1) {
+          state.suppliers[index] = action.payload;
+        }
+      })
+      .addCase(updateSupplier.rejected, (state, action) => {
+        state.error = action.payload || "Failed to update supplier";
       });
 
     // Delete supplier

@@ -56,7 +56,6 @@ export interface BomLineDto {
   allocatedQty?: number;
   orderedQty?: number;
   receivedQty?: number;
-  returnedQty?: number;
   utilizedQty?: number;
   balanceQty?: number;
 }

@@ -6,6 +6,7 @@ export type VehicleType = "OWN_VEHICLE" | "RENT_MONTHLY" | "RENT_DAILY" | "RENT_
 export type VehicleStatus = "ACTIVE" | "INACTIVE" | "PLANNED";
 export type EntryStatus = "OPEN" | "CLOSED";
 export type RentPeriod = "MONTHLY" | "DAILY" | "HOURLY";
+export type SupplierType = "FUEL" | "MATERIALS";
 
 export interface Vehicle {
   id: number;
@@ -63,10 +64,21 @@ export interface Supplier {
   id: number;
   projectId: number;
   projectCode: string;
+  code: string;
   supplierName: string;
+  supplierType: SupplierType;
   contactPerson?: string;
+  email?: string;
   phoneNumber?: string;
   address?: string;
+  gstNo?: string;
+  panNo?: string;
+  bankHolderName?: string;
+  bankName?: string;
+  accountNo?: string;
+  ifscCode?: string;
+  branch?: string;
+  businessType?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -127,9 +139,36 @@ export interface CloseFuelEntryRequest {
 export interface CreateSupplierRequest {
   projectId: number;
   supplierName: string;
+  supplierType: SupplierType;
   contactPerson?: string;
+  email?: string;
   phoneNumber?: string;
   address?: string;
+  gstNo?: string;
+  panNo?: string;
+  bankHolderName?: string;
+  bankName?: string;
+  accountNo?: string;
+  ifscCode?: string;
+  branch?: string;
+  businessType?: string;
+}
+
+export interface UpdateSupplierRequest {
+  supplierName: string;
+  supplierType: SupplierType;
+  contactPerson?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  gstNo?: string;
+  panNo?: string;
+  bankHolderName?: string;
+  bankName?: string;
+  accountNo?: string;
+  ifscCode?: string;
+  branch?: string;
+  businessType?: string;
 }
 
 export interface CreateDailyLogRequest {

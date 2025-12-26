@@ -1,109 +1,30 @@
-package com.vebops.store.model;
+package com.vebops.store.dto;
 
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import com.vebops.store.model.SupplierType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Entity
-@Table(name = "suppliers")
-public class Supplier {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
-
-    @Column(unique = true, nullable = false)
-    private String code;
-
-    @Column(nullable = false)
+public class UpdateSupplierRequest {
+    @NotBlank(message = "Supplier name is required")
     private String supplierName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @NotNull(message = "Supplier type is required")
     private SupplierType supplierType;
 
-    @Column
     private String contactPerson;
-
-    @Column
     private String email;
-
-    @Column
     private String phoneNumber;
-
-    @Column(length = 500)
     private String address;
-
-    @Column
     private String gstNo;
-
-    @Column
     private String panNo;
-
-    // Bank Account Details
-    @Column
     private String bankHolderName;
-
-    @Column
     private String bankName;
-
-    @Column
     private String accountNo;
-
-    @Column
     private String ifscCode;
-
-    @Column
     private String branch;
-
-    @Column
     private String businessType;
 
-    @Column
-    private LocalDateTime createdAt;
-
-    @Column
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
     public String getSupplierName() {
         return supplierName;
     }
@@ -214,21 +135,5 @@ public class Supplier {
 
     public void setBusinessType(String businessType) {
         this.businessType = businessType;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

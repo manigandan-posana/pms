@@ -224,8 +224,7 @@ public class BomService {
                 inwardLineRepository.sumOrderedQtyByProjectAndMaterial(project.getId(), material.getId()));
         double receivedQty = safeDouble(
                 inwardLineRepository.sumReceivedQtyByProjectAndMaterial(project.getId(), material.getId()));
-        double returnedQty = safeDouble(
-                inwardLineRepository.sumReturnedQtyByProjectAndMaterial(project.getId(), material.getId()));
+        // returnedQty removed - RETURN type no longer supported
         double issuedQty = safeDouble(
                 outwardLineRepository.sumIssuedQtyByProjectAndMaterial(project.getId(), material.getId()));
         double balanceQty = Math.max(0d, receivedQty - issuedQty);
@@ -243,7 +242,6 @@ public class BomService {
                 allocation,
                 orderedQty,
                 receivedQty,
-                returnedQty,
                 issuedQty,
                 balanceQty);
     }
