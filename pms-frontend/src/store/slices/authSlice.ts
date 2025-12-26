@@ -18,6 +18,7 @@ export interface AuthState {
   token: string | null;
   roles: string[];
   role: string | null;
+  permissions: string[];
   loading: boolean;
   error: string | null;
 }
@@ -66,6 +67,7 @@ const initialState: AuthState = {
   token: null,
   roles: [],
   role: null,
+  permissions: [],
   loading: false,
   error: null,
 };
@@ -82,6 +84,9 @@ const authSlice = createSlice({
       Object.assign(state, action.payload);
       if (action.payload.roles && action.payload.roles.length > 0) {
         state.role = action.payload.roles[0];
+      }
+      if (action.payload.permissions) {
+        state.permissions = action.payload.permissions as string[];
       }
       // Backwards-compatible `token` field used by older components
       state.token = (action.payload.accessToken as string | null) ?? (action.payload.idToken as string | null) ?? state.token;
@@ -120,6 +125,9 @@ const authSlice = createSlice({
         state.loading = false;
         if (action.payload) {
           Object.assign(state, action.payload);
+          if (action.payload.permissions) {
+            state.permissions = action.payload.permissions as string[];
+          }
         }
       })
       .addCase(getSession.rejected, (state, action) => {

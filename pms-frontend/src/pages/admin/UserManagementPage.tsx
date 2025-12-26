@@ -13,7 +13,7 @@ import type { RootState, AppDispatch } from "../../store/store";
 import AdminDataTable from "../../components/AdminDataTable";
 import AdminFormModal from "../../components/AdminFormModal";
 
-export type UserRole = "ADMIN" | "USER";
+export type UserRole = "ADMIN" | "USER_PLUS" | "USER";
 export type AccessType = "ALL" | "PROJECTS";
 
 interface User {
@@ -23,12 +23,25 @@ interface User {
   role?: UserRole;
   accessType?: AccessType;
   projects?: { id: string | number; name: string; code?: string }[];
+  permissions?: string[];
   [key: string]: any;
 }
 
 const roleOptions = [
   { label: "Admin", value: "ADMIN" },
+  { label: "User Plus", value: "USER_PLUS" },
   { label: "User", value: "USER" },
+];
+
+const permissionOptions = [
+  { label: "Admin Dashboard", value: "ADMIN_ACCESS" },
+  { label: "User Management", value: "USER_MANAGEMENT" },
+  { label: "Project Management", value: "PROJECT_MANAGEMENT" },
+  { label: "Material Management", value: "MATERIAL_MANAGEMENT" },
+  { label: "Material Allocation", value: "MATERIAL_ALLOCATION" },
+  { label: "Allocated Materials", value: "ALLOCATED_MATERIALS_VIEW" },
+  { label: "Inventory Operations", value: "INVENTORY_OPERATIONS" },
+  { label: "Vehicle Management", value: "VEHICLE_MANAGEMENT" },
 ];
 
 const accessTypeOptions = [
@@ -52,6 +65,7 @@ export const UserManagementPage: React.FC = () => {
     role: "USER" as UserRole,
     accessType: "PROJECTS" as AccessType,
     projectIds: [] as (string | number)[],
+    permissions: [] as string[],
   });
 
   const loading = status === "loading";
@@ -64,10 +78,23 @@ export const UserManagementPage: React.FC = () => {
   }, [token, dispatch]);
 
   const handleFormChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      if (field === "role") {
+        const nextRole = value as UserRole;
+        const defaultPermissions =
+          nextRole === "ADMIN"
+            ? permissionOptions.map((p) => p.value)
+            : nextRole === "USER"
+              ? []
+              : prev.permissions;
+        const nextAccess = nextRole === "ADMIN" ? "ALL" : prev.accessType;
+        return { ...prev, role: nextRole, permissions: defaultPermissions, accessType: nextAccess };
+      }
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
   };
 
   const handleAddUser = () => {
@@ -78,6 +105,7 @@ export const UserManagementPage: React.FC = () => {
       role: "USER",
       accessType: "PROJECTS",
       projectIds: [],
+      permissions: [],
     });
     setModalVisible(true);
   };
@@ -90,6 +118,7 @@ export const UserManagementPage: React.FC = () => {
       role: user.role || "USER",
       accessType: user.accessType || "PROJECTS",
       projectIds: user.projects ? user.projects.map(p => String(p.id)) : [],
+      permissions: user.permissions || [],
     });
     setModalVisible(true);
   };
@@ -141,6 +170,7 @@ export const UserManagementPage: React.FC = () => {
               role: formData.role,
               accessType: formData.accessType,
               projectIds,
+              permissions: formData.permissions,
             },
           })
         ).unwrap();
@@ -159,6 +189,7 @@ export const UserManagementPage: React.FC = () => {
             role: formData.role,
             accessType: formData.accessType,
             projectIds,
+            permissions: formData.permissions,
           })
         ).unwrap();
         toast.success("User created successfully");
@@ -195,7 +226,7 @@ export const UserManagementPage: React.FC = () => {
         <Chip
           label={row.role}
           size="small"
-          color={row.role === "ADMIN" ? "error" : "primary"}
+          color={row.role === "ADMIN" ? "error" : row.role === "USER_PLUS" ? "warning" : "primary"}
           sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600 }}
         />
       ),
@@ -214,6 +245,19 @@ export const UserManagementPage: React.FC = () => {
           }}
         >
           {row.accessType === "ALL" ? "All Projects" : "Specific"}
+        </Typography>
+      ),
+    },
+    {
+      field: "permissions",
+      header: "Permissions",
+      sortable: false,
+      width: "20%",
+      body: (row: User) => (
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {(row.permissions && row.permissions.length)
+            ? row.permissions.join(', ')
+            : 'Workspace Only'}
         </Typography>
       ),
     },
@@ -258,6 +302,15 @@ export const UserManagementPage: React.FC = () => {
       type: "select" as const,
       required: true,
       options: accessTypeOptions,
+    },
+    {
+      name: "permissions",
+      label: "Permissions (User Plus only)",
+      type: "select" as const,
+      multiple: true,
+      options: permissionOptions,
+      disabled: formData.role === "USER",
+      helperText: formData.role === "ADMIN" ? "Admins automatically receive all permissions." : undefined,
     },
     {
       name: "projectIds",
