@@ -6,7 +6,10 @@ import com.vebops.store.dto.CreateUserRequest;
 import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.dto.ProjectActivityDto;
 import com.vebops.store.dto.ProjectActivityEntryDto;
+import com.vebops.store.dto.ProjectDetailsDto;
 import com.vebops.store.dto.ProjectDto;
+import com.vebops.store.dto.ProjectTeamAssignmentRequest;
+import com.vebops.store.dto.ProjectTeamMemberDto;
 import com.vebops.store.dto.UpdateProjectRequest;
 import com.vebops.store.dto.UpdateUserRequest;
 import com.vebops.store.dto.UserDto;
@@ -14,6 +17,8 @@ import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.NotFoundException;
 import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Project;
+import com.vebops.store.model.ProjectRole;
+import com.vebops.store.model.ProjectTeamMember;
 import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
@@ -22,6 +27,7 @@ import com.vebops.store.repository.InwardRecordRepository;
 import com.vebops.store.repository.MaterialRepository;
 import com.vebops.store.repository.OutwardRecordRepository;
 import com.vebops.store.repository.ProjectRepository;
+import com.vebops.store.repository.ProjectTeamMemberRepository;
 import com.vebops.store.repository.TransferRecordRepository;
 import com.vebops.store.repository.UserRepository;
 import jakarta.persistence.criteria.Join;
@@ -55,6 +61,7 @@ public class AdminService {
     private final InwardRecordRepository inwardRecordRepository;
     private final OutwardRecordRepository outwardRecordRepository;
     private final TransferRecordRepository transferRecordRepository;
+    private final ProjectTeamMemberRepository projectTeamMemberRepository;
     private final PasswordEncoder passwordEncoder;
 
     private static final int MAX_RECENT_ITEMS = 5;
@@ -68,6 +75,7 @@ public class AdminService {
             InwardRecordRepository inwardRecordRepository,
             OutwardRecordRepository outwardRecordRepository,
             TransferRecordRepository transferRecordRepository,
+            ProjectTeamMemberRepository projectTeamMemberRepository,
             PasswordEncoder passwordEncoder) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -76,6 +84,7 @@ public class AdminService {
         this.inwardRecordRepository = inwardRecordRepository;
         this.outwardRecordRepository = outwardRecordRepository;
         this.transferRecordRepository = transferRecordRepository;
+        this.projectTeamMemberRepository = projectTeamMemberRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -203,6 +212,54 @@ public class AdminService {
             project.setProjectManager(StringUtils.hasText(trimmedManager) ? trimmedManager : null);
         }
         return toProjectDto(projectRepository.save(project));
+    }
+
+    public ProjectDetailsDto getProjectDetails(Long id) {
+        Project project = projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found"));
+        List<ProjectTeamMemberDto> team = projectTeamMemberRepository
+                .findByProjectId(id)
+                .stream()
+                .map(this::toTeamDto)
+                .toList();
+        return new ProjectDetailsDto(
+                project.getId().toString(),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager(),
+                team);
+    }
+
+    public ProjectDetailsDto updateProjectTeam(Long projectId, List<ProjectTeamAssignmentRequest> assignments) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+        List<ProjectTeamAssignmentRequest> safeAssignments = assignments == null
+                ? List.of()
+                : assignments;
+
+        projectTeamMemberRepository.deleteByProjectId(projectId);
+
+        List<ProjectTeamMember> saved = new ArrayList<>();
+        for (ProjectTeamAssignmentRequest assignment : safeAssignments) {
+            if (assignment == null || assignment.userId() == null || assignment.role() == null) {
+                continue;
+            }
+            UserAccount user = userRepository.findById(assignment.userId())
+                    .orElseThrow(() -> new NotFoundException("User not found for team assignment"));
+            ProjectTeamMember member = new ProjectTeamMember();
+            member.setProject(project);
+            member.setUser(user);
+            member.setRole(assignment.role());
+            saved.add(projectTeamMemberRepository.save(member));
+        }
+
+        List<ProjectTeamMemberDto> team = saved.stream().map(this::toTeamDto).toList();
+        return new ProjectDetailsDto(
+                project.getId().toString(),
+                project.getCode(),
+                project.getName(),
+                project.getProjectManager(),
+                team);
     }
 
     public void deleteProject(Long id) {
@@ -553,6 +610,15 @@ public class AdminService {
                 project.getCode(),
                 project.getName(),
                 project.getProjectManager());
+    }
+
+    private ProjectTeamMemberDto toTeamDto(ProjectTeamMember member) {
+        return new ProjectTeamMemberDto(
+                member.getId() != null ? member.getId().toString() : null,
+                member.getUser() != null && member.getUser().getId() != null ? member.getUser().getId().toString() : null,
+                member.getUser() != null ? member.getUser().getName() : null,
+                member.getUser() != null ? member.getUser().getEmail() : null,
+                member.getRole() != null ? member.getRole().name() : null);
     }
 
     private int normalizePage(int page) {

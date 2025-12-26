@@ -5,7 +5,9 @@ import com.vebops.store.dto.CreateProjectRequest;
 import com.vebops.store.dto.CreateUserRequest;
 import com.vebops.store.dto.PaginatedResponse;
 import com.vebops.store.dto.ProjectActivityDto;
+import com.vebops.store.dto.ProjectDetailsDto;
 import com.vebops.store.dto.ProjectDto;
+import com.vebops.store.dto.ProjectTeamAssignmentRequest;
 import com.vebops.store.dto.UpdateProjectRequest;
 import com.vebops.store.dto.UpdateUserRequest;
 import com.vebops.store.dto.UserDto;
@@ -86,6 +88,12 @@ public class AdminController {
         return adminService.searchProjects(search, prefixes, allocation, page, size);
     }
 
+    @GetMapping("/projects/{id}")
+    public ProjectDetailsDto projectDetails(@PathVariable Long id) {
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
+        return adminService.getProjectDetails(id);
+    }
+
     @GetMapping("/projects/search")
     public PaginatedResponse<ProjectDto> searchProjects(
         @RequestParam(name = "page", defaultValue = "1") int page,
@@ -116,6 +124,15 @@ public class AdminController {
     public void deleteProject(@PathVariable Long id) {
         AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
         adminService.deleteProject(id);
+    }
+
+    @PutMapping("/projects/{id}/team")
+    public ProjectDetailsDto updateProjectTeam(
+            @PathVariable Long id,
+            @Valid @RequestBody List<ProjectTeamAssignmentRequest> assignments
+    ) {
+        AuthUtils.requireAdminOrPermission(Permission.PROJECT_MANAGEMENT);
+        return adminService.updateProjectTeam(id, assignments);
     }
 
     @GetMapping("/users")

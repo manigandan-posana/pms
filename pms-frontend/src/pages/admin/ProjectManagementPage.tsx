@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Box, Typography, Paper, Chip, Alert, MenuItem } from '@mui/material';
 import AdminDataTable from '../../components/AdminDataTable';
@@ -34,6 +35,7 @@ const getStatusColor = (status?: string) => {
 
 export const ProjectManagementPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { items: projects, totalItems, status, error } = useSelector(
     (state: RootState) => state.adminProjects
   );
@@ -202,6 +204,7 @@ export const ProjectManagementPage: React.FC = () => {
           title="Project Management"
           loading={loading}
           totalRecords={totalItems}
+          onRowClick={(row) => navigate(`/workspace/projects/${(row as Project).id}`)}
           onEdit={(row) => handleOpenEdit(row as Project)}
           onDelete={(row) => handleDelete(row as Project)}
           onAdd={handleOpenCreate}
