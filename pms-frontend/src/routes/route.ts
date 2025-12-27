@@ -24,6 +24,8 @@ const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPag
 const ProjectManagementPage = lazy(() => import("../pages/admin/ProjectManagementPage"));
 const ProjectDetailsPage = lazy(() => import("../pages/workspace/ProjectDetailsPage"));
 const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
+const UserProjectsPage = lazy(() => import("../pages/workspace/UserProjectsPage"));
+const UserProjectBomPage = lazy(() => import("../pages/workspace/UserProjectBomPage"));
 
 // Lazy‑loaded admin pages
 const AllocatedMaterialsManagementPage = lazy(() => import("../pages/admin/AllocatedMaterialsManagementPage"));
@@ -77,6 +79,8 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "vehicles/suppliers", component: SupplierManagementPage },
   { path: "suppliers", component: SupplierManagementPage },
   { path: "vehicles/details/:vehicleId", component: VehicleDetailsPage },
+  { path: "my-projects", component: UserProjectsPage },
+  { path: "my-projects/:projectId", component: UserProjectBomPage },
   { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
   { path: "projects/:projectId", component: ProjectDetailsPage, requiredPermission: "PROJECT_MANAGEMENT" },
   { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },
