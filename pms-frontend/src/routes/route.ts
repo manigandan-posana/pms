@@ -80,7 +80,7 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "suppliers", component: SupplierManagementPage },
   { path: "vehicles/details/:vehicleId", component: VehicleDetailsPage },
   { path: "my-projects", component: UserProjectsPage },
-  { path: "my-projects/:projectId", component: UserProjectBomPage },
+  { path: "my-projects/:projectId", component: ProjectDetailsPage },
   { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
   { path: "projects/:projectId", component: ProjectDetailsPage, requiredPermission: "PROJECT_MANAGEMENT" },
   { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },

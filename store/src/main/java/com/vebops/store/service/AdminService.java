@@ -218,7 +218,7 @@ public class AdminService {
     public ProjectDetailsDto getProjectDetails(Long id) {
         Project project = projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Project not found"));
         List<ProjectTeamMemberDto> team = projectTeamMemberRepository
-                .findByProjectId(id)
+                .findByProject_Id(id)
                 .stream()
                 .map(this::toTeamDto)
                 .toList();
@@ -238,7 +238,7 @@ public class AdminService {
                 ? List.of()
                 : assignments;
 
-        projectTeamMemberRepository.deleteByProjectId(projectId);
+        projectTeamMemberRepository.deleteByProject_Id(projectId);
 
         List<ProjectTeamMember> saved = new ArrayList<>();
         Set<UserAccount> usersNeedingProjectAccess = new HashSet<>();
@@ -555,7 +555,8 @@ public class AdminService {
         }
     }
 
-    private void applyUserFields(UserAccount user, String name, Role role, AccessType accessType, List<String> permissions, Set<Permission> currentPermissions) {
+    private void applyUserFields(UserAccount user, String name, Role role, AccessType accessType,
+            List<String> permissions, Set<Permission> currentPermissions) {
         user.setName(name.trim());
         user.setRole(role);
         user.setAccessType(accessType);
@@ -573,14 +574,16 @@ public class AdminService {
         };
     }
 
-    private Set<Permission> resolvePermissions(Role role, List<String> requestedPermissions, Set<Permission> currentPermissions) {
+    private Set<Permission> resolvePermissions(Role role, List<String> requestedPermissions,
+            Set<Permission> currentPermissions) {
         if (role == Role.ADMIN) {
             return EnumSet.allOf(Permission.class);
         }
         if (role == Role.USER) {
             return EnumSet.noneOf(Permission.class);
         }
-        EnumSet<Permission> resolved = currentPermissions != null ? EnumSet.copyOf(currentPermissions) : EnumSet.noneOf(Permission.class);
+        EnumSet<Permission> resolved = currentPermissions != null ? EnumSet.copyOf(currentPermissions)
+                : EnumSet.noneOf(Permission.class);
         if (requestedPermissions != null) {
             resolved.clear();
             for (String value : requestedPermissions) {
@@ -623,7 +626,8 @@ public class AdminService {
     private ProjectTeamMemberDto toTeamDto(ProjectTeamMember member) {
         return new ProjectTeamMemberDto(
                 member.getId() != null ? member.getId().toString() : null,
-                member.getUser() != null && member.getUser().getId() != null ? member.getUser().getId().toString() : null,
+                member.getUser() != null && member.getUser().getId() != null ? member.getUser().getId().toString()
+                        : null,
                 member.getUser() != null ? member.getUser().getName() : null,
                 member.getUser() != null ? member.getUser().getEmail() : null,
                 member.getRole() != null ? member.getRole().name() : null);

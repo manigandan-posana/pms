@@ -325,15 +325,7 @@ const InwardCreatePage: React.FC = () => {
       },
     ];
 
-    if (!isReturn) {
-      cols.push({
-        field: "_orderedQty",
-        header: "Ordered",
-        align: "right",
-        width: "100px",
-        body: (row) => <Typography variant="body2" color="text.secondary" fontWeight={500}>{row._orderedQty || "—"}</Typography>
-      });
-    }
+    
 
     cols.push({
       field: "_receivedQty",

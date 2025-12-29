@@ -20,11 +20,17 @@ export interface UserProject {
 
 const UserProjectsPage: React.FC = () => {
     const navigate = useNavigate();
+    const role = useSelector((state: RootState) => state.auth.role);
     const [search, setSearch] = useState<string>("");
     const [projects, setProjects] = useState<UserProject[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
+        // Prevent admins from accessing the user "My Projects" page
+        if (role === "ADMIN") {
+            navigate("/workspace/projects", { replace: true });
+            return;
+        }
         const loadProjects = async () => {
             try {
                 setLoading(true);
@@ -83,32 +89,6 @@ const UserProjectsPage: React.FC = () => {
                 </Typography>
             ),
         },
-        {
-            field: "actions",
-            header: "Actions",
-            width: 120,
-            align: "center",
-            body: (row) => (
-                <Stack direction="row" spacing={1} justifyContent="center">
-                    <Chip
-                        label="View BOM"
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        onClick={() => navigate(`/workspace/projects/${row.id}`)}
-                        sx={{
-                            cursor: "pointer",
-                            fontSize: "0.7rem",
-                            height: "24px",
-                            "&:hover": {
-                                backgroundColor: "primary.light",
-                                color: "white",
-                            },
-                        }}
-                    />
-                </Stack>
-            ),
-        },
     ];
 
     return (
@@ -148,6 +128,7 @@ const UserProjectsPage: React.FC = () => {
                                 ? "Loading projects..."
                                 : "No projects assigned to you yet."
                         }
+                        onRowClick={(row) => navigate(`/workspace/my-projects/${(row as UserProject).id}`)}
                     />
                 </Stack>
             </Paper>

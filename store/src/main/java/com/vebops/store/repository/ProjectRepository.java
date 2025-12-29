@@ -12,4 +12,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
 
     @Query("select distinct upper(substring(p.code, 1, 1)) from Project p where p.code is not null")
     List<String> distinctCodePrefixes();
+
+    List<Project> findByProjectManager(String projectManager);
 }

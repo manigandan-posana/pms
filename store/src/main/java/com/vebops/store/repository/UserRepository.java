@@ -1,6 +1,7 @@
 package com.vebops.store.repository;
 
 import com.vebops.store.model.UserAccount;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,4 +17,10 @@ public interface UserRepository extends JpaRepository<UserAccount, Long>, JpaSpe
     @Override
     @EntityGraph(attributePaths = "projects")
     Page<UserAccount> findAll(Specification<UserAccount> spec, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = "projects")
+    Optional<UserAccount> findById(Long id);
+
+    List<UserAccount> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String name, String email);
 }

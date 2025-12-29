@@ -200,6 +200,32 @@ export const updateProjectTeam = createAsyncThunk<
   }
 });
 
+export const fetchUserProjectDetails = createAsyncThunk<
+  any,
+  string | number,
+  { rejectValue: string }
+>("adminProjects/userDetails", async (projectId, { rejectWithValue }) => {
+  try {
+    return await Get(`/app/projects/${projectId}`);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to load project details";
+    return rejectWithValue(message);
+  }
+});
+
+export const updateUserProjectTeam = createAsyncThunk<
+  any,
+  { projectId: string | number; assignments: any[] },
+  { rejectValue: string }
+>("adminProjects/updateUserTeam", async ({ projectId, assignments }, { rejectWithValue }) => {
+  try {
+    return await Put(`/app/projects/${projectId}/team`, assignments);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to update team";
+    return rejectWithValue(message);
+  }
+});
+
 // ---- Helpers ---- //
 
 const normalizePrefixes = (
@@ -298,6 +324,23 @@ const adminProjectsSlice = createSlice({
           action.payload ??
           action.error.message ??
           "Unable to delete project";
+        state.error = message;
+      })
+      .addCase(fetchUserProjectDetails.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.currentProject = action.payload;
+      })
+      .addCase(fetchUserProjectDetails.rejected, (state, action) => {
+        state.status = "failed";
+        const message = action.payload ?? action.error.message ?? "Unable to load project details";
+        state.error = message;
+      })
+      .addCase(updateUserProjectTeam.fulfilled, (state, action) => {
+        state.currentProject = action.payload;
+        state.error = "";
+      })
+      .addCase(updateUserProjectTeam.rejected, (state, action) => {
+        const message = action.payload ?? action.error.message ?? "Unable to update project team";
         state.error = message;
       });
   },

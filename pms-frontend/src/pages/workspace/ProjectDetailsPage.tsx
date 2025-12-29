@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { Get } from "../../utils/apiService";
 import {
   Alert,
   Autocomplete,
@@ -20,7 +21,9 @@ import toast from "react-hot-toast";
 import type { RootState, AppDispatch } from "../../store/store";
 import {
   fetchProjectDetails,
+  fetchUserProjectDetails,
   updateProjectTeam,
+  updateUserProjectTeam,
 } from "../../store/slices/adminProjectsSlice";
 import { searchUsers } from "../../store/slices/adminUsersSlice";
 import CustomButton from "../../widgets/CustomButton";
@@ -69,6 +72,10 @@ const ProjectDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin");
+  const { name: userName, email: userEmail } = useSelector((state: RootState) => state.auth);
+
   const { currentProject, status, error } = useSelector(
     (state: RootState) => state.adminProjects
   );
@@ -77,16 +84,34 @@ const ProjectDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("team");
   const [assignments, setAssignments] = useState<AssignmentMap>({});
   const [saving, setSaving] = useState(false);
+  const [localUsers, setLocalUsers] = useState<UserOption[]>([]);
 
   useEffect(() => {
-    dispatch(searchUsers({ page: 1, size: 200 }));
-  }, [dispatch]);
+    if (isAdmin) {
+      dispatch(searchUsers({ page: 1, size: 200 }));
+    } else {
+      // Fetch app users for non-admin mode
+      const fetchAppUsers = async () => {
+        try {
+          // Pass empty query to get all/top users
+          const res = await Get<any[]>("/app/users/search?query=");
+          const opts = res.map((u) => ({ id: String(u.id), label: u.name || u.email }));
+          setLocalUsers(opts);
+        } catch (e) { console.error("Failed to load users", e); }
+      };
+      fetchAppUsers();
+    }
+  }, [dispatch, isAdmin]);
 
   useEffect(() => {
     if (projectId) {
-      dispatch(fetchProjectDetails(projectId));
+      if (isAdmin) {
+        dispatch(fetchProjectDetails(projectId));
+      } else {
+        dispatch(fetchUserProjectDetails(projectId));
+      }
     }
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, isAdmin]);
 
   useEffect(() => {
     if (currentProject?.teamMembers) {
@@ -94,7 +119,7 @@ const ProjectDetailsPage: React.FC = () => {
       ROLE_OPTIONS.forEach((role) => {
         grouped[role.value] = [];
       });
-      currentProject.teamMembers.forEach((member) => {
+      currentProject.teamMembers.forEach((member: any) => {
         const option: UserOption = {
           id: member.userId || member.id || "",
           label: member.userName || member.userEmail || "Unknown user",
@@ -107,12 +132,16 @@ const ProjectDetailsPage: React.FC = () => {
   }, [currentProject]);
 
   const availableUsers: UserOption[] = useMemo(
-    () =>
-      (users || []).map((user: any) => ({
-        id: user.id?.toString?.() || user.id || user.email,
-        label: user.name || user.email || `User ${user.id}`,
-      })),
-    [users]
+    () => {
+      if (isAdmin) {
+        return (users || []).map((user: any) => ({
+          id: user.id?.toString?.() || user.id || user.email,
+          label: user.name || user.email || `User ${user.id}`,
+        }));
+      }
+      return localUsers;
+    },
+    [users, localUsers, isAdmin]
   );
 
   const handleSaveTeam = async () => {
@@ -125,9 +154,15 @@ const ProjectDetailsPage: React.FC = () => {
           role: role.value,
         }))
       );
-      await dispatch(
-        updateProjectTeam({ projectId: Number(projectId), assignments: payload })
-      ).unwrap();
+      if (isAdmin) {
+        await dispatch(
+          updateProjectTeam({ projectId: Number(projectId), assignments: payload })
+        ).unwrap();
+      } else {
+        await dispatch(
+          updateUserProjectTeam({ projectId: Number(projectId), assignments: payload })
+        ).unwrap();
+      }
       toast.success("Project team updated successfully");
     } catch (err: any) {
       toast.error(err || "Unable to save team");
@@ -136,55 +171,74 @@ const ProjectDetailsPage: React.FC = () => {
     }
   };
 
-  const renderTeamTab = () => (
-    <Stack spacing={2} sx={{ mt: 2 }}>
-      {ROLE_OPTIONS.map((role) => (
-        <Card key={role.value} variant="outlined" sx={{ borderRadius: 1 }}>
-          <CardContent>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Chip label={role.label} color={role.color} size="small" />
-                <Typography variant="body2" color="text.secondary">
-                  Assign users to this role
-                </Typography>
-              </Stack>
-              <Autocomplete
-                multiple
-                options={availableUsers}
-                getOptionLabel={(option) => option.label}
-                value={assignments[role.value] || []}
-                onChange={(_, value) =>
-                  setAssignments((prev) => ({
-                    ...prev,
-                    [role.value]: value,
-                  }))
-                }
-                renderInput={(params) => (
-                  <TextField {...params} placeholder="Select users" size="small" />
-                )}
-                sx={{ minWidth: 320 }}
-              />
-            </Stack>
-          </CardContent>
-        </Card>
-      ))}
+  const renderTeamTab = () => {
+    const isPM = currentProject?.projectManager && (
+      (userName && currentProject.projectManager?.toLowerCase() === userName.toLowerCase()) ||
+      (userEmail && currentProject.projectManager?.toLowerCase() === userEmail.toLowerCase())
+    );
+    const canEdit = isAdmin || isPM;
 
-      <Box display="flex" justifyContent="flex-end" gap={1}>
-        <CustomButton variant="outlined" onClick={() => navigate(-1)}>
-          Back
-        </CustomButton>
-        <CustomButton onClick={handleSaveTeam} disabled={saving}>
-          {saving ? "Saving..." : "Save Team"}
-        </CustomButton>
-      </Box>
-    </Stack>
-  );
+    return (
+      <Stack spacing={2} sx={{ mt: 2 }}>
+        {ROLE_OPTIONS.map((role) => (
+          <Card key={role.value} variant="outlined" sx={{ borderRadius: 1 }}>
+            <CardContent>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Chip label={role.label} color={role.color} size="small" />
+                  <Typography variant="body2" color="text.secondary">
+                    {canEdit ? "Assign users to this role" : "Assigned users"}
+                  </Typography>
+                </Stack>
+                {canEdit ? (
+                  <Autocomplete
+                    multiple
+                    options={availableUsers}
+                    getOptionLabel={(option) => option.label}
+                    value={assignments[role.value] || []}
+                    onChange={(_, value) =>
+                      setAssignments((prev) => ({
+                        ...prev,
+                        [role.value]: value,
+                      }))
+                    }
+                    renderInput={(params) => (
+                      <TextField {...params} placeholder="Select users" size="small" />
+                    )}
+                    sx={{ minWidth: 320 }}
+                  />
+                ) : (
+                  <Stack direction="row" spacing={1}>
+                    {(assignments[role.value] || []).length > 0 ? (
+                      (assignments[role.value] || []).map(u => (
+                        <Chip key={u.id} label={u.label} size="small" variant="outlined" />
+                      ))
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">No users assigned</Typography>
+                    )}
+                  </Stack>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+
+        {canEdit && (
+          <Box display="flex" justifyContent="flex-end" gap={1}>
+            <CustomButton onClick={handleSaveTeam} disabled={saving}>
+              {saving ? "Saving..." : "Save Team"}
+            </CustomButton>
+          </Box>
+        )}
+      </Stack>
+    );
+  };
 
   const renderDetailsTab = () => (
     <Card variant="outlined" sx={{ mt: 2, borderRadius: 1 }}>
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="subtitle2" color="text.secondary">
               Project Name
             </Typography>
@@ -192,7 +246,7 @@ const ProjectDetailsPage: React.FC = () => {
               {currentProject?.name || "—"}
             </Typography>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Typography variant="subtitle2" color="text.secondary">
               Project Code
             </Typography>
@@ -200,7 +254,7 @@ const ProjectDetailsPage: React.FC = () => {
               {currentProject?.code || "—"}
             </Typography>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Typography variant="subtitle2" color="text.secondary">
               Project Manager
             </Typography>
@@ -217,7 +271,7 @@ const ProjectDetailsPage: React.FC = () => {
     const grouped = ROLE_OPTIONS.map((role) => ({
       role,
       members: (currentProject?.teamMembers || []).filter(
-        (member) => member.role === role.value
+        (member: any) => member.role === role.value
       ),
     }));
 
@@ -320,12 +374,9 @@ const ProjectDetailsPage: React.FC = () => {
                         </Typography>
                       ) : (
                         <Grid container spacing={1.5}>
-                          {members.map((member) => (
+                          {members.map((member: any) => (
                             <Grid
-                              item
-                              xs={12}
-                              sm={6}
-                              md={4}
+                              size={{ xs: 12, sm: 6, md: 4 }}
                               key={`${member.role}-${member.userId}-${member.id}`}
                             >
                               <Box
@@ -365,9 +416,17 @@ const ProjectDetailsPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      <Typography variant="h6" fontWeight={700} mb={1}>
-        Project Details
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+        <Box
+          onClick={() => navigate(-1)}
+          sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+        >
+          <Typography variant="h6" component="span" sx={{ mr: 1 }}>←</Typography>
+        </Box>
+        <Typography variant="h6" fontWeight={700}>
+          Project Details
+        </Typography>
+      </Stack>
       <Typography variant="body2" color="text.secondary" mb={2}>
         Manage team members, view project info, and explore the team hierarchy.
       </Typography>

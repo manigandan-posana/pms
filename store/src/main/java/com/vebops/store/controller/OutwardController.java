@@ -2,7 +2,6 @@ package com.vebops.store.controller;
 
 import com.vebops.store.dto.OutwardLineDto;
 import com.vebops.store.dto.OutwardRegisterDto;
-import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Material;
 import com.vebops.store.model.OutwardLine;
 import com.vebops.store.model.OutwardRecord;
@@ -11,12 +10,12 @@ import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.MaterialRepository;
 import com.vebops.store.repository.OutwardRecordRepository;
 import com.vebops.store.service.AuthService;
+import com.vebops.store.service.AppDataService;
 import com.vebops.store.util.AuthUtils;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,14 +42,17 @@ public class OutwardController {
     private final AuthService authService;
     private final OutwardRecordRepository outwardRecordRepository;
     private final MaterialRepository materialRepository;
+    private final AppDataService appDataService;
 
     public OutwardController(
             AuthService authService,
             OutwardRecordRepository outwardRecordRepository,
-            MaterialRepository materialRepository) {
+            MaterialRepository materialRepository,
+            AppDataService appDataService) {
         this.authService = authService;
         this.outwardRecordRepository = outwardRecordRepository;
         this.materialRepository = materialRepository;
+        this.appDataService = appDataService;
     }
 
     /**
@@ -67,14 +69,10 @@ public class OutwardController {
         }
 
         // Check access
-        if (user.getAccessType() == AccessType.PROJECTS) {
-            Set<Long> allowedProjectIds = user.getProjects().stream()
-                    .map(Project::getId)
-                    .collect(Collectors.toSet());
-            if (!allowedProjectIds.contains(projectId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Access denied to this project"));
-            }
+        // Check access
+        if (!appDataService.hasProjectAccess(user, projectId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Access denied to this project"));
         }
 
         List<OutwardRecord> records = outwardRecordRepository.findByProjectIdOrderByEntryDateDesc(projectId);
@@ -106,15 +104,11 @@ public class OutwardController {
         }
 
         // Check access
-        if (user.getAccessType() == AccessType.PROJECTS) {
-            Long projectId = record.getProject() != null ? record.getProject().getId() : null;
-            Set<Long> allowedProjectIds = user.getProjects().stream()
-                    .map(Project::getId)
-                    .collect(Collectors.toSet());
-            if (projectId == null || !allowedProjectIds.contains(projectId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Access denied to this project"));
-            }
+        // Check access
+        Long projectId = record.getProject() != null ? record.getProject().getId() : null;
+        if (!appDataService.hasProjectAccess(user, projectId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Access denied to this project"));
         }
 
         // Convert to DTO
@@ -144,15 +138,11 @@ public class OutwardController {
         }
 
         // Check access
-        if (user.getAccessType() == AccessType.PROJECTS) {
-            Long projectId = record.getProject() != null ? record.getProject().getId() : null;
-            Set<Long> allowedProjectIds = user.getProjects().stream()
-                    .map(Project::getId)
-                    .collect(Collectors.toSet());
-            if (projectId == null || !allowedProjectIds.contains(projectId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Access denied to this project"));
-            }
+        // Check access
+        Long projectId = record.getProject() != null ? record.getProject().getId() : null;
+        if (!appDataService.hasProjectAccess(user, projectId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Access denied to this project"));
         }
 
         // Check if validated
@@ -200,15 +190,11 @@ public class OutwardController {
         }
 
         // Check access
-        if (user.getAccessType() == AccessType.PROJECTS) {
-            Long projectId = record.getProject() != null ? record.getProject().getId() : null;
-            Set<Long> allowedProjectIds = user.getProjects().stream()
-                    .map(Project::getId)
-                    .collect(Collectors.toSet());
-            if (projectId == null || !allowedProjectIds.contains(projectId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Access denied to this project"));
-            }
+        // Check access
+        Long projectId = record.getProject() != null ? record.getProject().getId() : null;
+        if (!appDataService.hasProjectAccess(user, projectId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Access denied to this project"));
         }
 
         if (record.isValidated()) {

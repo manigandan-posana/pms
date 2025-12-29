@@ -24,6 +24,7 @@ import {
   FiDatabase,
   FiUsers,
 } from "react-icons/fi";
+import { GrProjects } from "react-icons/gr";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -189,17 +190,23 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   };
 
   const navItems: NavItem[] = useMemo(() => {
-    return [
+    const items: NavItem[] = [
       { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
       { id: "materials", label: "Material Directory", icon: FiDatabase, path: "/workspace/materials", requiredPermission: "MATERIAL_MANAGEMENT" },
-      { id: "my-projects", label: "My Projects", icon: FiSettings, path: "/workspace/my-projects" },
-      { id: "projects", label: "Projects", icon: FiSettings, path: "/workspace/projects", requiredPermission: "PROJECT_MANAGEMENT" },
+      { id: "my-projects", label: "My Projects", icon: GrProjects, path: "/workspace/my-projects" },
+      { id: "projects", label: "Projects", icon: GrProjects, path: "/workspace/projects", requiredPermission: "PROJECT_MANAGEMENT" },
       { id: "users", label: "Users", icon: FiUsers, path: "/workspace/users", requiredPermission: "USER_MANAGEMENT" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
       { id: "suppliers", label: "Suppliers", icon: FiUsers, path: "/workspace/suppliers" },
     ];
-  }, []);
+
+    // Hide the "My Projects" item from admin users (admin has separate admin views)
+    return items.filter((item) => {
+      if (item.id === "my-projects" && userRole === "ADMIN") return false;
+      return true;
+    });
+  }, [userRole, permissions]);
 
   const handleToggle = () => {
     setCollapsed(!collapsed);

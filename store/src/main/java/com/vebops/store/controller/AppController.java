@@ -8,6 +8,11 @@ import com.vebops.store.service.AppDataService;
 import com.vebops.store.service.AuthService;
 import com.vebops.store.util.AuthUtils;
 import java.util.List;
+import com.vebops.store.dto.ProjectDetailsDto;
+import com.vebops.store.dto.ProjectTeamAssignmentRequest;
+import com.vebops.store.dto.UserDto;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,8 +40,7 @@ public class AppController {
 
     @GetMapping("/materials/{materialId}/inwards")
     public List<InwardHistoryDto> materialInwardHistory(
-        @PathVariable Long materialId
-    ) {
+            @PathVariable Long materialId) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         return appDataService.materialInwardHistory(user, materialId);
@@ -44,8 +48,7 @@ public class AppController {
 
     @GetMapping("/materials/{materialId}/movements")
     public MaterialMovementDto materialMovementHistory(
-        @PathVariable Long materialId
-    ) {
+            @PathVariable Long materialId) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         return appDataService.materialMovementHistory(user, materialId);
@@ -60,12 +63,32 @@ public class AppController {
 
     @GetMapping("/projects/{projectId}/bom")
     public List<com.vebops.store.dto.BomLineDto> getProjectBom(
-        @PathVariable Long projectId,
-        @RequestParam(name = "search", required = false) String search,
-        @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly
-    ) {
+            @PathVariable Long projectId,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly) {
         Long userId = AuthUtils.requireUserId();
         UserAccount user = authService.getUserById(userId);
         return appDataService.projectBom(user, projectId, search, inStockOnly);
+    }
+
+    @GetMapping("/projects/{projectId}")
+    public ProjectDetailsDto getProjectDetails(@PathVariable Long projectId) {
+        Long userId = AuthUtils.requireUserId();
+        UserAccount user = authService.getUserById(userId);
+        return appDataService.getProjectDetails(user, projectId);
+    }
+
+    @PutMapping("/projects/{projectId}/team")
+    public ProjectDetailsDto updateProjectTeam(
+            @PathVariable Long projectId,
+            @RequestBody List<ProjectTeamAssignmentRequest> assignments) {
+        Long userId = AuthUtils.requireUserId();
+        UserAccount user = authService.getUserById(userId);
+        return appDataService.updateProjectTeam(user, projectId, assignments);
+    }
+
+    @GetMapping("/users/search")
+    public List<UserDto> searchUsers(@RequestParam String query) {
+        return appDataService.searchUsers(query);
     }
 }

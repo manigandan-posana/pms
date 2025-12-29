@@ -5,7 +5,11 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectTeamMemberRepository extends JpaRepository<ProjectTeamMember, Long> {
-    List<ProjectTeamMember> findByProjectId(Long projectId);
+    List<ProjectTeamMember> findByProject_Id(Long projectId);
 
-    void deleteByProjectId(Long projectId);
+    void deleteByProject_Id(Long projectId);
+
+    boolean existsByProject_IdAndUser_Id(Long projectId, Long userId);
+
+    List<ProjectTeamMember> findByUser_Id(Long userId);
 }

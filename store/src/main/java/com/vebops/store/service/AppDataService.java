@@ -11,9 +11,15 @@ import com.vebops.store.dto.OutwardRegisterDto;
 import com.vebops.store.dto.ProjectDto;
 import com.vebops.store.dto.TransferLineDto;
 import com.vebops.store.dto.TransferRecordDto;
+import com.vebops.store.dto.ProjectDetailsDto;
+import com.vebops.store.dto.ProjectTeamMemberDto;
+import com.vebops.store.dto.ProjectTeamAssignmentRequest;
 import com.vebops.store.dto.UserDto;
+
+import com.vebops.store.model.ProjectTeamMember;
 import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.ForbiddenException;
+import com.vebops.store.exception.NotFoundException;
 import com.vebops.store.model.AccessType;
 import com.vebops.store.model.BomLine;
 import com.vebops.store.model.InwardLine;
@@ -31,10 +37,14 @@ import com.vebops.store.repository.MaterialRepository;
 import com.vebops.store.repository.OutwardLineRepository;
 import com.vebops.store.repository.OutwardRecordRepository;
 import com.vebops.store.repository.ProjectRepository;
+import com.vebops.store.repository.ProjectTeamMemberRepository;
+
 import com.vebops.store.repository.TransferRecordRepository;
 import com.vebops.store.repository.UserRepository;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
+
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,29 +69,32 @@ public class AppDataService {
         private final UserRepository userRepository;
         private final AuthService authService;
         private final InventoryService inventoryService;
+        private final ProjectTeamMemberRepository projectTeamMemberRepository;
 
         private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
 
         public AppDataService(
                         ProjectRepository projectRepository,
-                        MaterialRepository materialRepository,
                         BomLineRepository bomLineRepository,
                         InwardLineRepository inwardLineRepository,
-                        InwardRecordRepository inwardRecordRepository,
                         OutwardLineRepository outwardLineRepository,
-                        OutwardRecordRepository outwardRecordRepository,
                         TransferRecordRepository transferRecordRepository,
+                        InwardRecordRepository inwardRecordRepository,
+                        OutwardRecordRepository outwardRecordRepository,
+                        MaterialRepository materialRepository,
+                        ProjectTeamMemberRepository projectTeamMemberRepository,
                         UserRepository userRepository,
                         AuthService authService,
                         InventoryService inventoryService) {
                 this.projectRepository = projectRepository;
-                this.materialRepository = materialRepository;
                 this.bomLineRepository = bomLineRepository;
                 this.inwardLineRepository = inwardLineRepository;
-                this.inwardRecordRepository = inwardRecordRepository;
                 this.outwardLineRepository = outwardLineRepository;
-                this.outwardRecordRepository = outwardRecordRepository;
                 this.transferRecordRepository = transferRecordRepository;
+                this.inwardRecordRepository = inwardRecordRepository;
+                this.outwardRecordRepository = outwardRecordRepository;
+                this.materialRepository = materialRepository;
+                this.projectTeamMemberRepository = projectTeamMemberRepository;
                 this.userRepository = userRepository;
                 this.authService = authService;
                 this.inventoryService = inventoryService;
@@ -225,17 +238,48 @@ public class AppDataService {
                 if (user.getAccessType() == AccessType.ALL) {
                         return allProjects;
                 }
-                return new ArrayList<>(user.getProjects());
+                Set<Long> accessibleIds = user.getProjects().stream()
+                                .map(Project::getId)
+                                .collect(Collectors.toSet());
+
+                projectTeamMemberRepository.findByUser_Id(user.getId())
+                                .stream()
+                                .map(ptm -> ptm.getProject().getId())
+                                .forEach(accessibleIds::add);
+
+                return allProjects.stream()
+                                .filter(p -> {
+                                        if (accessibleIds.contains(p.getId())) {
+                                                return true;
+                                        }
+                                        String pm = p.getProjectManager();
+                                        return pm != null && (pm.equalsIgnoreCase(user.getName())
+                                                        || pm.equalsIgnoreCase(user.getEmail()));
+                                })
+                                .toList();
         }
 
-        private boolean hasProjectAccess(UserAccount user, Long projectId) {
+        public boolean hasProjectAccess(UserAccount user, Long projectId) {
                 if (user == null || projectId == null) {
                         return false;
                 }
                 if (user.getRole() == Role.ADMIN || user.getAccessType() == AccessType.ALL) {
                         return true;
                 }
-                return user.getProjects().stream().anyMatch(project -> project.getId().equals(projectId));
+                boolean inProjects = user.getProjects().stream().anyMatch(project -> project.getId().equals(projectId));
+                if (inProjects) {
+                        return true;
+                }
+                if (projectTeamMemberRepository.existsByProject_IdAndUser_Id(projectId, user.getId())) {
+                        return true;
+                }
+                return projectRepository.findById(projectId)
+                                .map(p -> {
+                                        String pm = p.getProjectManager();
+                                        return pm != null && (pm.equalsIgnoreCase(user.getName())
+                                                        || pm.equalsIgnoreCase(user.getEmail()));
+                                })
+                                .orElse(false);
         }
 
         private ProjectDto toProjectDto(Project project) {
@@ -415,5 +459,108 @@ public class AppDataService {
                 List<Project> allProjects = projectRepository.findAll();
                 List<Project> accessibleProjects = resolveAssignedProjects(user, allProjects);
                 return accessibleProjects.stream().map(this::toProjectDto).toList();
+        }
+
+        public ProjectDetailsDto getProjectDetails(UserAccount user, Long projectId) {
+                if (!hasProjectAccess(user, projectId)) {
+                        throw new ForbiddenException("You do not have access to this project");
+                }
+                Project project = projectRepository.findById(projectId)
+                                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+                List<ProjectTeamMemberDto> team = projectTeamMemberRepository
+                                .findByProject_Id(projectId)
+                                .stream()
+                                .map(this::toTeamMemberDto)
+                                .toList();
+
+                return new ProjectDetailsDto(
+                                String.valueOf(project.getId()),
+                                project.getCode(),
+                                project.getName(),
+                                project.getProjectManager(),
+                                team);
+        }
+
+        public ProjectDetailsDto updateProjectTeam(UserAccount user, Long projectId,
+                        List<ProjectTeamAssignmentRequest> assignments) {
+                Project project = projectRepository.findById(projectId)
+                                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+                if (!hasProjectAccess(user, projectId)) {
+                        throw new ForbiddenException("You do not have access to this project");
+                }
+
+                boolean isPm = project.getProjectManager() != null &&
+                                (project.getProjectManager().equalsIgnoreCase(user.getName()) ||
+                                                project.getProjectManager().equalsIgnoreCase(user.getEmail()));
+
+                if (!isPm && user.getRole() != Role.ADMIN) {
+                        throw new ForbiddenException("Only the Project Manager can update the team");
+                }
+
+                List<ProjectTeamAssignmentRequest> safeAssignments = assignments == null
+                                ? List.of()
+                                : assignments;
+
+                projectTeamMemberRepository.deleteByProject_Id(projectId);
+
+                List<ProjectTeamMember> saved = new ArrayList<>();
+                Set<UserAccount> usersNeedingProjectAccess = new HashSet<>();
+
+                for (ProjectTeamAssignmentRequest assignment : safeAssignments) {
+                        if (assignment == null || assignment.userId() == null || assignment.role() == null) {
+                                continue;
+                        }
+                        UserAccount memberAccount = userRepository.findById(assignment.userId())
+                                        .orElseThrow(() -> new NotFoundException("User not found for team assignment"));
+
+                        boolean alreadyHas = memberAccount.getProjects().stream()
+                                        .anyMatch(p -> p.getId().equals(projectId));
+                        if (!alreadyHas) {
+                                memberAccount.getProjects().add(project);
+                                usersNeedingProjectAccess.add(memberAccount);
+                        }
+
+                        ProjectTeamMember member = new ProjectTeamMember();
+                        member.setProject(project);
+                        member.setUser(memberAccount);
+                        member.setRole(assignment.role());
+                        saved.add(projectTeamMemberRepository.save(member));
+                }
+
+                if (!usersNeedingProjectAccess.isEmpty()) {
+                        userRepository.saveAll(usersNeedingProjectAccess);
+                }
+
+                List<ProjectTeamMemberDto> team = saved.stream().map(this::toTeamMemberDto).toList();
+                return new ProjectDetailsDto(
+                                String.valueOf(project.getId()),
+                                project.getCode(),
+                                project.getName(),
+                                project.getProjectManager(),
+                                team);
+        }
+
+        private ProjectTeamMemberDto toTeamMemberDto(ProjectTeamMember member) {
+                return new ProjectTeamMemberDto(
+                                member.getId() != null ? String.valueOf(member.getId()) : null,
+                                member.getUser() != null && member.getUser().getId() != null
+                                                ? String.valueOf(member.getUser().getId())
+                                                : null,
+                                member.getUser() != null ? member.getUser().getName() : null,
+                                member.getUser() != null ? member.getUser().getEmail() : null,
+                                member.getRole() != null ? member.getRole().name() : null);
+        }
+
+        public List<UserDto> searchUsers(String query) {
+                if (!StringUtils.hasText(query)) {
+                        // Return all users (or reasonable limit)
+                        return userRepository.findAll().stream().map(authService::toUserDto).toList();
+                }
+                return userRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query)
+                                .stream()
+                                .map(authService::toUserDto)
+                                .toList();
         }
 }
