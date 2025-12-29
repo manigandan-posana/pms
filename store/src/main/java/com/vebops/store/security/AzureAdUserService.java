@@ -17,7 +17,7 @@ import java.util.EnumSet;
 public class AzureAdUserService {
 
     private final UserRepository userRepository;
-    
+
     @Value("${azure.ad.admin-email}")
     private String adminEmail;
 
@@ -48,8 +48,8 @@ public class AzureAdUserService {
                         return userRepository.save(existingUser);
                     }
                     if (existingUser.getRole() == Role.ADMIN
-                        && (existingUser.getPermissions() == null
-                            || existingUser.getPermissions().size() != Permission.values().length)) {
+                            && (existingUser.getPermissions() == null
+                                    || existingUser.getPermissions().size() != Permission.values().length)) {
                         existingUser.setPermissions(EnumSet.allOf(Permission.class));
                         return userRepository.save(existingUser);
                     }
@@ -60,8 +60,8 @@ public class AzureAdUserService {
                     if (adminEmail.equalsIgnoreCase(email)) {
                         return createAdminUser(claims);
                     }
-                    // Return null for non-admin users not in database
-                    return null;
+                    // Auto-create new users from Azure AD
+                    return createNewUser(claims);
                 });
     }
 

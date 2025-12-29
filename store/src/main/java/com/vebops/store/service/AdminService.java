@@ -17,7 +17,7 @@ import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.NotFoundException;
 import com.vebops.store.model.AccessType;
 import com.vebops.store.model.Project;
-import com.vebops.store.model.ProjectRole;
+
 import com.vebops.store.model.ProjectTeamMember;
 import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;

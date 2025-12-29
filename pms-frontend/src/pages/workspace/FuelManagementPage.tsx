@@ -394,12 +394,37 @@ const FuelManagementPage: React.FC = () => {
 
     return (
         <Box sx={{ p: 2 }}>
-            {/* View Mode Toggle */}
-            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <ToggleButtonGroup value={fuelViewMode} exclusive onChange={(_, newMode) => newMode && setFuelViewMode(newMode)} size="small">
-                    <ToggleButton value="current">Current</ToggleButton>
-                    <ToggleButton value="history">History</ToggleButton>
-                </ToggleButtonGroup>
+            {/* View Mode Toggle and Fuel Type Tabs in one Row */}
+            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <ToggleButtonGroup
+                        value={fuelViewMode}
+                        exclusive
+                        onChange={(_, newMode) => {
+                            if (newMode) {
+                                setFuelViewMode(newMode);
+                                setActiveFuelType("DIESEL"); // Reset to default when switching views
+                            }
+                        }}
+                        size="small"
+                    >
+                        <ToggleButton value="current">Current</ToggleButton>
+                        <ToggleButton value="history">History</ToggleButton>
+                    </ToggleButtonGroup>
+
+                    <Box sx={{ width: 1, height: 24, bgcolor: 'divider' }} />
+
+                    <ToggleButtonGroup
+                        value={activeFuelType}
+                        exclusive
+                        onChange={(_, newType) => newType && setActiveFuelType(newType)}
+                        size="small"
+                    >
+                        <ToggleButton value="DIESEL">Diesel</ToggleButton>
+                        <ToggleButton value="PETROL">Petrol</ToggleButton>
+                        <ToggleButton value="ELECTRIC">Electric</ToggleButton>
+                    </ToggleButtonGroup>
+                </Stack>
 
                 <Stack direction="row" spacing={1}>
                     <CustomButton label="Add Fuel Entry" startIcon={<FiPlus />} onClick={() => setShowFuelDialog(true)} />
@@ -407,18 +432,7 @@ const FuelManagementPage: React.FC = () => {
                 </Stack>
             </Box>
 
-            {/* Fuel Type Tabs */}
-            <ToggleButtonGroup
-                value={activeFuelType}
-                exclusive
-                onChange={(_, newType) => newType && setActiveFuelType(newType)}
-                size="small"
-                sx={{ mb: 2 }}
-            >
-                <ToggleButton value="DIESEL">Diesel</ToggleButton>
-                <ToggleButton value="PETROL">Petrol</ToggleButton>
-                <ToggleButton value="ELECTRIC">Electric</ToggleButton>
-            </ToggleButtonGroup>
+
 
             {/* Filters (History Mode) */}
             {fuelViewMode === "history" && (
@@ -451,8 +465,8 @@ const FuelManagementPage: React.FC = () => {
             {/* Summary Metrics */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700}>
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700}>
                             {fuelSummaryMetrics.totalQuantity.toFixed(2)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -461,8 +475,8 @@ const FuelManagementPage: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700} color="primary.main">
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700} color="primary.main">
                             ₹{fuelSummaryMetrics.totalCost.toLocaleString("en-IN")}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -471,8 +485,8 @@ const FuelManagementPage: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700}>
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700}>
                             {fuelSummaryMetrics.totalDistance.toFixed(0)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -481,8 +495,8 @@ const FuelManagementPage: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700} color="success.main">
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700} color="success.main">
                             {fuelSummaryMetrics.avgMileage.toFixed(2)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">

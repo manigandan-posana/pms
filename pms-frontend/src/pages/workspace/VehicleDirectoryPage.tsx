@@ -287,9 +287,8 @@ const VehicleDirectoryPage: React.FC = () => {
             {/* Header with Metrics */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <FiTruck size={32} style={{ color: "#1976d2", marginBottom: 8 }} />
-                        <Typography variant="h4" fontWeight={700}>
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700}>
                             {metrics.totalVehicles}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -298,8 +297,8 @@ const VehicleDirectoryPage: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700} color="success.main">
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700} color="success.main">
                             {metrics.activeVehicles}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -308,8 +307,8 @@ const VehicleDirectoryPage: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700} color="primary.main">
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700} color="primary.main">
                             ₹{metrics.totalFuelCost.toLocaleString("en-IN")}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -318,8 +317,8 @@ const VehicleDirectoryPage: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700}>
+                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography variant="h5" fontWeight={700}>
                             {metrics.totalDistance.toFixed(0)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
