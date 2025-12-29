@@ -98,6 +98,7 @@ export interface InwardRequest {
   date?: string | null;
   closeDate?: string | null;
   invoiceNo?: string | null;
+  supplierId?: string | number | null;
   supplierName?: string | null;
   remarks?: string | null;
   lines: InwardLineRequest[];

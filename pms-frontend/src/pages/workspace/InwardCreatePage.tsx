@@ -11,6 +11,7 @@ import type { ColumnDef } from "../../widgets/CustomTable";
 import CustomModal from "../../widgets/CustomModal";
 import CustomTextField from "../../widgets/CustomTextField";
 import CustomSelect from "../../widgets/CustomSelect";
+import { Get, Post } from "../../utils/apiService";
 
 import { refreshInventoryCodes, submitInward } from "../../store/slices/workspaceSlice";
 import {
@@ -69,6 +70,7 @@ export interface InwardUiState {
   invoiceDate: string;
   deliveryDate: string;
   vehicleNo: string;
+  supplierId: string;
   supplierName: string;
   remarks: string;
   saving: boolean;
@@ -169,6 +171,7 @@ const InwardCreatePage: React.FC = () => {
     invoiceDate,
     deliveryDate,
     vehicleNo,
+    supplierId,
     supplierName,
     remarks,
     saving,
@@ -176,6 +179,11 @@ const InwardCreatePage: React.FC = () => {
     modalLine,
     modalValues,
   } = inwardUi;
+
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [creatingSupplier, setCreatingSupplier] = useState(false);
+  const [newSupplierName, setNewSupplierName] = useState("");
+  const [newSupplierType, setNewSupplierType] = useState("MATERIALS");
 
   const allocatedMaterials: AllocatedMaterial[] = useMemo(() => {
     if (!projectId) return [];
@@ -227,6 +235,24 @@ const InwardCreatePage: React.FC = () => {
       );
     }
   }, [assignedProjects, dispatch, projectId]);
+
+  // Load suppliers for selected project
+  useEffect(() => {
+    let mounted = true;
+    if (!projectId) {
+      setSuppliers([]);
+      return;
+    }
+    (async () => {
+      try {
+        const list = await Get(`/suppliers/project/${projectId}`);
+        if (mounted) setSuppliers(list || []);
+      } catch (e) {
+        if (mounted) setSuppliers([]);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [projectId]);
 
   const handleCheckboxClick = (e: React.MouseEvent, line: AllocatedMaterial): void => {
     e.stopPropagation(); // Prevent opening modal
@@ -371,6 +397,7 @@ const InwardCreatePage: React.FC = () => {
           deliveryDate: deliveryDate || null,
           vehicleNo: vehicleNo || null,
           remarks: remarks || null,
+          supplierId: supplierId ? Number(supplierId) : null,
           supplierName: supplierName || null,
           lines: selectedLinesArray,
         })
@@ -383,6 +410,7 @@ const InwardCreatePage: React.FC = () => {
       dispatch(setInwardField({ field: "deliveryDate", value: "" }));
       dispatch(setInwardField({ field: "vehicleNo", value: "" }));
       dispatch(setInwardField({ field: "supplierName", value: "" }));
+      dispatch(setInwardField({ field: "supplierId", value: "" }));
       dispatch(setInwardField({ field: "remarks", value: "" }));
       dispatch(clearInwardSelections());
       navigate('/workspace/inventory/inwards');
@@ -495,11 +523,19 @@ const InwardCreatePage: React.FC = () => {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <CustomTextField
-                  label="Supplier Name"
-                  value={supplierName}
-                  onChange={(e) => dispatch(setInwardField({ field: 'supplierName', value: e.target.value }))}
-                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <CustomSelect
+                    label="Supplier"
+                    value={supplierId || ""}
+                    options={suppliers.map((s: any) => ({ label: s.supplierName, value: String(s.id) }))}
+                    onChange={(value) => {
+                      dispatch(setInwardField({ field: 'supplierId', value: String(value) }));
+                      const sel = suppliers.find((x) => String(x.id) === String(value));
+                      dispatch(setInwardField({ field: 'supplierName', value: sel ? sel.supplierName : '' }));
+                    }}
+                  />
+                  <CustomButton size="small" variant="outlined" onClick={() => setCreatingSupplier(true)}>Add</CustomButton>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
@@ -546,6 +582,45 @@ const InwardCreatePage: React.FC = () => {
         onSave={saveModalLine}
         onClose={() => dispatch(setInwardModalLine(null))}
       />
+      {/* Create Supplier Modal */}
+      {creatingSupplier && (
+        <CustomModal
+          title="Create Supplier"
+          open={creatingSupplier}
+          onClose={() => setCreatingSupplier(false)}
+          footer={
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <CustomButton variant="text" onClick={() => setCreatingSupplier(false)} size="small">Cancel</CustomButton>
+              <CustomButton onClick={async () => {
+                try {
+                  const payload = {
+                    projectId: Number(projectId),
+                    supplierName: newSupplierName,
+                    supplierType: newSupplierType,
+                  };
+                  const created = await Post('/suppliers', payload);
+                  setSuppliers((s) => [created, ...s]);
+                  dispatch(setInwardField({ field: 'supplierId', value: String(created.id) }));
+                  dispatch(setInwardField({ field: 'supplierName', value: created.supplierName }));
+                  setCreatingSupplier(false);
+                  setNewSupplierName('');
+                } catch (err) {
+                  // ignore - errors handled elsewhere
+                }
+              }} startIcon={<FiSave />} size="small">Save</CustomButton>
+            </Stack>
+          }
+        >
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              <CustomTextField label="Supplier Name" value={newSupplierName} onChange={(e) => setNewSupplierName(e.target.value)} />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <CustomSelect label="Type" value={newSupplierType} options={[{ label: 'Materials', value: 'MATERIALS' }, { label: 'Fuel', value: 'FUEL' }]} onChange={(v) => setNewSupplierType(String(v))} />
+            </Grid>
+          </Grid>
+        </CustomModal>
+      )}
     </Box >
   );
 };

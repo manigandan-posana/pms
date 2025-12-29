@@ -29,6 +29,7 @@ export interface InwardFormState {
   invoiceDate: string;
   deliveryDate: string;
   vehicleNo: string;
+  supplierId: string;
   supplierName: string;
   remarks: string;
   selectedLines: InwardSelectedLines;
@@ -104,6 +105,7 @@ const createEmptyInward = (): InwardFormState => ({
   invoiceDate: "",
   deliveryDate: "",
   vehicleNo: "",
+  supplierId: "",
   supplierName: "",
   remarks: "",
   selectedLines: {},

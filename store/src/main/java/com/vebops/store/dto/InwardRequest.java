@@ -10,6 +10,7 @@ public record InwardRequest(
         String deliveryDate,
         String vehicleNo,
         String remarks,
+        Long supplierId,
         String supplierName,
         List<InwardLineRequest> lines) {
 }

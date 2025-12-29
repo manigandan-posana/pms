@@ -29,6 +29,7 @@ import com.vebops.store.repository.MaterialRepository;
 import com.vebops.store.repository.OutwardLineRepository;
 import com.vebops.store.repository.OutwardRecordRepository;
 import com.vebops.store.repository.ProjectRepository;
+import com.vebops.store.repository.SupplierRepository;
 import com.vebops.store.repository.TransferRecordRepository;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -59,6 +60,7 @@ public class InventoryService {
     private final BomLineRepository bomLineRepository;
     private final InwardLineRepository inwardLineRepository;
     private final OutwardLineRepository outwardLineRepository;
+    private final SupplierRepository supplierRepository;
 
     private static final DateTimeFormatter CODE_DATE = DateTimeFormatter.BASIC_ISO_DATE;
 
@@ -70,7 +72,8 @@ public class InventoryService {
             TransferRecordRepository transferRecordRepository,
             BomLineRepository bomLineRepository,
             InwardLineRepository inwardLineRepository,
-            OutwardLineRepository outwardLineRepository) {
+            OutwardLineRepository outwardLineRepository,
+            SupplierRepository supplierRepository) {
         this.projectRepository = projectRepository;
         this.materialRepository = materialRepository;
         this.inwardRecordRepository = inwardRecordRepository;
@@ -79,6 +82,7 @@ public class InventoryService {
         this.bomLineRepository = bomLineRepository;
         this.inwardLineRepository = inwardLineRepository;
         this.outwardLineRepository = outwardLineRepository;
+        this.supplierRepository = supplierRepository;
     }
 
     public InventoryCodesResponse generateCodes() {
@@ -109,7 +113,22 @@ public class InventoryService {
         record.setDeliveryDate(parseDate(request.deliveryDate()));
         record.setVehicleNo(request.vehicleNo());
         record.setRemarks(request.remarks());
-        record.setSupplierName(request.supplierName());
+        // Resolve supplier name: prefer supplierId if provided, otherwise use supplierName
+        String resolvedSupplierName = null;
+        try {
+            if (request.supplierId() != null) {
+                var supOpt = supplierRepository.findById(request.supplierId());
+                if (supOpt.isPresent()) {
+                    resolvedSupplierName = supOpt.get().getSupplierName();
+                }
+            }
+        } catch (Exception e) {
+            // ignore and fallback
+        }
+        if (resolvedSupplierName == null) {
+            resolvedSupplierName = request.supplierName();
+        }
+        record.setSupplierName(resolvedSupplierName);
         record.setEntryDate(
                 record.getDeliveryDate() != null ? record.getDeliveryDate() : LocalDate.now());
 
@@ -603,17 +622,18 @@ public class InventoryService {
                 ));
 
         registerInward(
-                user,
-                new InwardRequest(
-                        null,
-                        request.toProjectId(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        "Transfer from " + fromProject.getCode(),
-                        fromProject.getName(),
-                        inwardLines));
+            user,
+            new InwardRequest(
+                null,
+                request.toProjectId(),
+                null,
+                null,
+                null,
+                null,
+                "Transfer from " + fromProject.getCode(),
+                null,
+                fromProject.getName(),
+                inwardLines));
     }
 
     private String resolveOrGenerateCode(String requested, Supplier<String> generator) {
