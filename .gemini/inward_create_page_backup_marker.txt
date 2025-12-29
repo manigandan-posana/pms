@@ -1,2 +1,0 @@
-// This file will be completely rewritten to remove RETURN functionality
-// Saving the original first for reference if needed

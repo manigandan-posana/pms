@@ -710,11 +710,7 @@ const ProjectDetailsPage: React.FC = () => {
         Manage team members, view project info, and explore the team hierarchy.
       </Typography>
 
-      {error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      ) : null}
+      
 
       <Tabs
         value={activeTab}
