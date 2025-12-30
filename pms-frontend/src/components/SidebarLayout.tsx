@@ -52,7 +52,7 @@ interface NavItem {
   id: string;
   label: string;
   path: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: React.ComponentType<{ size?: number }> | string;
   children?: NavItem[];
   requiredPermission?: string;
 }
@@ -138,7 +138,6 @@ const StyledListItemIcon = styled(ListItemIcon, {
 
 // Memoized Sidebar Item Component to prevent unnecessary re-renders
 const SidebarItem = React.memo(({ item, open, isActive }: { item: NavItem; open: boolean; isActive: boolean }) => {
-  const Icon = item.icon;
   return (
     <ListItem disablePadding sx={{ display: 'block' }}>
       <Tooltip title={!open ? item.label : ""} placement="right">
@@ -149,7 +148,11 @@ const SidebarItem = React.memo(({ item, open, isActive }: { item: NavItem; open:
           open={open}
         >
           <StyledListItemIcon active={isActive} open={open}>
-            <Icon size={16} />
+            {typeof item.icon === 'string' ? (
+              <img src={item.icon} alt={item.label} style={{ width: 16, height: 16 }} />
+            ) : (
+              <item.icon size={16} />
+            )}
           </StyledListItemIcon>
           <ListItemText
             primary={item.label}
@@ -198,7 +201,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
       { id: "projects", label: "Projects", icon: GrProjects, path: "/workspace/projects", requiredPermission: "PROJECT_MANAGEMENT" },
       { id: "users", label: "Users", icon: FiUsers, path: "/workspace/users", requiredPermission: "USER_MANAGEMENT" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
-      { id: "suppliers", label: "Suppliers", icon: FiUsers, path: "/workspace/suppliers" },
+      { id: "suppliers", label: "Suppliers", icon: "/supplier.svg", path: "/workspace/suppliers" },
+      { id: "contractors", label: "Contractors", icon: "/contractor.svg", path: "/workspace/contractors" },
     ];
 
     // Hide the "My Projects" item from admin users (admin has separate admin views)

@@ -26,6 +26,8 @@ const ProjectDetailsPage = lazy(() => import("../pages/workspace/ProjectDetailsP
 const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
 const UserProjectsPage = lazy(() => import("../pages/workspace/UserProjectsPage"));
 const UserProjectBomPage = lazy(() => import("../pages/workspace/UserProjectBomPage"));
+const ContractorDirectoryPage = lazy(() => import("../pages/contractors/ContractorDirectoryPage"));
+const ContractorDetailsPage = lazy(() => import("../pages/contractors/ContractorDetailsPage"));
 
 // Lazy‑loaded admin pages
 const AllocatedMaterialsManagementPage = lazy(() => import("../pages/admin/AllocatedMaterialsManagementPage"));
@@ -84,6 +86,8 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
   { path: "projects/:projectId", component: ProjectDetailsPage, requiredPermission: "PROJECT_MANAGEMENT" },
   { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },
+  { path: "contractors", component: ContractorDirectoryPage },
+  { path: "contractors/:id", component: ContractorDetailsPage },
 ];
 
 // ----- Admin nested routes (/admin/...) -----

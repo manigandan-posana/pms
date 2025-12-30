@@ -354,12 +354,7 @@ export default function Login() {
             >
               <div className="flex items-center gap-3">
                 <div className="bg-white/10 p-1.5 rounded group-hover:bg-white/20 transition-colors">
-                  <svg className="w-4 h-4 block" viewBox="1 1 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10.5 1H1V10.5H10.5V1Z" fill="#F25022" />
-                    <path d="M21 1H11.5V10.5H21V1Z" fill="#7FBA00" />
-                    <path d="M10.5 11.5H1V21H10.5V11.5Z" fill="#00A4EF" />
-                    <path d="M21 11.5H11.5V21H21V11.5Z" fill="#FFB900" />
-                  </svg>
+                  <img src="/microsoft.svg" alt="Microsoft" className="w-4 h-4 block" />
                 </div>
                 <span className="font-semibold text-sm">
                   {isLoading || inProgress !== "none" ? "Signing in..." : "Login with Microsoft"}
