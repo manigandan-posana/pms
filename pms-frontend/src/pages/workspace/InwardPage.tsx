@@ -49,6 +49,7 @@ interface AuthStateSlice {
 const InwardPage: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useSelector<RootState, AuthStateSlice>((state) => state.auth as AuthStateSlice);
+  const selectedProjectId = useSelector((state: RootState) => state.workspace.selectedProjectId);
 
   const [historyRecords, setHistoryRecords] = useState<InwardHistoryRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -96,6 +97,7 @@ const InwardPage: React.FC = () => {
         size: historyPageSize,
         ...historyFilters,
         ...(trimmedSearch ? { search: trimmedSearch } : {}),
+        projectId: selectedProjectId || undefined,
       };
       const response = await dispatch(searchInwardHistory(params)).unwrap();
       const data = Array.isArray(response?.content)
@@ -111,7 +113,7 @@ const InwardPage: React.FC = () => {
     } finally {
       setLoadingHistory(false);
     }
-  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch]);
+  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch, selectedProjectId]);
 
   // Load history when filters change
   useEffect(() => {

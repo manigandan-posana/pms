@@ -464,6 +464,7 @@ const SupplierManagementPage = () => {
                     resetSupplierForm();
                 }}
                 title={editingSupplier ? "Edit Supplier" : "Add New Supplier"}
+                maxWidth="md"
                 footer={
                     <>
                         <Button
@@ -471,6 +472,7 @@ const SupplierManagementPage = () => {
                                 setShowSupplierDialog(false);
                                 resetSupplierForm();
                             }}
+                            color="inherit"
                         >
                             Cancel
                         </Button>
@@ -480,149 +482,171 @@ const SupplierManagementPage = () => {
                     </>
                 }
             >
-                <Grid container spacing={2}>
-                    {/* Basic Information */}
-                    <Grid item xs={12}>
-                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+                    {/* Basic Information Section */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                             Basic Information
                         </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Supplier Name *"
-                            value={supplierForm.supplierName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })}
-                            required
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        {/* @ts-expect-error - React 19 type compatibility */}
-                        <CustomSelect
-                            label="Supplier Type *"
-                            value={supplierForm.supplierType}
-                            options={[
-                                { label: "Fuel", value: "FUEL" },
-                                { label: "Materials", value: "MATERIALS" },
-                            ]}
-                            onChange={(value: string | number) => setSupplierForm({ ...supplierForm, supplierType: value as SupplierType })}
-                        />
-                    </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Supplier Name *"
+                                    value={supplierForm.supplierName}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })}
+                                    required
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                {/* @ts-expect-error - React 19 type compatibility */}
+                                <CustomSelect
+                                    label="Supplier Type *"
+                                    value={supplierForm.supplierType}
+                                    options={[
+                                        { label: "Fuel", value: "FUEL" },
+                                        { label: "Materials", value: "MATERIALS" },
+                                    ]}
+                                    onChange={(value: string | number) => setSupplierForm({ ...supplierForm, supplierType: value as SupplierType })}
+                                    fullWidth
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
 
-                    {/* Contact Information */}
-                    <Grid item xs={12} sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 1 }}>
+                    {/* Contact Information Section */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                             Contact Information
                         </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Contact Person"
-                            value={supplierForm.contactPerson}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Email"
-                            type="email"
-                            value={supplierForm.email}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, email: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Phone Number"
-                            value={supplierForm.phoneNumber}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, phoneNumber: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Business Type"
-                            value={supplierForm.businessType}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, businessType: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        {/* @ts-expect-error - React 19 type compatibility */}
-                        <CustomTextField
-                            label="Address"
-                            value={supplierForm.address}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, address: e.target.value })}
-                            multiline
-                            rows={2}
-                        />
-                    </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Contact Person"
+                                    value={supplierForm.contactPerson}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, contactPerson: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Email"
+                                    type="email"
+                                    value={supplierForm.email}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, email: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Phone Number"
+                                    value={supplierForm.phoneNumber}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, phoneNumber: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Business Type"
+                                    value={supplierForm.businessType}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, businessType: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                {/* @ts-expect-error - React 19 type compatibility */}
+                                <CustomTextField
+                                    label="Address"
+                                    value={supplierForm.address}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, address: e.target.value })}
+                                    multiline
+                                    rows={2}
+                                    fullWidth
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
 
-                    {/* Tax Information */}
-                    <Grid item xs={12} sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 1 }}>
+                    {/* Tax Information Section */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                             Tax Information
                         </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="GST No"
-                            value={supplierForm.gstNo}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, gstNo: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="PAN No"
-                            value={supplierForm.panNo}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, panNo: e.target.value })}
-                        />
-                    </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="GST No"
+                                    value={supplierForm.gstNo}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, gstNo: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="PAN No"
+                                    value={supplierForm.panNo}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, panNo: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
 
-                    {/* Bank Account Details */}
-                    <Grid item xs={12} sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 1 }}>
+                    {/* Bank Account Details Section */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                             Bank Account Details
                         </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Account Holder Name"
-                            value={supplierForm.bankHolderName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, bankHolderName: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Bank Name"
-                            value={supplierForm.bankName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, bankName: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="Account Number"
-                            value={supplierForm.accountNo}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, accountNo: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <CustomTextField
-                            label="IFSC Code"
-                            value={supplierForm.ifscCode}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, ifscCode: e.target.value })}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <CustomTextField
-                            label="Branch"
-                            value={supplierForm.branch}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, branch: e.target.value })}
-                        />
-                    </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Account Holder Name"
+                                    value={supplierForm.bankHolderName}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, bankHolderName: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Bank Name"
+                                    value={supplierForm.bankName}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, bankName: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Account Number"
+                                    value={supplierForm.accountNo}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, accountNo: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="IFSC Code"
+                                    value={supplierForm.ifscCode}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, ifscCode: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                    label="Branch"
+                                    value={supplierForm.branch}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSupplierForm({ ...supplierForm, branch: e.target.value })}
+                                    fullWidth
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
 
-                    <Grid item xs={12}>
+                    <Box sx={{ mt: 1 }}>
                         <Typography variant="caption" color="text.secondary">
                             * Required fields. Code will be generated automatically.
                         </Typography>
-                    </Grid>
-                </Grid>
+                    </Box>
+                </Box>
             </CustomModal>
         </Box>
     );

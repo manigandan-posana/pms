@@ -60,8 +60,8 @@ public class AzureAdUserService {
                     if (adminEmail.equalsIgnoreCase(email)) {
                         return createAdminUser(claims);
                     }
-                    // Auto-create new users from Azure AD
-                    return createNewUser(claims);
+                    // Do NOT auto-create other users; they must be pre-registered by admin.
+                    return null;
                 });
     }
 
@@ -76,20 +76,6 @@ public class AzureAdUserService {
         user.setRole(Role.ADMIN);
         user.setAccessType(AccessType.ALL);
         user.setPermissions(EnumSet.allOf(Permission.class));
-        return userRepository.save(user);
-    }
-
-    /**
-     * Creates a new user with determined role (used by admin to create users)
-     */
-    private UserAccount createNewUser(AzureAdJwtValidator.AzureAdTokenClaims claims) {
-        UserAccount user = new UserAccount();
-        user.setEmail(claims.email());
-        user.setName(claims.name() != null ? claims.name() : claims.email());
-        user.setPasswordHash("$2a$10$AZURE_AD_USER_NO_PASSWORD_NEEDED");
-        Role role = determineRole(claims);
-        user.setRole(role);
-        user.setAccessType(role == Role.ADMIN ? AccessType.ALL : AccessType.PROJECTS);
         return userRepository.save(user);
     }
 

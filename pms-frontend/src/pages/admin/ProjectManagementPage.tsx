@@ -64,7 +64,7 @@ export const ProjectManagementPage: React.FC = () => {
   );
 
   const hasManagerOption = useMemo(
-    () => projectManager && projectManagerOptions.some((option) => option.value === projectManager),
+    () => projectManager && projectManagerOptions.some((option: { value: string }) => option.value === projectManager),
     [projectManager, projectManagerOptions]
   );
 
@@ -215,19 +215,19 @@ export const ProjectManagementPage: React.FC = () => {
         open={modalOpen}
         onClose={handleClose}
         title={editingProject ? 'Edit Project' : 'Create New Project'}
-        maxWidth="xs"
+        maxWidth="sm"
         footer={
-          <div className="flex gap-2 justify-end">
+          <>
             <CustomButton variant="outlined" onClick={handleClose} disabled={saving}>
               Cancel
             </CustomButton>
             <CustomButton onClick={handleSave} disabled={saving}>
               {saving ? 'Saving...' : editingProject ? 'Update' : 'Create'}
             </CustomButton>
-          </div>
+          </>
         }
       >
-        <div className="pt-2">
+        <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <CustomTextField
             label="Project Name"
             value={projectName}
@@ -235,14 +235,17 @@ export const ProjectManagementPage: React.FC = () => {
             placeholder="Enter project name"
             required
             autoFocus
+            fullWidth
           />
           <CustomTextField
             label="Project Manager"
             value={projectManager}
             onChange={(e) => setProjectManager(e.target.value)}
-            className="mt-3"
             select
             SelectProps={{ displayEmpty: true }}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            placeholder="Select Project Manager"
           >
             <MenuItem value="">
               <em>No manager assigned</em>
@@ -250,18 +253,18 @@ export const ProjectManagementPage: React.FC = () => {
             {!hasManagerOption && projectManager ? (
               <MenuItem value={projectManager}>{projectManager}</MenuItem>
             ) : null}
-            {projectManagerOptions.map((option) => (
+            {projectManagerOptions.map((option: { value: string; label: string }) => (
               <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>
             ))}
           </CustomTextField>
           {editingProject && (
-            <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
               Project Code: {editingProject.code || 'Will be auto-generated'}
             </Typography>
           )}
-        </div>
+        </Box>
       </CustomModal>
     </Box>
   );

@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { bootstrapWorkspace } from "./workspaceSlice";
 import { Get, Post, Put, Delete } from "../../utils/apiService";
 
 // Query string helper
@@ -130,9 +131,10 @@ export const createProject = createAsyncThunk<
   boolean,
   any,
   { rejectValue: string }
->("adminProjects/create", async (payload, { rejectWithValue }) => {
+>("adminProjects/create", async (payload, { rejectWithValue, dispatch }) => {
   try {
     await Post("/admin/projects", payload);
+    dispatch(bootstrapWorkspace());
     return true;
   } catch (err: unknown) {
     const message =
@@ -147,9 +149,10 @@ export const updateProject = createAsyncThunk<
   { rejectValue: string }
 >(
   "adminProjects/update",
-  async ({ projectId, payload }, { rejectWithValue }) => {
+  async ({ projectId, payload }, { rejectWithValue, dispatch }) => {
     try {
       await Put(`/admin/projects/${projectId}`, payload);
+      dispatch(bootstrapWorkspace());
       return true;
     } catch (err: unknown) {
       const message =
@@ -163,9 +166,10 @@ export const deleteProject = createAsyncThunk<
   boolean,
   string | number,
   { rejectValue: string }
->("adminProjects/delete", async (projectId, { rejectWithValue }) => {
+>("adminProjects/delete", async (projectId, { rejectWithValue, dispatch }) => {
   try {
     await Delete(`/admin/projects/${projectId}`);
+    dispatch(bootstrapWorkspace());
     return true;
   } catch (err: unknown) {
     const message =

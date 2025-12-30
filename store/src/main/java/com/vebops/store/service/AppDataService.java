@@ -235,7 +235,7 @@ public class AppDataService {
         }
 
         private List<Project> resolveAssignedProjects(UserAccount user, List<Project> allProjects) {
-                if (user.getAccessType() == AccessType.ALL) {
+                if (user.getRole() == Role.ADMIN || user.getAccessType() == AccessType.ALL) {
                         return allProjects;
                 }
                 Set<Long> accessibleIds = user.getProjects().stream()
@@ -276,6 +276,8 @@ public class AppDataService {
                 return projectRepository.findById(projectId)
                                 .map(p -> {
                                         String pm = p.getProjectManager();
+                                        // Project Manager (as a string) might be Name or Email.
+                                        // We should check if the current user matches that PM string.
                                         return pm != null && (pm.equalsIgnoreCase(user.getName())
                                                         || pm.equalsIgnoreCase(user.getEmail()));
                                 })

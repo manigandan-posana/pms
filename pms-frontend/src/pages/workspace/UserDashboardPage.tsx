@@ -524,9 +524,6 @@ const UserDashboardPage: React.FC = () => {
                 slotProps={{
                   legend: {
                     position: { vertical: 'top', horizontal: 'right' },
-                    itemMarkWidth: 12,
-                    itemMarkHeight: 12,
-                    labelStyle: { fontSize: 11, fontWeight: 600 },
                     padding: { top: 0, bottom: 10, left: 10, right: 10 }
                   }
                 } as any}
@@ -631,9 +628,6 @@ const UserDashboardPage: React.FC = () => {
                   slotProps={{
                     legend: {
                       position: { vertical: 'top', horizontal: 'right' },
-                      itemMarkWidth: 10,
-                      itemMarkHeight: 10,
-                      labelStyle: { fontSize: 10, fontWeight: 600 }
                     }
                   } as any}
                   height={280}

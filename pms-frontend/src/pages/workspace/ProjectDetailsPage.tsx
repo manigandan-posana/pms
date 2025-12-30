@@ -86,7 +86,7 @@ const ProjectDetailsPage: React.FC = () => {
 
   const location = useLocation();
   const isAdmin = location.pathname.startsWith("/admin");
-  const { name: userName, email: userEmail } = useSelector((state: RootState) => state.auth);
+  const { name: userName, email: userEmail, role: userRole } = useSelector((state: RootState) => state.auth);
 
   const { currentProject, status, error } = useSelector(
     (state: RootState) => state.adminProjects
@@ -231,7 +231,7 @@ const ProjectDetailsPage: React.FC = () => {
       (userName && currentProject.projectManager?.toLowerCase() === userName.toLowerCase()) ||
       (userEmail && currentProject.projectManager?.toLowerCase() === userEmail.toLowerCase())
     );
-    const canEdit = isAdmin || isPM;
+    const canEdit = isAdmin || isPM || userRole === "ADMIN";
 
     return (
       <Box sx={{ mt: 2 }}>
@@ -710,7 +710,7 @@ const ProjectDetailsPage: React.FC = () => {
         Manage team members, view project info, and explore the team hierarchy.
       </Typography>
 
-      
+
 
       <Tabs
         value={activeTab}

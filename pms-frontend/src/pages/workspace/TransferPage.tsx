@@ -42,6 +42,7 @@ const TransferPage: React.FC = () => {
   const { token } = useSelector<RootState, AuthStateShape>(
     (state) => state.auth as unknown as AuthStateShape
   );
+  const selectedProjectId = useSelector((state: RootState) => state.workspace.selectedProjectId);
 
   // History state
   const [historyRecords, setHistoryRecords] = useState<TransferHistoryRecord[]>([]);
@@ -90,6 +91,7 @@ const TransferPage: React.FC = () => {
         size: historyPageSize,
         ...historyFilters,
         ...(trimmedSearch ? { search: trimmedSearch } : {}),
+        projectId: selectedProjectId || undefined,
       };
       const response = await dispatch(searchTransferHistory(params)).unwrap();
       const data = Array.isArray(response?.content)
@@ -105,7 +107,7 @@ const TransferPage: React.FC = () => {
     } finally {
       setLoadingHistory(false);
     }
-  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch]);
+  }, [token, debouncedSearch, historyPage, historyPageSize, historyFilters, dispatch, selectedProjectId]);
 
   // Load history when filters change
   useEffect(() => {

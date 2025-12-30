@@ -61,6 +61,7 @@ public class InventoryService {
     private final InwardLineRepository inwardLineRepository;
     private final OutwardLineRepository outwardLineRepository;
     private final SupplierRepository supplierRepository;
+    private final com.vebops.store.repository.ProjectTeamMemberRepository projectTeamMemberRepository;
 
     private static final DateTimeFormatter CODE_DATE = DateTimeFormatter.BASIC_ISO_DATE;
 
@@ -73,7 +74,8 @@ public class InventoryService {
             BomLineRepository bomLineRepository,
             InwardLineRepository inwardLineRepository,
             OutwardLineRepository outwardLineRepository,
-            SupplierRepository supplierRepository) {
+            SupplierRepository supplierRepository,
+            com.vebops.store.repository.ProjectTeamMemberRepository projectTeamMemberRepository) {
         this.projectRepository = projectRepository;
         this.materialRepository = materialRepository;
         this.inwardRecordRepository = inwardRecordRepository;
@@ -83,6 +85,7 @@ public class InventoryService {
         this.inwardLineRepository = inwardLineRepository;
         this.outwardLineRepository = outwardLineRepository;
         this.supplierRepository = supplierRepository;
+        this.projectTeamMemberRepository = projectTeamMemberRepository;
     }
 
     public InventoryCodesResponse generateCodes() {
@@ -113,7 +116,8 @@ public class InventoryService {
         record.setDeliveryDate(parseDate(request.deliveryDate()));
         record.setVehicleNo(request.vehicleNo());
         record.setRemarks(request.remarks());
-        // Resolve supplier name: prefer supplierId if provided, otherwise use supplierName
+        // Resolve supplier name: prefer supplierId if provided, otherwise use
+        // supplierName
         String resolvedSupplierName = null;
         try {
             if (request.supplierId() != null) {
@@ -622,18 +626,18 @@ public class InventoryService {
                 ));
 
         registerInward(
-            user,
-            new InwardRequest(
-                null,
-                request.toProjectId(),
-                null,
-                null,
-                null,
-                null,
-                "Transfer from " + fromProject.getCode(),
-                null,
-                fromProject.getName(),
-                inwardLines));
+                user,
+                new InwardRequest(
+                        null,
+                        request.toProjectId(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        "Transfer from " + fromProject.getCode(),
+                        null,
+                        fromProject.getName(),
+                        inwardLines));
     }
 
     private String resolveOrGenerateCode(String requested, Supplier<String> generator) {
@@ -657,13 +661,28 @@ public class InventoryService {
         if (user == null) {
             throw new ForbiddenException("Authentication required");
         }
-        if (user.getAccessType() == AccessType.ALL) {
+        if (user.getAccessType() == AccessType.ALL || user.getRole() == com.vebops.store.model.Role.ADMIN) {
             return;
         }
-        boolean allowed = user.getProjects()
+
+        // 1. Check explicit project assignment
+        boolean inProjects = user.getProjects()
                 .stream()
                 .anyMatch(assigned -> assigned.getId().equals(project.getId()));
-        if (!allowed) {
+        if (inProjects) {
+            return;
+        }
+
+        // 2. Check team membership
+        if (projectTeamMemberRepository.existsByProject_IdAndUser_Id(project.getId(), user.getId())) {
+            return;
+        }
+
+        // 3. Check Project Manager string match
+        String pm = project.getProjectManager();
+        boolean isPm = pm != null && (pm.equalsIgnoreCase(user.getName()) || pm.equalsIgnoreCase(user.getEmail()));
+
+        if (!isPm) {
             throw new ForbiddenException("You do not have access to this project");
         }
     }

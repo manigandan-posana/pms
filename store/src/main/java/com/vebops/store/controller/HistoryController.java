@@ -59,6 +59,7 @@ public class HistoryController {
     private final InwardRecordRepository inwardRecordRepository;
     private final OutwardRecordRepository outwardRecordRepository;
     private final TransferRecordRepository transferRecordRepository;
+    private final com.vebops.store.repository.ProjectTeamMemberRepository projectTeamMemberRepository;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
 
@@ -67,12 +68,51 @@ public class HistoryController {
             ProjectRepository projectRepository,
             InwardRecordRepository inwardRecordRepository,
             OutwardRecordRepository outwardRecordRepository,
-            TransferRecordRepository transferRecordRepository) {
+            TransferRecordRepository transferRecordRepository,
+            com.vebops.store.repository.ProjectTeamMemberRepository projectTeamMemberRepository) {
         this.authService = authService;
         this.projectRepository = projectRepository;
         this.inwardRecordRepository = inwardRecordRepository;
         this.outwardRecordRepository = outwardRecordRepository;
         this.transferRecordRepository = transferRecordRepository;
+        this.projectTeamMemberRepository = projectTeamMemberRepository;
+    }
+
+    // ... methods ...
+
+    private Set<Long> resolveAllowedProjectIds(UserAccount user) {
+        // Users with ALL access can see all projects
+        if (user.getAccessType() == AccessType.ALL || user.getRole() == com.vebops.store.model.Role.ADMIN) {
+            return projectRepository
+                    .findAll()
+                    .stream()
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
+        }
+
+        // 1. Explicit assignments
+        Set<Long> allowed = user.getProjects()
+                .stream()
+                .map(Project::getId)
+                .collect(Collectors.toSet());
+
+        // 2. Team assignments
+        projectTeamMemberRepository.findByUser_Id(user.getId())
+                .stream()
+                .map(ptm -> ptm.getProject().getId())
+                .forEach(allowed::add);
+
+        // 3. Project Manager match (Name or Email) - Iterate all to check string match
+        // This is necessary because project manager reference is loose (string).
+        projectRepository.findAll().stream()
+                .filter(p -> {
+                    String pm = p.getProjectManager();
+                    return pm != null && (pm.equalsIgnoreCase(user.getName()) || pm.equalsIgnoreCase(user.getEmail()));
+                })
+                .map(Project::getId)
+                .forEach(allowed::add);
+
+        return allowed;
     }
 
     /**
@@ -261,73 +301,6 @@ public class HistoryController {
     }
 
     // ---- Helpers ----
-
-    private List<InwardHistoryDto> filterInwardsByUser(UserAccount user) {
-        List<InwardRecord> all = inwardRecordRepository.findAllByOrderByEntryDateDesc();
-        Set<Long> allowedProjectIds = resolveAllowedProjectIds(user);
-        if (allowedProjectIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<InwardHistoryDto> dtos = new ArrayList<>();
-        for (InwardRecord record : all) {
-            Project project = record.getProject();
-            if (project != null && allowedProjectIds.contains(project.getId())) {
-                dtos.add(toInwardRecordDto(record));
-            }
-        }
-        return dtos;
-    }
-
-    private List<OutwardRegisterDto> filterOutwardsByUser(UserAccount user) {
-        List<OutwardRecord> all = outwardRecordRepository.findAllByOrderByEntryDateDesc();
-        Set<Long> allowedProjectIds = resolveAllowedProjectIds(user);
-        if (allowedProjectIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<OutwardRegisterDto> dtos = new ArrayList<>();
-        for (OutwardRecord rec : all) {
-            Project project = rec.getProject();
-            if (project != null && allowedProjectIds.contains(project.getId())) {
-                dtos.add(toOutwardRegisterDto(rec));
-            }
-        }
-        return dtos;
-    }
-
-    private List<TransferRecordDto> filterTransfersByUser(UserAccount user) {
-        List<TransferRecord> all = transferRecordRepository.findAllByOrderByTransferDateDesc();
-        Set<Long> allowedProjectIds = resolveAllowedProjectIds(user);
-        if (allowedProjectIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<TransferRecordDto> dtos = new ArrayList<>();
-        for (TransferRecord record : all) {
-            Long fromId = record.getFromProject() != null ? record.getFromProject().getId() : null;
-            Long toId = record.getToProject() != null ? record.getToProject().getId() : null;
-            boolean allowed = (fromId != null && allowedProjectIds.contains(fromId)) ||
-                    (toId != null && allowedProjectIds.contains(toId));
-            if (allowed) {
-                dtos.add(toTransferRecordDto(record));
-            }
-        }
-        return dtos;
-    }
-
-    private Set<Long> resolveAllowedProjectIds(UserAccount user) {
-        // Users with ALL access can see all projects
-        if (user.getAccessType() == AccessType.ALL) {
-            return projectRepository
-                    .findAll()
-                    .stream()
-                    .map(Project::getId)
-                    .collect(Collectors.toSet());
-        }
-        return user
-                .getProjects()
-                .stream()
-                .map(Project::getId)
-                .collect(Collectors.toSet());
-    }
 
     private <T> PaginatedResponse<T> emptyResponse(int page, int size) {
         return toPaginatedResponse(buildPageFromList(Collections.emptyList(), page, size));
