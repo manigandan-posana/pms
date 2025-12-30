@@ -97,11 +97,17 @@ public class InventoryService {
 
     @Transactional
     public void registerInward(UserAccount user, InwardRequest request) {
+        doRegisterInward(user, request, true);
+    }
+
+    private void doRegisterInward(UserAccount user, InwardRequest request, boolean checkAccess) {
         log.info("registerInward: Processing inward request for projectId={}, lines={}",
                 request.projectId(), request.lines() != null ? request.lines().size() : 0);
 
         Project project = requireProject(request.projectId());
-        assertProjectAccess(user, project);
+        if (checkAccess) {
+            assertProjectAccess(user, project);
+        }
         if (request.lines() == null || request.lines().isEmpty()) {
             log.warn("registerInward: No inward lines provided");
             throw new BadRequestException("At least one inward line is required");
@@ -543,7 +549,8 @@ public class InventoryService {
         Project fromProject = requireProject(request.fromProjectId());
         Project toProject = requireProject(request.toProjectId());
         assertProjectAccess(user, fromProject);
-        assertProjectAccess(user, toProject);
+        // assertProjectAccess(user, toProject); // Unchecked to allow transfers to ANY
+        // project
 
         if (request.lines() == null || request.lines().isEmpty()) {
             throw new BadRequestException("At least one transfer line is required");
@@ -625,7 +632,7 @@ public class InventoryService {
                         true // bypass closed check for transfers
                 ));
 
-        registerInward(
+        doRegisterInward(
                 user,
                 new InwardRequest(
                         null,
@@ -637,7 +644,9 @@ public class InventoryService {
                         "Transfer from " + fromProject.getCode(),
                         null,
                         fromProject.getName(),
-                        inwardLines));
+                        inwardLines),
+                false // Skip access check for destination project
+        );
     }
 
     private String resolveOrGenerateCode(String requested, Supplier<String> generator) {

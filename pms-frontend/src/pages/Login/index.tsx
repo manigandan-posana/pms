@@ -10,6 +10,8 @@ import toast from "react-hot-toast";
 import { jwtDecode } from "../../utils/jwtDecode";
 import { setUser } from "../../store/slices/authSlice";
 import { workspacePath } from "../../routes/route";
+import { BiSupport } from "react-icons/bi";
+
 
 /*
  * Login page with Microsoft authentication.
@@ -24,6 +26,20 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingRedirect, setIsProcessingRedirect] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [supportEmail, setSupportEmail] = useState<string>("");
+
+  useEffect(() => {
+    // Fetch public config
+    fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/auth/public-config`)
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error("Failed to load config");
+      })
+      .then((data) => {
+        if (data.supportEmail) setSupportEmail(data.supportEmail);
+      })
+      .catch((err) => console.error("Config load error:", err));
+  }, []);
 
   const scopes = useMemo(
     () => [
@@ -40,12 +56,9 @@ export default function Login() {
     try {
       // Clear all MSAL accounts so a previous sign-in cannot silently resume
       const accounts = instance.getAllAccounts();
-      for (const account of accounts) {
-        try {
-          await instance.removeAccount(account);
-        } catch (logoutError) {
-          console.error("Failed to remove cached account:", logoutError);
-        }
+      if (accounts.length > 0) {
+        // Just clear active account, removeAccount is not available on interface
+        instance.setActiveAccount(null);
       }
       instance.setActiveAccount(null);
     } catch (logoutError) {
@@ -55,7 +68,7 @@ export default function Login() {
     // Clear all storage
     sessionStorage.clear();
     localStorage.clear();
-    
+
     // Reset Redux state
     dispatch(
       setUser({
@@ -67,7 +80,7 @@ export default function Login() {
         role: null,
       })
     );
-    
+
     // Clear login error
     setLoginError(null);
   }, [dispatch, instance]);
@@ -93,9 +106,9 @@ export default function Login() {
         const expiryTime = expiresOn
           ? expiresOn.getTime()
           : (() => {
-              const decoded: { exp?: number } = jwtDecode(bearerToken);
-              return (decoded.exp ?? 0) * 1000;
-            })();
+            const decoded: { exp?: number } = jwtDecode(bearerToken);
+            return (decoded.exp ?? 0) * 1000;
+          })();
 
         sessionStorage.setItem("msal.accessToken", bearerToken);
         if (expiryTime) {
@@ -118,7 +131,7 @@ export default function Login() {
               'Content-Type': 'application/json'
             }
           });
-          
+
           if (response.status === 401) {
             console.log("User not registered in database");
             const errorMsg = `Your Microsoft account (${account.username}) is not registered in the system. Please contact an administrator to enable access.`;
@@ -126,11 +139,11 @@ export default function Login() {
             await resetUserState();
             throw new Error(errorMsg);
           }
-          
+
           if (!response.ok) {
             throw new Error(`Session validation failed: ${response.statusText}`);
           }
-          
+
           userSession = await response.json();
           console.log("User session retrieved:", userSession);
         } catch (sessionError: any) {
@@ -214,14 +227,14 @@ export default function Login() {
     const handleRedirect = async () => {
       // Skip if already processing
       if (isProcessingRedirect) return;
-      
+
       setIsProcessingRedirect(true);
       setIsLoading(true);
 
       try {
         // Handle redirect response
         const redirectResponse = await instance.handleRedirectPromise();
-        
+
         if (redirectResponse) {
           // User just logged in via redirect
           console.log("Processing redirect response from Microsoft login");
@@ -285,39 +298,130 @@ export default function Login() {
   }, [completeLogin, instance, resetUserState, scopes]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-xl border border-[var(--border)] bg-white p-8 shadow-sm">
-        <img
-          src="/posana-logo.svg"
-          alt="posana logo"
-          className="mx-auto mb-6 h-12 w-auto"
-        />
-        <h2 className="text-center text-xs font-medium mb-8">
-          Sign in to your account
-        </h2>
-        
-        {loginError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <div
+      className="min-h-screen w-full flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
+      style={{
+        backgroundImage: "url('https://images.unsplash.com/photo-1466611653911-95081537e5b7?q=80&w=2070&auto=format&fit=crop')",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+      {/* Main Card - Compact Design */}
+      <div className="relative z-10 w-full max-w-[900px] h-[500px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+
+        {/* Left Side - Login Form */}
+        <div className="w-full md:w-[45%] p-8 flex flex-col justify-between bg-white relative">
+
+          {/* Header */}
+          <div className="flex items-center gap-2">
+            <img
+              src="/posana-logo.svg"
+              alt="Posana"
+              className="h-6 w-auto"
+            />
+          </div>
+
+          {/* Center Content */}
+          <div className="flex flex-col gap-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">
+                Welcome back
+              </h1>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Sign in to your corporate sustainability dashboard.
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {loginError && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
+                <svg className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <h3 className="text-xs font-semibold text-red-900">Authentication Failed</h3>
+                  <p className="text-[10px] text-red-700 mt-0.5">{loginError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Login Button */}
+            <button
+              type="button"
+              onClick={handleMicrosoftLogin}
+              disabled={isLoading || inProgress !== "none"}
+              className="group relative w-full flex items-center justify-between bg-[#107c10] hover:bg-[#0b5c0b] text-white px-4 py-3 rounded-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hover:shadow active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-white/10 p-1.5 rounded group-hover:bg-white/20 transition-colors">
+                  <svg className="w-4 h-4 block" viewBox="1 1 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.5 1H1V10.5H10.5V1Z" fill="#F25022" />
+                    <path d="M21 1H11.5V10.5H21V1Z" fill="#7FBA00" />
+                    <path d="M10.5 11.5H1V21H10.5V11.5Z" fill="#00A4EF" />
+                    <path d="M21 11.5H11.5V21H21V11.5Z" fill="#FFB900" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-sm">
+                  {isLoading || inProgress !== "none" ? "Signing in..." : "Login with Microsoft"}
+                </span>
+              </div>
+              <svg className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-              <div className="flex-1">
-                <h3 className="text-xs font-semibold text-red-900 mb-1">Authentication Error</h3>
-                <p className="text-xs text-red-700">{loginError}</p>
+            </button>
+
+            {/* Support Box */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="bg-blue-100 p-2 rounded text-blue-600">
+                <BiSupport />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 text-xs">Having trouble?</p>
+                {supportEmail ? (
+                  <a href={`mailto:${supportEmail}`} className="text-blue-600 hover:text-blue-700 text-xs font-semibold hover:underline">
+                    Contact IT Support
+                  </a>
+                ) : (
+                  <span className="text-gray-400 text-xs">Contact IT Support</span>
+                )}
               </div>
             </div>
           </div>
-        )}
-        
-        <button
-          type="button"
-          onClick={handleMicrosoftLogin}
-          disabled={isLoading || inProgress !== "none"}
-          className="w-full rounded-lg bg-green-600 py-3 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading || inProgress !== "none" ? "Authenticating..." : "Login with Microsoft"}
-        </button>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between text-[10px] text-gray-400 mt-auto pt-6 border-t border-gray-100">
+            <p>© 2024 Posana</p>
+            <div className="flex gap-4">
+              <a href="#" className="hover:text-gray-600 transition-colors">Privacy</a>
+              <a href="#" className="hover:text-gray-600 transition-colors">Terms</a>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Visual */}
+        <div className="hidden md:block w-[55%] relative">
+          <img
+            src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?q=80&w=2070&auto=format&fit=crop"
+            alt="Sustainability"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {/* Overlay Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+
+          {/* Content Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-8">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10 text-white shadow-lg">
+              <h2 className="text-white/80 text-xl font-bold mb-2 leading-tight">
+                Energy for a sustainable tomorrow.
+              </h2>
+              <p className="text-white/80 text-xs leading-relaxed font-light">
+                Securely manage your renewable assets with real-time analytics.
+                Join us in powering global change through innovation.
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -140,16 +140,16 @@ const VehicleDetailsPage: React.FC = () => {
   const enhancedDailyLogs = useMemo(() => {
     return vehicleDailyLogs.map((log) => {
       const logDate = new Date(log.date);
-      
+
       // Find the fuel entry that was active during this daily log
       // A fuel entry is active if the log date is on or after the fuel entry date
       // and before the next fuel entry date (or if it's the latest entry)
       const sortedEntries = [...vehicleFuelEntries]
         .filter(e => new Date(e.date) <= logDate)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
+
       const activeFuelEntry = sortedEntries[0];
-      
+
       if (activeFuelEntry && activeFuelEntry.status === 'OPEN') {
         // Calculate running km from daily logs during this fuel entry period
         const fuelEntryDate = new Date(activeFuelEntry.date);
@@ -157,10 +157,10 @@ const VehicleDetailsPage: React.FC = () => {
           const dlDate = new Date(dl.date);
           return dlDate >= fuelEntryDate && dlDate <= logDate && dl.status === 'CLOSED';
         });
-        
+
         const runningKm = dailyLogsInPeriod.reduce((sum, dl) => sum + (dl.distance || 0), 0);
         const avgMileage = activeFuelEntry.litres > 0 ? runningKm / activeFuelEntry.litres : 0;
-        
+
         return {
           ...log,
           fuelEntryId: activeFuelEntry.id,
@@ -180,7 +180,7 @@ const VehicleDetailsPage: React.FC = () => {
           fuelLitres: activeFuelEntry.litres
         };
       }
-      
+
       return {
         ...log,
         fuelEntryId: null,
@@ -391,8 +391,8 @@ const VehicleDetailsPage: React.FC = () => {
               content: (
                 <div className="space-y-6">
                   <div className="flex gap-4 mb-6">
-                    <CustomDateInput label="From Date" value={dateFrom} onChange={(e) => setDateFrom(e.value as Date)} size="small" />
-                    <CustomDateInput label="To Date" value={dateTo} onChange={(e) => setDateTo(e.value as Date)} size="small" />
+                    <CustomDateInput label="From Date" value={dateFrom} onChange={(date: Date | null) => setDateFrom(date)} size="small" />
+                    <CustomDateInput label="To Date" value={dateTo} onChange={(date: Date | null) => setDateTo(date)} size="small" />
                     <CustomButton variant="outlined" onClick={() => { setDateFrom(null); setDateTo(null); }} className="mt-auto">Clear</CustomButton>
                   </div>
 

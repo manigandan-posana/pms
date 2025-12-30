@@ -61,7 +61,7 @@ export const AdvancedHistoryFilters: React.FC<AdvancedHistoryFiltersProps> = ({
           <Box sx={{ width: 120 }}>
             <CustomDateInput
               value={filters.startDate}
-              onChange={(e: any) => handleInputChange("startDate", e.value)}
+              onChange={(date: Date | null) => handleInputChange("startDate", date)}
               label="Start Date"
               size="small"
               disabled={isLoading}
@@ -74,7 +74,7 @@ export const AdvancedHistoryFilters: React.FC<AdvancedHistoryFiltersProps> = ({
           <Box sx={{ width: 120 }}>
             <CustomDateInput
               value={filters.endDate}
-              onChange={(e: any) => handleInputChange("endDate", e.value)}
+              onChange={(date: Date | null) => handleInputChange("endDate", date)}
               label="End Date"
               size="small"
               disabled={isLoading}

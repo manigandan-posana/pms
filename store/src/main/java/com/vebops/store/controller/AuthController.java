@@ -38,11 +38,19 @@ public class AuthController {
         return authService.toUserDto(user);
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.support.email}")
+    private String supportEmail;
+
     private String extractBearerToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
         return null;
+    }
+
+    @GetMapping("/public-config")
+    public java.util.Map<String, String> getPublicConfig() {
+        return java.util.Map.of("supportEmail", supportEmail);
     }
 }

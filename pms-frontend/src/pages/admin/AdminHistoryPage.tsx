@@ -276,10 +276,10 @@ const AdminHistoryPage: React.FC = () => {
         />
       </div>
       <div className="w-40">
-        <CustomDateInput value={dateFrom} onChange={(e) => setDateFrom(e.value as Date)} placeholder="From Date" />
+        <CustomDateInput label="From Date" value={dateFrom} onChange={(date: Date | null) => setDateFrom(date)} />
       </div>
       <div className="w-40">
-        <CustomDateInput value={dateTo} onChange={(e) => setDateTo(e.value as Date)} placeholder="To Date" />
+        <CustomDateInput label="To Date" value={dateTo} onChange={(date: Date | null) => setDateTo(date)} />
       </div>
       <div className="flex items-end">
         <CustomButton variant="outlined" onClick={() => { setSearch(""); setDateFrom(null); setDateTo(null); }}>Clear</CustomButton>

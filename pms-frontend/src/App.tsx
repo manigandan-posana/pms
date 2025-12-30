@@ -78,9 +78,9 @@ export default function App() {
   useEffect(() => {
     const checkStorageConsistency = () => {
       const hasToken = Boolean(accessToken || idToken);
-      const hasStorageToken = sessionStorage.getItem('msal.accessToken') || 
-                             localStorage.getItem('persist:root');
-      
+      const hasStorageToken = sessionStorage.getItem('msal.accessToken') ||
+        localStorage.getItem('persist:root');
+
       // If we have no tokens but storage exists, clear it
       if (!hasToken && hasStorageToken) {
         console.warn('Detected inconsistent storage state, clearing...');
@@ -182,7 +182,7 @@ export default function App() {
     <div className="min-h-screen bg-white">
       <Routes>
         {/* Protected routes */}
-        <Route element={<RequireAuth isAuthenticated={isAuthenticated} />}> 
+        <Route element={<RequireAuth isAuthenticated={isAuthenticated} />}>
           {/* Workspace layout available to all authenticated users */}
           <Route
             path={workspacePath}
@@ -192,10 +192,10 @@ export default function App() {
                 currentUser={
                   name || email
                     ? {
-                        id: "user",
-                        name: name || email,
-                        role: role,
-                      }
+                      id: "user",
+                      name: name || email,
+                      role: role,
+                    }
                     : null
                 }
                 canAccessAdmin={canAccessAdmin}

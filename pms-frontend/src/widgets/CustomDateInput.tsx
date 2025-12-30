@@ -1,55 +1,68 @@
-import React from 'react';
-import CustomTextField from './CustomTextField';
-import type { CustomInputProps } from './CustomTextField';
+import React from "react";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
-interface CustomDateInputProps extends Omit<CustomInputProps, 'type'> {
-    value?: Date | string | null;
-    onChange?: (e: any) => void;
+// Enable custom parse format plugin
+dayjs.extend(customParseFormat);
+
+interface CustomDateInputProps {
+    label: string;
+    value: Date | null | undefined;
+    onChange: (date: Date | null) => void;
+    size?: "small" | "medium";
+    required?: boolean;
+    disabled?: boolean;
+    minDate?: Date;
+    maxDate?: Date;
 }
 
 const CustomDateInput: React.FC<CustomDateInputProps> = ({
+    label,
     value,
     onChange,
-    InputLabelProps, // Extract to merge
-    ...props
+    size = "medium",
+    required = false,
+    disabled = false,
+    minDate,
+    maxDate
 }) => {
-    // Convert Date object to YYYY-MM-DD string for input type="date"
-    const formattedValue = value instanceof Date
-        ? value.toISOString().split('T')[0]
-        : value || '';
+    // Convert Date to Dayjs
+    const dayjsValue = value ? dayjs(value) : null;
+    const dayjsMinDate = minDate ? dayjs(minDate) : undefined;
+    const dayjsMaxDate = maxDate ? dayjs(maxDate) : undefined;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Pass back the event or value. Previous usage in Calendar was e.value (Date).
-        // Here we get a string. We might want to convert back to Date if expected.
-        // However, existing usage in AdvancedHistoryFilters: onChange={(e) => handleInputChange("startDate", e.value)}
-        // PrimeReact Calendar e.value is Date.
-
-        if (onChange) {
-            // Mocking the event structure or handling value directly?
-            // AdvancedHistoryFilters expects handleInputChange(key, value).
-            // We'll standardise that existing code should handle Date or string.
-            // But let's return a Date if possible to be compatible.
-
-            const dateVal = e.target.value ? new Date(e.target.value) : null;
-            // We can trigger onChange with a synthetic event-like object or just call the parent handler logic.
-            // But CustomModal etc are widgets. 
-            // Let's stick to returning the event, but we need compatibility.
-
-            // Actually, let's look at usage: e.value
-            // Let's mimic the expected signature if we can, or change usage.
-            // Changing usage is safer.
-            onChange({ target: { value: dateVal }, value: dateVal });
+    // Handle change and convert Dayjs back to Date
+    const handleChange = (newValue: Dayjs | null) => {
+        if (newValue && newValue.isValid()) {
+            onChange(newValue.toDate());
+        } else {
+            onChange(null);
         }
     };
 
     return (
-        <CustomTextField
-            type="date"
-            value={formattedValue}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true, ...InputLabelProps }}
-            {...props}
-        />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+                label={label}
+                value={dayjsValue}
+                onChange={handleChange}
+                format="DD-MM-YYYY"
+                disabled={disabled}
+                minDate={dayjsMinDate}
+                maxDate={dayjsMaxDate}
+                slotProps={{
+                    textField: {
+                        size: size,
+                        fullWidth: true,
+                        required: required,
+                        variant: "outlined",
+                    },
+                }}
+            />
+        </LocalizationProvider>
     );
 };
 
