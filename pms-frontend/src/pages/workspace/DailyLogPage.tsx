@@ -290,9 +290,9 @@ const DailyLogPage: React.FC = () => {
             {/* Header with Date */}
             <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <FiCalendar size={24} />
+                    <FiCalendar size={18} />
                     <Box>
-                        <Typography variant="h6" fontWeight={600}>
+                        <Typography variant="body1" fontWeight={600}>
                             Today's Daily Logs
                         </Typography>
                         <Typography variant="caption" color="text.secondary">

@@ -1,7 +1,9 @@
 package com.vebops.store.controller;
 
+import com.vebops.store.dto.ContractorDto;
 import com.vebops.store.dto.CreateContractorRequest;
 import com.vebops.store.dto.CreateLabourRequest;
+import com.vebops.store.dto.LabourDto;
 import com.vebops.store.dto.UtilizationDto;
 import com.vebops.store.model.Contractor;
 import com.vebops.store.model.Labour;
@@ -17,6 +19,7 @@ import java.time.Period;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/contractors")
@@ -29,11 +32,23 @@ public class ContractorController {
     }
 
     @GetMapping
-    public List<Contractor> list(@RequestParam(required = false) Long projectId) {
+    public ResponseEntity<?> list(@RequestParam(required = false) Long projectId, 
+                                    @RequestParam(required = false, defaultValue = "false") boolean includeProjects) {
         if (projectId != null) {
-            return contractorService.listByProject(projectId);
+            // Return contractors linked to specific project
+            List<Contractor> contractors = contractorService.listByProject(projectId);
+            if (includeProjects) {
+                return ResponseEntity.ok(contractors.stream()
+                    .map(ContractorDto::fromEntity)
+                    .collect(Collectors.toList()));
+            }
+            return ResponseEntity.ok(contractors);
         }
-        return contractorService.listAll();
+        // Return all contractors
+        if (includeProjects) {
+            return ResponseEntity.ok(contractorService.listAllWithProjects());
+        }
+        return ResponseEntity.ok(contractorService.listAll());
     }
 
     @PostMapping
@@ -65,8 +80,9 @@ public class ContractorController {
     }
 
     @GetMapping("/{code}/labours")
-    public ResponseEntity<List<Labour>> listLabours(@PathVariable String code,
-            @RequestParam(required = false) Long projectId) {
+    public ResponseEntity<?> listLabours(@PathVariable String code,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false, defaultValue = "false") boolean includeProjects) {
         var opt = contractorService.findByCodeOrId(code);
         if (opt.isEmpty())
             return ResponseEntity.notFound().build();
@@ -76,6 +92,12 @@ public class ContractorController {
             labours = contractorService.listLaboursForContractorAndProject(opt.get(), projectId);
         } else {
             labours = contractorService.listLaboursForContractor(opt.get());
+        }
+        
+        if (includeProjects) {
+            return ResponseEntity.ok(labours.stream()
+                .map(LabourDto::fromEntity)
+                .collect(Collectors.toList()));
         }
         return ResponseEntity.ok(labours);
     }

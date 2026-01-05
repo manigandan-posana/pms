@@ -1,5 +1,6 @@
 package com.vebops.store.service;
 
+import com.vebops.store.dto.ContractorDto;
 import com.vebops.store.model.Contractor;
 import com.vebops.store.model.Labour;
 import com.vebops.store.model.LabourUtilization;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ContractorService {
@@ -53,6 +55,15 @@ public class ContractorService {
 
     public List<Contractor> listAll() {
         return contractorRepository.findAll();
+    }
+
+    /**
+     * Get all contractors with project information as DTOs
+     */
+    public List<ContractorDto> listAllWithProjects() {
+        return contractorRepository.findAll().stream()
+            .map(ContractorDto::fromEntity)
+            .collect(Collectors.toList());
     }
 
     public Optional<Contractor> findByCode(String code) {

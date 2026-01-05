@@ -1,5 +1,11 @@
 export type ContractorType = "Work" | "Labour";
 
+export interface ProjectInfo {
+    id: number;
+    code: string;
+    name: string;
+}
+
 export interface Contractor {
     id: string;
     numericId?: number;
@@ -17,6 +23,7 @@ export interface Contractor {
     ifscCode?: string;
     bankBranch?: string;
     createdAt: string;
+    projects?: ProjectInfo[];
 }
 
 export interface Labour {
@@ -33,6 +40,7 @@ export interface Labour {
     contactAddress?: string;
     esiNumber?: string;
     uanNumber?: string;
+    projects?: ProjectInfo[];
 }
 
 export interface UtilizationHours {

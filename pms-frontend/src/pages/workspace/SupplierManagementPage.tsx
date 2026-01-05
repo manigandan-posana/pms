@@ -73,11 +73,11 @@ const SupplierManagementPage: React.FC<SupplierManagementPageProps> = ({ isAdmin
     }, [suppliers]);
 
     const handleAddSupplier = async () => {
-        // For non-admin (workspace), create under the current project so backend validation passes
+        // Admin mode: projectIds can be empty to create "common" supplier
+        // Workspace mode: always link to current project
         const createProjectIds = isAdminMode
             ? (supplierForm.projectIds.length > 0 ? supplierForm.projectIds : [])
             : (selectedProjectId ? [Number(selectedProjectId)] : []);
-        const linkProjectIds = !isAdminMode && selectedProjectId ? [Number(selectedProjectId)] : [];
 
         if (!supplierForm.supplierName || !supplierForm.supplierType) {
             toast.error("Please fill in supplier name and type");
@@ -113,7 +113,6 @@ const SupplierManagementPage: React.FC<SupplierManagementPageProps> = ({ isAdmin
             } else {
                 const createdSupplier = await dispatch(
                     createSupplier({
-                        projectId: createProjectIds[0] || undefined, // Backward compatibility/primary project
                         projectIds: createProjectIds,
                         supplierName: supplierForm.supplierName,
                         supplierType: supplierForm.supplierType,
@@ -131,8 +130,6 @@ const SupplierManagementPage: React.FC<SupplierManagementPageProps> = ({ isAdmin
                         businessType: supplierForm.businessType || undefined,
                     })
                 ).unwrap();
-
-                // No additional linking required for non-admin: supplier is created with the current project
 
                 toast.success("Supplier added successfully");
             }

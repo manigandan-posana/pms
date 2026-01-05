@@ -52,10 +52,10 @@ export default function ContractorDirectoryPage({ isAdminMode = false }: Contrac
 
     const loadContractors = async () => {
         try {
-            let url = '/contractors';
+            let url = '/contractors?includeProjects=true';
             if (!isAdminMode) {
                 if (!selectedProjectId) return;
-                url = `/contractors?projectId=${selectedProjectId}`;
+                url = `/contractors?projectId=${selectedProjectId}&includeProjects=true`;
             }
 
             const cs = await Get<any[]>(url);
@@ -76,6 +76,7 @@ export default function ContractorDirectoryPage({ isAdminMode = false }: Contrac
                 bankBranch: c.bankBranch,
                 type: c.type,
                 createdAt: c.createdAt,
+                projects: c.projects || [],
             } as Contractor));
             setContractors(mapped);
         } catch (err) {
@@ -190,6 +191,7 @@ export default function ContractorDirectoryPage({ isAdminMode = false }: Contrac
                                         <TableCell sx={{ fontWeight: 800 }}>ID</TableCell>
                                         <TableCell sx={{ fontWeight: 800 }}>Name</TableCell>
                                         <TableCell sx={{ fontWeight: 800 }}>Type</TableCell>
+                                        {isAdminMode && <TableCell sx={{ fontWeight: 800 }}>Projects</TableCell>}
                                         <TableCell sx={{ fontWeight: 800 }}>Mobile</TableCell>
                                         <TableCell sx={{ fontWeight: 800 }}>Email</TableCell>
                                         <TableCell sx={{ fontWeight: 800 }}>PAN</TableCell>
@@ -228,6 +230,24 @@ export default function ContractorDirectoryPage({ isAdminMode = false }: Contrac
                                                     variant="outlined"
                                                 />
                                             </TableCell>
+                                            {isAdminMode && (
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                        {(c.projects || []).length === 0 ? (
+                                                            <Chip label="Common" size="small" color="success" variant="outlined" />
+                                                        ) : (
+                                                            <>
+                                                                {(c.projects || []).slice(0, 2).map((p: any) => (
+                                                                    <Chip key={p.id} label={p.name || p.code} size="small" variant="outlined" />
+                                                                ))}
+                                                                {(c.projects || []).length > 2 && (
+                                                                    <Chip label={`+${(c.projects || []).length - 2}`} size="small" />
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                            )}
                                             <TableCell>{c.mobile}</TableCell>
                                             <TableCell>{c.email}</TableCell>
                                             <TableCell>{c.panCard}</TableCell>
@@ -247,7 +267,7 @@ export default function ContractorDirectoryPage({ isAdminMode = false }: Contrac
                                     ))}
                                     {filteredContractors.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={isAdminMode ? 8 : 7} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                                            <TableCell colSpan={isAdminMode ? 9 : 8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                                                 No contractors found.
                                             </TableCell>
                                         </TableRow>

@@ -5,9 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public class CreateSupplierRequest {
-    @NotNull(message = "Project ID is required")
-    private Long projectId;
-
     @NotBlank(message = "Supplier name is required")
     private String supplierName;
 
@@ -24,7 +21,7 @@ public class CreateSupplierRequest {
     private String bankName;
     private String accountNo;
     private String ifscCode;
-    @NotNull(message = "At least one Project ID is required")
+    // projectIds can be null/empty when admin creates in master console
     private java.util.List<Long> projectIds;
     private String branch;
     private String businessType;

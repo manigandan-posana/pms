@@ -53,8 +53,9 @@ export default function ContractorFormDialog({
         if (!newContractor.name.trim()) return;
         setLoading(true);
         try {
-            const createProjectIds = !isAdminMode ? [] : [];
-            const linkProjectIds = !isAdminMode && selectedProjectId ? [selectedProjectId] : [];
+            // In admin mode, projectIds can be empty (creating common contractor)
+            // In workspace mode, link to the current project
+            const projectIds = isAdminMode ? [] : (selectedProjectId ? [selectedProjectId] : []);
 
             const payload = {
                 name: newContractor.name.trim(),
@@ -70,21 +71,14 @@ export default function ContractorFormDialog({
                 bankAccountNumber: newContractor.bankAccountNumber?.trim(),
                 ifscCode: newContractor.ifscCode?.trim(),
                 bankBranch: newContractor.bankBranch?.trim(),
-                projectIds: createProjectIds,
+                projectIds: projectIds,
             };
 
             const c = await Post<any>("/contractors", payload);
 
-            // For non-admin, link to the current project
-            if (linkProjectIds.length > 0) {
-                await Post<void>("/contractors/bulk-assign", {
-                    ids: [c.id],
-                    projectIds: linkProjectIds,
-                });
-            }
-
             const mapped: Contractor = {
                 id: c.code ?? `CTR-${c.id}`,
+                numericId: c.id,
                 name: c.name,
                 mobile: c.mobile,
                 email: c.email,
@@ -112,7 +106,6 @@ export default function ContractorFormDialog({
                 address: "",
                 panCard: "",
                 type: "Work",
-                // projectIds: [],
                 contactPerson: "",
                 gstNumber: "",
                 bankAccountHolderName: "",
