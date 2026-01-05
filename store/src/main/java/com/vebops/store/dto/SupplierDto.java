@@ -6,8 +6,7 @@ import java.time.LocalDateTime;
 
 public class SupplierDto {
     private Long id;
-    private Long projectId;
-    private String projectCode;
+    private java.util.List<ProjectDto> projects;
     private String code;
     private String supplierName;
     private SupplierType supplierType;
@@ -29,8 +28,9 @@ public class SupplierDto {
     public static SupplierDto fromEntity(Supplier supplier) {
         SupplierDto dto = new SupplierDto();
         dto.setId(supplier.getId());
-        dto.setProjectId(supplier.getProject().getId());
-        dto.setProjectCode(supplier.getProject().getCode());
+        dto.setProjects(supplier.getProjects().stream()
+                .map(p -> new ProjectDto(String.valueOf(p.getId()), p.getCode(), p.getName(), p.getProjectManager()))
+                .collect(java.util.stream.Collectors.toList()));
         dto.setCode(supplier.getCode());
         dto.setSupplierName(supplier.getSupplierName());
         dto.setSupplierType(supplier.getSupplierType());
@@ -60,20 +60,12 @@ public class SupplierDto {
         this.id = id;
     }
 
-    public Long getProjectId() {
-        return projectId;
+    public java.util.List<ProjectDto> getProjects() {
+        return projects;
     }
 
-    public void setProjectId(Long projectId) {
-        this.projectId = projectId;
-    }
-
-    public String getProjectCode() {
-        return projectCode;
-    }
-
-    public void setProjectCode(String projectCode) {
-        this.projectCode = projectCode;
+    public void setProjects(java.util.List<ProjectDto> projects) {
+        this.projects = projects;
     }
 
     public String getCode() {

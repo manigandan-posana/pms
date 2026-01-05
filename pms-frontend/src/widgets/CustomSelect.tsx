@@ -19,6 +19,7 @@ interface CustomSelectProps extends Omit<SelectProps, 'onChange'> {
     onChange?: (value: any) => void;
     helperText?: string;
     error?: boolean;
+    noDataText?: string;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -28,6 +29,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     onChange,
     helperText,
     error,
+    noDataText,
     size = "small",
     multiple,
     sx,
@@ -37,6 +39,21 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         if (onChange) {
             onChange(event.target.value);
         }
+    };
+
+    // Generate no data text
+    const getNoDataText = () => {
+        if (noDataText) return noDataText;
+        if (!label) return "No data";
+        const cleanLabel = label.replace(/\*$/, '').trim();
+        // Simple pluralization
+        let plural = cleanLabel;
+        if (cleanLabel.toLowerCase().endsWith('y')) {
+            plural = cleanLabel.slice(0, -1) + 'ies';
+        } else if (!cleanLabel.toLowerCase().endsWith('s')) {
+            plural = cleanLabel + 's';
+        }
+        return `No ${plural}`;
     };
 
     // For multiple select, value must always be an array
@@ -82,11 +99,17 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                 }}
                 {...props}
             >
-                {options.map((option) => (
-                    <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                        {option.label}
+                {options.length === 0 ? (
+                    <MenuItem disabled sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                        {getNoDataText()}
                     </MenuItem>
-                ))}
+                ) : (
+                    options.map((option) => (
+                        <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                            {option.label}
+                        </MenuItem>
+                    ))
+                )}
             </Select>
             {helperText && <FormHelperText sx={{ fontSize: '0.65rem', mt: 0.25 }}>{helperText}</FormHelperText>}
         </FormControl>

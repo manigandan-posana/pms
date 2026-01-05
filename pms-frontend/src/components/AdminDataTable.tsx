@@ -87,7 +87,10 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
             <CustomButton
               size="small"
               variant="text"
-              onClick={() => onEdit(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(row);
+              }}
               className="!p-1 !min-w-0 text-blue-600 hover:bg-blue-50"
               title="Edit"
             >
@@ -98,7 +101,10 @@ export const AdminDataTable = <T extends DataRow = DataRow>({
             <CustomButton
               size="small"
               variant="text"
-              onClick={() => onDelete(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(row);
+              }}
               className="!p-1 !min-w-0 text-red-600 hover:bg-red-50"
               title="Delete"
             >

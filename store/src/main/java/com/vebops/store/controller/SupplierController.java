@@ -61,4 +61,15 @@ public class SupplierController {
         supplierService.deleteSupplier(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/bulk-assign")
+    public ResponseEntity<Void> bulkAssign(@RequestBody BulkAssignRequest req) {
+        supplierService.bulkAssignSuppliers(req.ids, req.projectIds);
+        return ResponseEntity.ok().build();
+    }
+
+    public static class BulkAssignRequest {
+        public List<Long> ids;
+        public List<Long> projectIds;
+    }
 }

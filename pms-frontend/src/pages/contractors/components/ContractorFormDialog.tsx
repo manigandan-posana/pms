@@ -20,12 +20,16 @@ interface ContractorFormDialogProps {
     open: boolean;
     onClose: () => void;
     onSuccess: (contractor: Contractor) => void;
+    isAdminMode?: boolean;
+    selectedProjectId?: number;
 }
 
 export default function ContractorFormDialog({
     open,
     onClose,
     onSuccess,
+    isAdminMode = false,
+    selectedProjectId,
 }: ContractorFormDialogProps) {
     const [newContractor, setNewContractor] = useState({
         name: "",
@@ -49,6 +53,9 @@ export default function ContractorFormDialog({
         if (!newContractor.name.trim()) return;
         setLoading(true);
         try {
+            const createProjectIds = !isAdminMode ? [] : [];
+            const linkProjectIds = !isAdminMode && selectedProjectId ? [selectedProjectId] : [];
+
             const payload = {
                 name: newContractor.name.trim(),
                 mobile: newContractor.mobile.trim(),
@@ -63,9 +70,19 @@ export default function ContractorFormDialog({
                 bankAccountNumber: newContractor.bankAccountNumber?.trim(),
                 ifscCode: newContractor.ifscCode?.trim(),
                 bankBranch: newContractor.bankBranch?.trim(),
+                projectIds: createProjectIds,
             };
 
             const c = await Post<any>("/contractors", payload);
+
+            // For non-admin, link to the current project
+            if (linkProjectIds.length > 0) {
+                await Post<void>("/contractors/bulk-assign", {
+                    ids: [c.id],
+                    projectIds: linkProjectIds,
+                });
+            }
+
             const mapped: Contractor = {
                 id: c.code ?? `CTR-${c.id}`,
                 name: c.name,
@@ -95,6 +112,7 @@ export default function ContractorFormDialog({
                 address: "",
                 panCard: "",
                 type: "Work",
+                // projectIds: [],
                 contactPerson: "",
                 gstNumber: "",
                 bankAccountHolderName: "",
@@ -115,7 +133,7 @@ export default function ContractorFormDialog({
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
             <DialogTitle sx={{ fontWeight: 800 }}>Create New Contractor</DialogTitle>
             <DialogContent>
-                <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <TextField
                             size="small"
@@ -175,6 +193,7 @@ export default function ContractorFormDialog({
                             </Select>
                         </FormControl>
                     </Grid>
+
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <TextField
                             size="small"

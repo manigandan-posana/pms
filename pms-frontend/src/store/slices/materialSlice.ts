@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 import { Get, Post, Put, Delete } from "../../utils/apiService";
+import type { MaterialDto, PaginatedResponse } from "../../types/backend";
 
 // Query string helper
 const toQueryString = (params: Record<string, any> = {}): string => {
@@ -102,7 +104,7 @@ export const fetchMaterials = createAsyncThunk<
   { rejectValue: string }
 >("materials/fetch", async ({ query }, { rejectWithValue }) => {
   try {
-    const response = await Get(`/materials/search${toQueryString(query)}`);
+    const response = await Get<PaginatedResponse<MaterialDto>>(`/materials/search${toQueryString(query)}`);
     const items = (response?.content ?? []) as Material[];
 
     return {
@@ -162,8 +164,12 @@ export const updateMaterial = createAsyncThunk<
     const result = await Put(`/materials/${materialId}`, payload);
     return result as Material;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to update material";
+    let message = "Unable to update material";
+    if (axios.isAxiosError(err) && err.response?.data) {
+      message = err.response.data.message || err.response.data.error || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });
@@ -177,8 +183,12 @@ export const deleteMaterial = createAsyncThunk<
     await Delete(`/materials/${materialId}`);
     return String(materialId);
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to delete material";
+    let message = "Unable to delete material";
+    if (axios.isAxiosError(err) && err.response?.data) {
+      message = err.response.data.message || err.response.data.error || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });

@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 import { Get, Post, Put, Delete } from "../../utils/apiService";
+import type { PaginatedResponse, AnalyticsDto, ProjectActivityDto } from "../../types/backend";
 
 // Query string helper
 const toQueryString = (params: Record<string, any> = {}): string => {
@@ -64,14 +66,7 @@ export interface RawUserFilters {
   projects?: Array<string | null | undefined>;
 }
 
-export interface UserSearchResponse {
-  content?: AdminUser[];
-  totalElements?: number;
-  totalPages?: number;
-  number?: number;
-  size?: number;
-  filters?: RawUserFilters;
-}
+export interface UserSearchResponse extends PaginatedResponse<AdminUser> {}
 
 export interface AdminUserProject {
   id?: string;
@@ -113,8 +108,8 @@ export const searchUsers = createAsyncThunk<
   { rejectValue: string }
 >("adminUsers/search", async (query, { rejectWithValue }) => {
   try {
-    const res = await Get(`/admin/users/search${toQueryString(query)}`);
-    return res as UserSearchResponse;
+    const res = await Get<UserSearchResponse>(`/admin/users/search${toQueryString(query)}`);
+    return res;
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to load users";
@@ -123,12 +118,12 @@ export const searchUsers = createAsyncThunk<
 });
 
 export const listUsers = createAsyncThunk<
-  any,
+  PaginatedResponse<AdminUser>,
   any,
   { rejectValue: string }
 >("adminUsers/list", async (params = {}, { rejectWithValue }) => {
   try {
-    return await Get(`/admin/users${toQueryString(params)}`);
+    return await Get<PaginatedResponse<AdminUser>>(`/admin/users${toQueryString(params)}`);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to list users";
@@ -145,8 +140,12 @@ export const createUser = createAsyncThunk<
     await Post("/admin/users", payload);
     return true;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to create user";
+    let message = "Unable to create user";
+    if (axios.isAxiosError(err) && err.response) {
+      message = err.response.data?.message || err.response.data?.error || err.response.statusText || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });
@@ -162,7 +161,7 @@ export const loadUserProjects = createAsyncThunk<
     let hasNext = true;
 
     while (hasNext) {
-      const response = await Get(`/admin/projects${toQueryString({ page, size: 50 })}`);
+      const response = await Get<PaginatedResponse<AdminUserProject>>(`/admin/projects${toQueryString({ page, size: 50 })}`);
       const content = (response?.content as AdminUserProject[]) || [];
       projects.push(...content);
       const totalPages = response?.totalPages ?? 0;
@@ -188,8 +187,12 @@ export const updateUser = createAsyncThunk<
     await Put(`/admin/users/${userId}`, payload);
     return true;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to update user";
+    let message = "Unable to update user";
+    if (axios.isAxiosError(err) && err.response?.data) {
+      message = err.response.data.message || err.response.data.error || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });
@@ -203,19 +206,23 @@ export const deleteUser = createAsyncThunk<
     await Delete(`/admin/users/${userId}`);
     return true;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to delete user";
+    let message = "Unable to delete user";
+    if (axios.isAxiosError(err) && err.response?.data) {
+      message = err.response.data.message || err.response.data.error || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });
 
 export const getAnalytics = createAsyncThunk<
-  any,
+  AnalyticsDto,
   void,
   { rejectValue: string }
 >("adminUsers/analytics", async (_, { rejectWithValue }) => {
   try {
-    return await Get("/admin/analytics");
+    return await Get<AnalyticsDto>("/admin/analytics");
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to get analytics";
@@ -224,12 +231,12 @@ export const getAnalytics = createAsyncThunk<
 });
 
 export const getProjectActivity = createAsyncThunk<
-  any,
+  ProjectActivityDto[],
   void,
   { rejectValue: string }
 >("adminUsers/projectActivity", async (_, { rejectWithValue }) => {
   try {
-    return await Get("/admin/project-activity");
+    return await Get<ProjectActivityDto[]>("/admin/project-activity");
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Unable to get project activity";

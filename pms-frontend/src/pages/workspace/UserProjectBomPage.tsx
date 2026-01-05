@@ -222,7 +222,7 @@ const UserProjectBomPage: React.FC = () => {
                         <Stack direction="row" spacing={1} alignItems="center">
                             <Typography
                                 variant="caption"
-                                onClick={() => navigate("/workspace/my-projects")}
+                                onClick={() => navigate("/workspace/dashboard")}
                                 sx={{
                                     cursor: "pointer",
                                     color: "primary.main",

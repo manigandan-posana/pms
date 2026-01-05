@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface SupplierRepository extends JpaRepository<Supplier, Long> {
-    List<Supplier> findByProjectId(Long projectId);
+    List<Supplier> findByProjectsId(Long projectId);
 
-    List<Supplier> findByProjectIdAndSupplierType(Long projectId, SupplierType supplierType);
+    List<Supplier> findByProjectsIdAndSupplierType(Long projectId, SupplierType supplierType);
 }

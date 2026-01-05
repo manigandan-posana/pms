@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
     Box,
     Button,
@@ -16,13 +16,24 @@ import type { Contractor, Labour } from "../../types/contractor";
 import LabourList from "./components/LabourList";
 import toast from "react-hot-toast";
 
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
+import ManageProjectLaboursDialog from "./components/ManageProjectLaboursDialog";
+
 export default function ContractorDetailsPage() {
     const { id } = useParams<{ id: string }>();
 
     const navigate = useNavigate();
+    const location = useLocation();
     const [contractor, setContractor] = useState<Contractor | null>(null);
     const [labours, setLabours] = useState<Labour[]>([]);
     const [loading, setLoading] = useState(true);
+    const [openManage, setOpenManage] = useState(false);
+
+    const isAdminMode = location.pathname.startsWith('/admin');
+
+    // Get current project from store if in workspace mode
+    const selectedProjectId = isAdminMode ? null : useSelector((state: RootState) => (state as any).workspace?.currentProject?.id);
 
     useEffect(() => {
         if (!id) return;
@@ -57,9 +68,13 @@ export default function ContractorDetailsPage() {
                 };
                 setContractor(mapped);
 
-                // Fetch labours if available
+                // Fetch labours
                 try {
-                    const lres = await Get<any[]>(`/contractors/${encodeURIComponent(mapped.id)}/labours`);
+                    let url = `/contractors/${encodeURIComponent(mapped.id)}/labours`;
+                    if (selectedProjectId) {
+                        url += `?projectId=${selectedProjectId}`;
+                    }
+                    const lres = await Get<any[]>(url);
                     const mappedLab = (lres || []).map((l) => ({
                         id: l.code ?? `LAB-${l.id}`,
                         contractorId: mapped.id,
@@ -89,7 +104,7 @@ export default function ContractorDetailsPage() {
         };
 
         fetchDetails();
-    }, [id]);
+    }, [id, selectedProjectId]);
 
     if (loading) return <Box p={3}>Loading...</Box>;
     if (!contractor) return <Box p={3}>Contractor not found.</Box>;
@@ -97,7 +112,7 @@ export default function ContractorDetailsPage() {
     return (
         <Box sx={{ p: 3 }}>
             <Button
-                onClick={() => navigate(-1)} // Go back
+                onClick={() => isAdminMode ? navigate('/admin/master-console', { state: { tab: 3 } }) : navigate('/workspace/contractors')} // Go back
                 sx={{ mb: 2, color: 'text.secondary' }}
             >
                 ← Back to Contractors
@@ -168,6 +183,20 @@ export default function ContractorDetailsPage() {
 
                 {contractor.type === "Labour" ? (
                     <Card sx={{ p: 3, borderRadius: 3 }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                            <Typography variant="h6" fontWeight={800}>
+                                {selectedProjectId ? "Project Assigned Labours" : "All Labours"}
+                            </Typography>
+                            {selectedProjectId && (
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => setOpenManage(true)}
+                                    size="small"
+                                >
+                                    Manage Project Labours
+                                </Button>
+                            )}
+                        </Stack>
                         <LabourList
                             contractorId={contractor.id}
                             labours={labours}
@@ -180,6 +209,22 @@ export default function ContractorDetailsPage() {
                     </Alert>
                 )}
             </Stack>
+
+            {contractor && selectedProjectId && (
+                <ManageProjectLaboursDialog
+                    open={openManage}
+                    onClose={() => setOpenManage(false)}
+                    contractorId={contractor.id}
+                    projectId={Number(selectedProjectId)}
+                    currentLabours={labours}
+                    onSuccess={(updated: Labour[]) => {
+                        // updated is list of ALL labours or list of assigned labours?
+                        // The fetch endpoint will be recalled by useEffect or we can update local state
+                        // Ideally we re-fetch to be safe
+                        setLabours(updated);
+                    }}
+                />
+            )}
         </Box>
     );
 }

@@ -14,5 +14,6 @@ public class CreateContractorRequest {
     public String bankName;
     public String bankAccountNumber;
     public String ifscCode;
+    public java.util.List<Long> projectIds;
     public String bankBranch;
 }

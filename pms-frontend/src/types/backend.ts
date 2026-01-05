@@ -34,10 +34,12 @@ export interface TransferRecordDto {
   lines?: TransferLineDto[];
 }
 
-export interface InventoryCodesResponse {
-  inwardCode?: string;
-  outwardCode?: string;
-  transferCode?: string;
+export interface AnalyticsDto {
+  totalProjects: number;
+  totalMaterials: number;
+  totalUsers: number;
+  totalReceivedQty: number;
+  totalUtilizedQty: number;
 }
 
 export interface ProjectDto {
@@ -105,10 +107,14 @@ export interface InwardRequest {
 }
 
 export interface PaginatedResponse<T> {
-  page: number;
+  content: T[];
+  totalElements: number;
+  totalPages: number;
   size: number;
-  total: number;
-  items: T[];
+  number: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  filters: Record<string, string[]>;
 }
 
 export interface ProjectActivityEntryDto {

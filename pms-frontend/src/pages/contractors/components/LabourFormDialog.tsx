@@ -14,6 +14,10 @@ import {
 import { Post } from "../../../utils/apiService";
 import type { Labour } from "../../../types/contractor";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../../store/store";
+import { listProjects } from "../../../store/slices/adminProjectsSlice";
+import CustomSelect from "../../../widgets/CustomSelect";
 
 interface LabourFormDialogProps {
     open: boolean;
@@ -52,10 +56,24 @@ export default function LabourFormDialog({
     contractorId,
     onSuccess,
 }: LabourFormDialogProps) {
+    const dispatch = useDispatch<AppDispatch>();
+    const { items: adminProjects } = useSelector((state: RootState) => state.adminProjects);
+
+    React.useEffect(() => {
+        if (open) {
+            dispatch(listProjects({}));
+        }
+    }, [open, dispatch]);
+
+    const projectOptions = React.useMemo(() => {
+        return adminProjects.map(p => ({ label: p.name || p.code || "Unknown", value: Number(p.id) }));
+    }, [adminProjects]);
+
     const [newLabour, setNewLabour] = useState({
         name: "",
         dob: "",
         active: true,
+        projectIds: [] as number[],
         aadharNumber: "",
         bloodGroup: "",
         contactNumber: "",
@@ -114,6 +132,7 @@ export default function LabourFormDialog({
                 name,
                 dob,
                 active: newLabour.active,
+                projectIds: newLabour.projectIds,
                 aadharNumber: newLabour.aadharNumber?.trim(),
                 bloodGroup: newLabour.bloodGroup?.trim(),
                 contactNumber: newLabour.contactNumber?.trim(),
@@ -147,6 +166,7 @@ export default function LabourFormDialog({
                 name: "",
                 dob: "",
                 active: true,
+                projectIds: [],
                 aadharNumber: "",
                 bloodGroup: "",
                 contactNumber: "",
@@ -178,6 +198,15 @@ export default function LabourFormDialog({
                         onChange={(e) => setNewLabour((p) => ({ ...p, name: e.target.value }))}
                         fullWidth
                         required
+                    />
+
+                    <CustomSelect
+                        label="Projects"
+                        value={newLabour.projectIds}
+                        options={projectOptions}
+                        onChange={(val: number[]) => setNewLabour((p) => ({ ...p, projectIds: val }))}
+                        multiple
+                        fullWidth
                     />
 
                     <Stack direction="row" spacing={2}>

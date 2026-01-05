@@ -34,13 +34,13 @@ public class SupplierService {
     }
 
     public List<SupplierDto> getSuppliersByProject(Long projectId) {
-        return supplierRepository.findByProjectId(projectId).stream()
+        return supplierRepository.findByProjectsId(projectId).stream()
                 .map(SupplierDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     public List<SupplierDto> getSuppliersByProjectAndType(Long projectId, SupplierType type) {
-        return supplierRepository.findByProjectIdAndSupplierType(projectId, type).stream()
+        return supplierRepository.findByProjectsIdAndSupplierType(projectId, type).stream()
                 .map(SupplierDto::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -53,16 +53,19 @@ public class SupplierService {
 
     @Transactional
     public SupplierDto createSupplier(CreateSupplierRequest request) {
-        // Get project
-        Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new NotFoundException("Project not found with id: " + request.getProjectId()));
+        // Get projects
+        java.util.List<Project> projects = new java.util.ArrayList<>();
+        if (request.getProjectIds() != null && !request.getProjectIds().isEmpty()) {
+            projects = projectRepository.findAllById(request.getProjectIds());
+        }
+        // PROJECTS CAN BE EMPTY
 
         // Generate unique supplier code
-        String code = generateSupplierCode(project);
+        String code = generateSupplierCode();
 
         // Create supplier
         Supplier supplier = new Supplier();
-        supplier.setProject(project);
+        supplier.setProjects(new java.util.HashSet<>(projects));
         supplier.setCode(code);
         supplier.setSupplierName(request.getSupplierName());
         supplier.setSupplierType(request.getSupplierType());
@@ -101,6 +104,11 @@ public class SupplierService {
         supplier.setAccountNo(request.getAccountNo());
         supplier.setIfscCode(request.getIfscCode());
         supplier.setBranch(request.getBranch());
+        if (request.getProjectIds() != null && !request.getProjectIds().isEmpty()) {
+            List<Project> projects = projectRepository.findAllById(request.getProjectIds());
+            supplier.setProjects(new java.util.HashSet<>(projects));
+        }
+
         supplier.setBusinessType(request.getBusinessType());
 
         Supplier updated = supplierRepository.save(supplier);
@@ -114,11 +122,26 @@ public class SupplierService {
         supplierRepository.delete(supplier);
     }
 
+    @Transactional
+    public void bulkAssignSuppliers(List<Long> supplierIds, List<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty())
+            return;
+        List<Project> projects = projectRepository.findAllById(projectIds);
+        if (projects.isEmpty())
+            return;
+
+        List<Supplier> suppliers = supplierRepository.findAllById(supplierIds);
+        for (Supplier s : suppliers) {
+            s.getProjects().addAll(projects);
+            supplierRepository.save(s);
+        }
+    }
+
     /**
      * Generate a unique supplier code in the format: SUP-YYYYMMDD-XXXX
      * where XXXX is a sequential number for the day
      */
-    private String generateSupplierCode(Project project) {
+    private String generateSupplierCode() {
         String dateStr = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
         String prefix = "SUP-" + dateStr + "-";
 

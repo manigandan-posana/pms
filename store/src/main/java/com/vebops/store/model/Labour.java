@@ -28,6 +28,10 @@ public class Labour {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Contractor contractor;
 
+    @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
+    @jakarta.persistence.JoinTable(name = "labour_projects", joinColumns = @JoinColumn(name = "labour_id"), inverseJoinColumns = @JoinColumn(name = "project_id"))
+    private java.util.Set<Project> projects = new java.util.HashSet<>();
+
     @Column(nullable = false)
     private String name;
 
@@ -63,6 +67,14 @@ public class Labour {
 
     public void setContractor(Contractor contractor) {
         this.contractor = contractor;
+    }
+
+    public java.util.Set<Project> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(java.util.Set<Project> projects) {
+        this.projects = projects;
     }
 
     public String getName() {

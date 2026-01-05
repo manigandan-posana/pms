@@ -24,6 +24,16 @@ public class UpdateSupplierRequest {
     private String branch;
     private String businessType;
 
+    private java.util.List<Long> projectIds;
+
+    public java.util.List<Long> getProjectIds() {
+        return projectIds;
+    }
+
+    public void setProjectIds(java.util.List<Long> projectIds) {
+        this.projectIds = projectIds;
+    }
+
     // Getters and Setters
     public String getSupplierName() {
         return supplierName;

@@ -194,6 +194,20 @@ export const refillFuelEntry = createAsyncThunk<
 });
 
 // Supplier Thunks
+export const fetchAllSuppliers = createAsyncThunk<
+  Supplier[],
+  void,
+  { rejectValue: string }
+>("vehicles/fetchAllSuppliers", async (_, { rejectWithValue }) => {
+  try {
+    const data = await Get<Supplier[]>("/suppliers");
+    return data;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to fetch suppliers";
+    return rejectWithValue(message);
+  }
+});
+
 export const fetchSuppliersByProject = createAsyncThunk<
   Supplier[],
   number,
@@ -218,6 +232,19 @@ export const createSupplier = createAsyncThunk<
     return data;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unable to create supplier";
+    return rejectWithValue(message);
+  }
+});
+
+export const bulkAssignSuppliers = createAsyncThunk<
+  void,
+  { ids: number[]; projectIds: number[] },
+  { rejectValue: string }
+>("vehicles/bulkAssignSuppliers", async (payload, { rejectWithValue }) => {
+  try {
+    await Post<void>("/suppliers/bulk-assign", payload);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unable to assign suppliers";
     return rejectWithValue(message);
   }
 });
@@ -464,6 +491,14 @@ const vehicleSlice = createSlice({
 
     // Fetch suppliers
     builder
+      .addCase(fetchAllSuppliers.fulfilled, (state, action) => {
+        state.suppliers = action.payload;
+        state.status = "succeeded";
+      })
+      .addCase(fetchAllSuppliers.rejected, (state, action) => {
+        state.error = action.payload || "Failed to fetch suppliers";
+        state.status = "failed";
+      })
       .addCase(fetchSuppliersByProject.fulfilled, (state, action) => {
         state.suppliers = action.payload;
       })

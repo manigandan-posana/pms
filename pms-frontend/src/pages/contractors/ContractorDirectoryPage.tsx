@@ -15,6 +15,8 @@ import {
     TableBody,
     Chip,
     IconButton,
+    Checkbox,
+    Paper
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { Get, Post } from "../../utils/apiService";
@@ -24,42 +26,68 @@ import ContractorUtilization from "./components/ContractorUtilization";
 // import DeleteIcon from '@mui/icons-material/Delete'; // If I had icons
 import toast from "react-hot-toast";
 
-export default function ContractorDirectoryPage() {
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../../store/store";
+import BulkAssignDialog from "../admin/components/BulkAssignDialog";
+import { fetchAllSuppliers } from "../../store/slices/vehicleSlice"; // Re-using for consistency? No, manual reload here.
+
+interface ContractorDirectoryPageProps {
+    isAdminMode?: boolean;
+}
+
+export default function ContractorDirectoryPage({ isAdminMode = false }: ContractorDirectoryPageProps) {
     const [tab, setTab] = useState(0);
     const [contractors, setContractors] = useState<Contractor[]>([]);
     const [search, setSearch] = useState("");
     const [openCreate, setOpenCreate] = useState(false);
     const navigate = useNavigate();
 
+    // Bulk Assign
+    const [selectedContractorIds, setSelectedContractorIds] = useState<Set<number>>(new Set());
+    const [showBulkAssign, setShowBulkAssign] = useState(false);
+
+    // Get current project from store if in workspace mode
+    // We need to support 'workspaceSlice' correctly
+    const selectedProjectId = useSelector((state: RootState) => (state as any).workspace?.currentProject?.id);
+
+    const loadContractors = async () => {
+        try {
+            let url = '/contractors';
+            if (!isAdminMode) {
+                if (!selectedProjectId) return;
+                url = `/contractors?projectId=${selectedProjectId}`;
+            }
+
+            const cs = await Get<any[]>(url);
+            const mapped = (cs || []).map((c) => ({
+                id: c.code ?? `CTR-${c.id}`,
+                numericId: c.id,
+                name: c.name,
+                mobile: c.mobile,
+                email: c.email,
+                address: c.address,
+                panCard: c.panCard,
+                contactPerson: c.contactPerson,
+                gstNumber: c.gstNumber,
+                bankAccountHolderName: c.bankAccountHolderName,
+                bankName: c.bankName,
+                bankAccountNumber: c.bankAccountNumber,
+                ifscCode: c.ifscCode,
+                bankBranch: c.bankBranch,
+                type: c.type,
+                createdAt: c.createdAt,
+            } as Contractor));
+            setContractors(mapped);
+        } catch (err) {
+            console.error('Load contractors failed', err);
+            toast.error('Failed to load contractors');
+        }
+    };
+
     // Load contractors
     useEffect(() => {
-        (async () => {
-            try {
-                const cs = await Get<any[]>('/contractors');
-                const mapped = (cs || []).map((c) => ({
-                    id: c.code ?? `CTR-${c.id}`,
-                    name: c.name,
-                    mobile: c.mobile,
-                    email: c.email,
-                    address: c.address,
-                    panCard: c.panCard,
-                    contactPerson: c.contactPerson,
-                    gstNumber: c.gstNumber,
-                    bankAccountHolderName: c.bankAccountHolderName,
-                    bankName: c.bankName,
-                    bankAccountNumber: c.bankAccountNumber,
-                    ifscCode: c.ifscCode,
-                    bankBranch: c.bankBranch,
-                    type: c.type,
-                    createdAt: c.createdAt,
-                } as Contractor));
-                setContractors(mapped);
-            } catch (err) {
-                console.error('Load contractors failed', err);
-                toast.error('Failed to load contractors');
-            }
-        })();
-    }, []);
+        loadContractors();
+    }, [isAdminMode, selectedProjectId]);
 
     const filteredContractors = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -77,10 +105,32 @@ export default function ContractorDirectoryPage() {
         }
     };
 
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            const ids = new Set<number>();
+            filteredContractors.forEach(c => {
+                if (c.numericId) ids.add(c.numericId);
+            });
+            setSelectedContractorIds(ids);
+        } else {
+            setSelectedContractorIds(new Set());
+        }
+    };
+
+    const handleSelectOne = (id: number, checked: boolean) => {
+        const newSet = new Set(selectedContractorIds);
+        if (checked) {
+            newSet.add(id);
+        } else {
+            newSet.delete(id);
+        }
+        setSelectedContractorIds(newSet);
+    };
+
     return (
-        <Box sx={{ p: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" fontWeight={800}>
+        <Box sx={{ p: 2 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="subtitle1" fontWeight={800}>
                     Contractor Management
                 </Typography>
             </Stack>
@@ -114,10 +164,29 @@ export default function ContractorDirectoryPage() {
                             </Button>
                         </Stack>
 
+                        {isAdminMode && selectedContractorIds.size > 0 && (
+                            <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'grey.50' }}>
+                                <Typography variant="body2">{selectedContractorIds.size} selected</Typography>
+                                <Button variant="outlined" onClick={() => setShowBulkAssign(true)} size="small">
+                                    Bulk Assign Projects
+                                </Button>
+                            </Paper>
+                        )}
+
                         <Box sx={{ overflowX: "auto", border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                             <Table>
                                 <TableHead sx={{ bgcolor: "background.neutral" }}>
                                     <TableRow>
+                                        {isAdminMode && (
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    size="small"
+                                                    onChange={(e) => handleSelectAll(e.target.checked)}
+                                                    checked={filteredContractors.length > 0 && selectedContractorIds.size === filteredContractors.filter(c => c.numericId).length}
+                                                    indeterminate={selectedContractorIds.size > 0 && selectedContractorIds.size < filteredContractors.filter(c => c.numericId).length}
+                                                />
+                                            </TableCell>
+                                        )}
                                         <TableCell sx={{ fontWeight: 800 }}>ID</TableCell>
                                         <TableCell sx={{ fontWeight: 800 }}>Name</TableCell>
                                         <TableCell sx={{ fontWeight: 800 }}>Type</TableCell>
@@ -132,9 +201,20 @@ export default function ContractorDirectoryPage() {
                                         <TableRow
                                             key={c.id}
                                             hover
-                                            onClick={() => navigate(`/workspace/contractors/${c.id}`)}
+                                            onClick={() => navigate(isAdminMode ? `/admin/contractors/${c.id}` : `/workspace/contractors/${c.id}`)}
                                             sx={{ cursor: "pointer" }}
+                                            selected={c.numericId ? selectedContractorIds.has(c.numericId) : false}
                                         >
+                                            {isAdminMode && (
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        size="small"
+                                                        checked={c.numericId ? selectedContractorIds.has(c.numericId) : false}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onChange={(e) => c.numericId && handleSelectOne(c.numericId, e.target.checked)}
+                                                    />
+                                                </TableCell>
+                                            )}
                                             <TableCell>{c.id}</TableCell>
                                             <TableCell>
                                                 <Typography variant="subtitle2" fontWeight={700}>{c.name}</Typography>
@@ -167,7 +247,7 @@ export default function ContractorDirectoryPage() {
                                     ))}
                                     {filteredContractors.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                                            <TableCell colSpan={isAdminMode ? 8 : 7} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                                                 No contractors found.
                                             </TableCell>
                                         </TableRow>
@@ -186,8 +266,31 @@ export default function ContractorDirectoryPage() {
             <ContractorFormDialog
                 open={openCreate}
                 onClose={() => setOpenCreate(false)}
-                onSuccess={(newC) => setContractors((prev) => [newC, ...prev])}
+                onSuccess={(newC) => {
+                    // Since newC might not have numericId in return from dialog, we might reload or just add it.
+                    // But dialog onSuccess returns local object?
+                    // Actually logic says `setContractors((prev) => [newC, ...prev])`
+                    // We should probably reload to get full ID.
+                    loadContractors();
+                }}
+                isAdminMode={isAdminMode}
+                selectedProjectId={selectedProjectId}
             />
+
+            {isAdminMode && (
+                <BulkAssignDialog
+                    open={showBulkAssign}
+                    onClose={() => {
+                        setShowBulkAssign(false);
+                        setSelectedContractorIds(new Set());
+                    }}
+                    resourceType="contractors"
+                    selectedIds={Array.from(selectedContractorIds)}
+                    onSuccess={() => {
+                        loadContractors();
+                    }}
+                />
+            )}
         </Box>
     );
 }

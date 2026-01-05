@@ -128,7 +128,6 @@ const UserProjectsPage: React.FC = () => {
                                 ? "Loading projects..."
                                 : "No projects assigned to you yet."
                         }
-                        onRowClick={(row) => navigate(`/workspace/my-projects/${(row as UserProject).id}`)}
                     />
                 </Stack>
             </Paper>

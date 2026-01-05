@@ -5,7 +5,6 @@ import com.vebops.store.dto.LoginResponse;
 import com.vebops.store.dto.UserDto;
 import com.vebops.store.exception.BadRequestException;
 import com.vebops.store.exception.UnauthorizedException;
-import com.vebops.store.model.Permission;
 import com.vebops.store.model.Role;
 import com.vebops.store.model.UserAccount;
 import com.vebops.store.repository.UserRepository;

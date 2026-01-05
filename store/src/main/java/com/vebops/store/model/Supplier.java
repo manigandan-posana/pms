@@ -11,9 +11,9 @@ public class Supplier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "supplier_projects", joinColumns = @JoinColumn(name = "supplier_id"), inverseJoinColumns = @JoinColumn(name = "project_id"))
+    private java.util.Set<Project> projects = new java.util.HashSet<>();
 
     @Column(unique = true, nullable = false)
     private String code;
@@ -88,12 +88,12 @@ public class Supplier {
         this.id = id;
     }
 
-    public Project getProject() {
-        return project;
+    public java.util.Set<Project> getProjects() {
+        return projects;
     }
 
-    public void setProject(Project project) {
-        this.project = project;
+    public void setProjects(java.util.Set<Project> projects) {
+        this.projects = projects;
     }
 
     public String getCode() {

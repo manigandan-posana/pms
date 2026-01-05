@@ -101,7 +101,11 @@ export const ProjectManagementPage: React.FC = () => {
         await dispatch(
           updateProject({
             projectId: editingProject.id,
-            payload: { name: projectName.trim(), projectManager: projectManager.trim() },
+            payload: { 
+              code: editingProject.code || '',
+              name: projectName.trim(), 
+              projectManager: projectManager.trim() 
+            },
           })
         ).unwrap();
         toast.success('Project updated successfully');
@@ -197,7 +201,7 @@ export const ProjectManagementPage: React.FC = () => {
         </Alert>
       )}
 
-      <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 0, overflow: 'hidden' }}>
         <AdminDataTable<Project>
           data={projects as Project[]}
           columns={columns as any}

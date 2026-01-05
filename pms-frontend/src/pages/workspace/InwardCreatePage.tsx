@@ -245,7 +245,7 @@ const InwardCreatePage: React.FC = () => {
     }
     (async () => {
       try {
-        const list = await Get(`/suppliers/project/${projectId}`);
+        const list = await Get(`/suppliers/project/${projectId}`) as any[];
         if (mounted) setSuppliers(list || []);
       } catch (e) {
         if (mounted) setSuppliers([]);
@@ -598,7 +598,7 @@ const InwardCreatePage: React.FC = () => {
                     supplierName: newSupplierName,
                     supplierType: newSupplierType,
                   };
-                  const created = await Post('/suppliers', payload);
+                  const created = await Post('/suppliers', payload) as any;
                   setSuppliers((s) => [created, ...s]);
                   dispatch(setInwardField({ field: 'supplierId', value: String(created.id) }));
                   dispatch(setInwardField({ field: 'supplierName', value: created.supplierName }));

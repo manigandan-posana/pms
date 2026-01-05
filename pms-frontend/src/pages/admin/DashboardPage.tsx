@@ -27,8 +27,14 @@ const DashboardPage: React.FC = () => {
       .unwrap()
       .then((response) => {
         if (!isMounted) return;
-        const payload = response?.data ?? response;
-        setAnalytics(payload as AnalyticsSummary);
+        const payload: AnalyticsSummary = {
+          totalProjects: response.totalProjects,
+          totalMaterials: response.totalMaterials,
+          totalUsers: response.totalUsers,
+          received: response.totalReceivedQty,
+          utilized: response.totalUtilizedQty,
+        };
+        setAnalytics(payload);
       })
       .catch((error) => {
         if (!isMounted) return;

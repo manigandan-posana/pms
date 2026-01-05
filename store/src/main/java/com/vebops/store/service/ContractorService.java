@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,17 +22,25 @@ public class ContractorService {
     private final ContractorRepository contractorRepository;
     private final LabourRepository labourRepository;
     private final LabourUtilizationRepository utilizationRepository;
+    private final com.vebops.store.repository.ProjectRepository projectRepository;
 
     public ContractorService(ContractorRepository contractorRepository,
             LabourRepository labourRepository,
-            LabourUtilizationRepository utilizationRepository) {
+            LabourUtilizationRepository utilizationRepository,
+            com.vebops.store.repository.ProjectRepository projectRepository) {
         this.contractorRepository = contractorRepository;
         this.labourRepository = labourRepository;
         this.utilizationRepository = utilizationRepository;
+        this.projectRepository = projectRepository;
     }
 
     @Transactional
-    public Contractor createContractor(Contractor c) {
+    public Contractor createContractor(Contractor c, List<Long> projectIds) {
+        if (projectIds != null && !projectIds.isEmpty()) {
+            List<com.vebops.store.model.Project> projects = projectRepository.findAllById(projectIds);
+            c.setProjects(new java.util.HashSet<>(projects));
+        }
+
         // ensure code is non-null to satisfy existing DB constraints
         if (c.getCode() == null || c.getCode().isBlank()) {
             c.setCode("TMP-" + java.util.UUID.randomUUID().toString());
@@ -68,16 +76,30 @@ public class ContractorService {
     }
 
     @Transactional
-    public Labour createLabour(String contractorCode, Labour labour) {
+    public Labour createLabour(String contractorCode, Labour labour, List<Long> projectIds) {
         Contractor contractor = findByCodeOrId(contractorCode)
                 .orElseThrow(() -> new IllegalArgumentException("Contractor not found"));
         labour.setContractor(contractor);
+
+        if (projectIds != null && !projectIds.isEmpty()) {
+            List<com.vebops.store.model.Project> projects = projectRepository.findAllById(projectIds);
+            labour.setProjects(new java.util.HashSet<>(projects));
+        }
+
         if (labour.getCode() == null || labour.getCode().isBlank()) {
             labour.setCode("TMP-" + java.util.UUID.randomUUID().toString());
         }
         Labour saved = labourRepository.save(labour);
         saved.setCode("LAB-" + saved.getId());
         return labourRepository.save(saved);
+    }
+
+    public List<Contractor> listByProject(Long projectId) {
+        return contractorRepository.findByProjectsId(projectId);
+    }
+
+    public List<Labour> listLaboursForContractorAndProject(Contractor contractor, Long projectId) {
+        return labourRepository.findByContractorAndProjectsId(contractor, projectId);
     }
 
     public List<Labour> listLaboursForContractor(Contractor contractor) {
@@ -118,5 +140,42 @@ public class ContractorService {
             u.setHours(hours);
         }
         return utilizationRepository.save(u);
+    }
+
+    @Transactional
+    public void updateProjectLabours(String contractorCode, Long projectId, List<String> labourCodes) {
+        Contractor contractor = findByCodeOrId(contractorCode)
+                .orElseThrow(() -> new IllegalArgumentException("Contractor not found"));
+
+        com.vebops.store.model.Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        List<Labour> allLabours = labourRepository.findByContractor(contractor);
+
+        for (Labour labour : allLabours) {
+            boolean shouldBeLinked = labourCodes.contains(labour.getCode())
+                    || labourCodes.contains(String.valueOf(labour.getId()));
+            if (shouldBeLinked) {
+                labour.getProjects().add(project);
+            } else {
+                labour.getProjects().remove(project);
+            }
+            labourRepository.save(labour);
+        }
+    }
+
+    @Transactional
+    public void bulkAssignContractors(List<Long> contractorIds, List<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty())
+            return;
+        List<com.vebops.store.model.Project> projects = projectRepository.findAllById(projectIds);
+        if (projects.isEmpty())
+            return;
+
+        List<Contractor> contractors = contractorRepository.findAllById(contractorIds);
+        for (Contractor c : contractors) {
+            c.getProjects().addAll(projects);
+            contractorRepository.save(c);
+        }
     }
 }

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { Get, Post, Put, Delete } from "../../utils/apiService";
+import type { PaginatedResponse } from "../../types/backend";
 
 // Query string helper
 const toQueryString = (params: Record<string, any> = {}): string => {
@@ -100,7 +101,7 @@ export const loadAllocationData = createAsyncThunk<
     let projectPage = 1;
     let hasMoreProjects = true;
     while (hasMoreProjects) {
-      const response = await Get(`/admin/projects${toQueryString({
+      const response = await Get<PaginatedResponse<AllocationProject>>(`/admin/projects${toQueryString({
         page: projectPage,
         size: 50,
       })}`);
@@ -115,7 +116,7 @@ export const loadAllocationData = createAsyncThunk<
     let materialPage = 1;
     let hasMoreMaterials = true;
     while (hasMoreMaterials) {
-      const response = await Get(`/materials/search${toQueryString({
+      const response = await Get<PaginatedResponse<AllocationMaterial>>(`/materials/search${toQueryString({
         page: materialPage,
         size: 50,
       })}`);

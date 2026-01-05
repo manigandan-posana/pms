@@ -8,12 +8,17 @@ import AdminTopBar from "../components/AdminTopBar";
 import { createLogoutHandler } from "../services/LogoutService";
 import { Box } from "@mui/material";
 
+// Constants for sidebar
+const DRAWER_WIDTH = 200;
+const COLLAPSED_WIDTH = 56;
+
 // Helper to get page heading based on route
 const getAdminPageHeading = (pathname: string): string => {
   if (pathname.includes("/admin/project-details")) return "Project Dashboard";
   if (pathname.includes("/admin/inward/")) return "Inward Transaction Details";
   if (pathname.includes("/admin/outward/")) return "Outward Transaction Details";
   if (pathname.includes("/admin/transfer/")) return "Transfer Transaction Details";
+  if (pathname.includes("/admin/contractors/")) return "Contractor Details";
   return "Admin";
 };
 
@@ -35,22 +40,29 @@ const AdminDashboard: React.FC = () => {
     await logout();
   }, [instance, navigate, store]);
 
+  // Check if current page is master console or contractor details
+  const isMasterConsole = location.pathname.includes('/admin/master-console');
+  const isContractorDetails = location.pathname.includes('/admin/contractors/');
+  const hideSidebar = isMasterConsole || isContractorDetails;
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <AdminSidebar
-        onLogout={handleLogout}
-        userName={name || email}
-        userRole={role}
-        permissions={permissions}
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed(!collapsed)}
-      />
+      {!hideSidebar && (
+        <AdminSidebar
+          onLogout={handleLogout}
+          userName={name || email}
+          userRole={role}
+          permissions={permissions}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed(!collapsed)}
+        />
+      )}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           transition: 'margin-left 0.3s',
-          ml: 0,
+          ml: hideSidebar ? 0 : (collapsed ? `${COLLAPSED_WIDTH}px` : `${DRAWER_WIDTH}px`),
           display: 'flex',
           flexDirection: 'column',
           minHeight: '100vh'
@@ -60,6 +72,7 @@ const AdminDashboard: React.FC = () => {
           userName={name || email}
           userRole={role}
           pageHeading={pageHeading}
+          showWorkspaceToggle={hideSidebar}
         />
         <Box sx={{ p: 1, flexGrow: 1 }}>
           <Outlet />

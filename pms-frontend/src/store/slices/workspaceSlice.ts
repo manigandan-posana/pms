@@ -81,6 +81,7 @@ export interface WorkspaceState {
   transferHistory: TransferRecord[];
   codes: InventoryCodes;
   selectedProjectId: string | null;
+  currentProject: Project | null;
 }
 
 // ---- Initial State ---- //
@@ -102,6 +103,7 @@ const initialState: WorkspaceState = {
     transfer: "",
   },
   selectedProjectId: null,
+  currentProject: null,
 };
 
 // ---- Thunks ---- //
@@ -226,6 +228,11 @@ const workspaceSlice = createSlice({
       action: PayloadAction<string | null | undefined>
     ) {
       state.selectedProjectId = action.payload || null;
+      if (state.selectedProjectId) {
+        state.currentProject = state.assignedProjects.find(p => p.id === state.selectedProjectId) || null;
+      } else {
+        state.currentProject = null;
+      }
     },
     clearWorkspaceError(state) {
       state.error = "";
@@ -266,6 +273,13 @@ const workspaceSlice = createSlice({
 
         if (!state.selectedProjectId && state.assignedProjects.length > 0) {
           state.selectedProjectId = state.assignedProjects[0].id;
+        }
+
+        // Set currentProject based on selectedProjectId
+        if (state.selectedProjectId) {
+          state.currentProject = state.assignedProjects.find(p => p.id === state.selectedProjectId) || null;
+        } else {
+          state.currentProject = null;
         }
       })
       .addCase(bootstrapWorkspace.rejected, (state, action) => {

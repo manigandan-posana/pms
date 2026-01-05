@@ -76,6 +76,9 @@ export const vehicleApi = {
   createSupplier: (data: CreateSupplierRequest) =>
     Post<Supplier>(`${BASE_URL}/suppliers`, data),
   
+  bulkAssignSuppliers: (data: { ids: number[]; projectIds: number[] }) =>
+    Post<void>(`${BASE_URL}/suppliers/bulk-assign`, data),
+  
   deleteSupplier: (id: number) =>
     Delete<void>(`${BASE_URL}/suppliers/${id}`),
 

@@ -195,21 +195,14 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       { id: "dashboard", label: "Dashboard", icon: FiBarChart2, path: "/workspace/dashboard" },
+      { id: "project-overview", label: "Project Overview", icon: GrProjects, path: "/workspace/project-overview" },
       { id: "inventory", label: "Inventory", icon: FiBox, path: "/workspace/inventory" },
-      { id: "materials", label: "Material Directory", icon: FiDatabase, path: "/workspace/materials", requiredPermission: "MATERIAL_MANAGEMENT" },
-      { id: "my-projects", label: "My Projects", icon: GrProjects, path: "/workspace/my-projects" },
-      { id: "projects", label: "Projects", icon: GrProjects, path: "/workspace/projects", requiredPermission: "PROJECT_MANAGEMENT" },
-      { id: "users", label: "Users", icon: FiUsers, path: "/workspace/users", requiredPermission: "USER_MANAGEMENT" },
       { id: "vehicles", label: "Vehicles", icon: FiTruck, path: "/workspace/vehicles" },
       { id: "suppliers", label: "Suppliers", icon: "/supplier.svg", path: "/workspace/suppliers" },
       { id: "contractors", label: "Contractors", icon: "/contractor.svg", path: "/workspace/contractors" },
     ];
 
-    // Hide the "My Projects" item from admin users (admin has separate admin views)
-    return items.filter((item) => {
-      if (item.id === "my-projects" && userRole === "ADMIN") return false;
-      return true;
-    });
+    return items;
   }, [userRole, permissions]);
 
   const handleToggle = () => {

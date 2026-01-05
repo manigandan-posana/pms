@@ -89,8 +89,8 @@ const ProjectActivityPage: React.FC = () => {
     dispatch(getProjectActivity())
       .unwrap()
       .then((response) => {
-        const payload = response?.data ?? response ?? [];
-        setActivity(payload as ProjectActivityDto[]);
+        const payload = response;
+        setActivity(payload);
       })
       .catch((error) => {
         console.error("Failed to load project activity", error);

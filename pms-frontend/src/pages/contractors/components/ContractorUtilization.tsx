@@ -150,13 +150,18 @@ export default function ContractorUtilization({ contractors }: ContractorUtiliza
                         value={utilContractorId}
                         onChange={(e) => setUtilContractorId(String(e.target.value))}
                     >
-                        {contractors
-                            .filter((c) => c.type === "Labour")
-                            .map((c) => (
-                                <MenuItem key={c.id} value={c.id}>
-                                    {c.name}
-                                </MenuItem>
-                            ))}
+                        {(() => {
+                            const labourContractors = contractors.filter((c) => c.type === "Labour");
+                            return labourContractors.length === 0 ? (
+                                <MenuItem disabled>No Labour Contractors</MenuItem>
+                            ) : (
+                                labourContractors.map((c) => (
+                                    <MenuItem key={c.id} value={c.id}>
+                                        {c.name}
+                                    </MenuItem>
+                                ))
+                            );
+                        })()}
                     </Select>
                 </FormControl>
 

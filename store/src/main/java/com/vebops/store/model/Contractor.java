@@ -48,6 +48,10 @@ public class Contractor {
     @OneToMany(mappedBy = "contractor")
     private List<Labour> labours = new ArrayList<>();
 
+    @jakarta.persistence.ManyToMany(fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.JoinTable(name = "contractor_projects", joinColumns = @jakarta.persistence.JoinColumn(name = "contractor_id"), inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "project_id"))
+    private java.util.Set<Project> projects = new java.util.HashSet<>();
+
     public Long getId() {
         return id;
     }
@@ -170,5 +174,13 @@ public class Contractor {
 
     public List<Labour> getLabours() {
         return labours;
+    }
+
+    public java.util.Set<Project> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(java.util.Set<Project> projects) {
+        this.projects = projects;
     }
 }

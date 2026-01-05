@@ -24,10 +24,10 @@ const UserDashboardPage = lazy(() => import("../pages/workspace/UserDashboardPag
 const ProjectManagementPage = lazy(() => import("../pages/admin/ProjectManagementPage"));
 const ProjectDetailsPage = lazy(() => import("../pages/workspace/ProjectDetailsPage"));
 const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
-const UserProjectsPage = lazy(() => import("../pages/workspace/UserProjectsPage"));
 const UserProjectBomPage = lazy(() => import("../pages/workspace/UserProjectBomPage"));
 const ContractorDirectoryPage = lazy(() => import("../pages/contractors/ContractorDirectoryPage"));
 const ContractorDetailsPage = lazy(() => import("../pages/contractors/ContractorDetailsPage"));
+const ProjectOverviewPage = lazy(() => import("../pages/workspace/ProjectOverviewPage"));
 
 // Lazy‑loaded admin pages
 const AllocatedMaterialsManagementPage = lazy(() => import("../pages/admin/AllocatedMaterialsManagementPage"));
@@ -81,10 +81,9 @@ export const workspaceRoutes: IRouteConfig[] = [
   { path: "vehicles/suppliers", component: SupplierManagementPage },
   { path: "suppliers", component: SupplierManagementPage },
   { path: "vehicles/details/:vehicleId", component: VehicleDetailsPage },
-  { path: "my-projects", component: UserProjectsPage },
-  { path: "my-projects/:projectId", component: ProjectDetailsPage },
+  { path: "project-overview", component: ProjectOverviewPage },
   { path: "projects", component: ProjectManagementPage, requiredPermission: "PROJECT_MANAGEMENT" },
-  { path: "projects/:projectId", component: ProjectDetailsPage, requiredPermission: "PROJECT_MANAGEMENT" },
+  { path: "projects/:projectId", component: ProjectDetailsPage },
   { path: "users", component: UserManagementPage, requiredPermission: "USER_MANAGEMENT" },
   { path: "contractors", component: ContractorDirectoryPage },
   { path: "contractors/:id", component: ContractorDetailsPage },
@@ -94,8 +93,11 @@ export const workspaceRoutes: IRouteConfig[] = [
 
 export const adminRoutes: IRouteConfig[] = [
   { path: "project-details", component: UnifiedProjectDetailsPage, requiredPermission: "ADMIN_ACCESS" },
+  { path: "master-console", component: lazy(() => import("../pages/admin/MasterDashboardPage")), requiredPermission: "ADMIN_ACCESS" },
   { path: "inward/:id", component: AdminInwardDetailPage, requiredPermission: "ADMIN_ACCESS" },
   { path: "outward/:id", component: AdminOutwardDetailPage, requiredPermission: "ADMIN_ACCESS" },
   { path: "transfer/:id", component: AdminTransferDetailPage, requiredPermission: "ADMIN_ACCESS" },
   { path: "allocated-materials", component: AllocatedMaterialsManagementPage, requiredPermission: "ALLOCATED_MATERIALS_VIEW" },
+  { path: "contractors", component: ContractorDirectoryPage, requiredPermission: "ADMIN_ACCESS" },
+  { path: "contractors/:id", component: ContractorDetailsPage, requiredPermission: "ADMIN_ACCESS" },
 ];

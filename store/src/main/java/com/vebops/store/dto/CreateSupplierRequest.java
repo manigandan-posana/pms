@@ -24,16 +24,18 @@ public class CreateSupplierRequest {
     private String bankName;
     private String accountNo;
     private String ifscCode;
+    @NotNull(message = "At least one Project ID is required")
+    private java.util.List<Long> projectIds;
     private String branch;
     private String businessType;
 
     // Getters and Setters
-    public Long getProjectId() {
-        return projectId;
+    public java.util.List<Long> getProjectIds() {
+        return projectIds;
     }
 
-    public void setProjectId(Long projectId) {
-        this.projectId = projectId;
+    public void setProjectIds(java.util.List<Long> projectIds) {
+        this.projectIds = projectIds;
     }
 
     public String getSupplierName() {

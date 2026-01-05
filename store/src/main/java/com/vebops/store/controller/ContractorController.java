@@ -29,7 +29,10 @@ public class ContractorController {
     }
 
     @GetMapping
-    public List<Contractor> list() {
+    public List<Contractor> list(@RequestParam(required = false) Long projectId) {
+        if (projectId != null) {
+            return contractorService.listByProject(projectId);
+        }
         return contractorService.listAll();
     }
 
@@ -41,6 +44,7 @@ public class ContractorController {
         c.setEmail(req.email);
         c.setAddress(req.address);
         c.setPanCard(req.panCard);
+        c.setType(req.type);
         c.setContactPerson(req.contactPerson);
         c.setGstNumber(req.gstNumber);
         c.setBankAccountHolderName(req.bankAccountHolderName);
@@ -48,24 +52,31 @@ public class ContractorController {
         c.setBankAccountNumber(req.bankAccountNumber);
         c.setIfscCode(req.ifscCode);
         c.setBankBranch(req.bankBranch);
-        c.setType(req.type == null ? "Work" : req.type);
-        Contractor created = contractorService.createContractor(c);
+
+        Contractor created = contractorService.createContractor(c, req.projectIds);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/{code}")
     public ResponseEntity<Contractor> get(@PathVariable String code) {
-        return contractorService.findByCodeOrId(code)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        var opt = contractorService.findByCodeOrId(code);
+        return opt.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{code}/labours")
-    public ResponseEntity<List<Labour>> listLabours(@PathVariable String code) {
+    public ResponseEntity<List<Labour>> listLabours(@PathVariable String code,
+            @RequestParam(required = false) Long projectId) {
         var opt = contractorService.findByCodeOrId(code);
         if (opt.isEmpty())
             return ResponseEntity.notFound().build();
-        List<Labour> labours = contractorService.listLaboursForContractor(opt.get());
+
+        List<Labour> labours;
+        if (projectId != null) {
+            labours = contractorService.listLaboursForContractorAndProject(opt.get(), projectId);
+        } else {
+            labours = contractorService.listLaboursForContractor(opt.get());
+        }
         return ResponseEntity.ok(labours);
     }
 
@@ -94,7 +105,7 @@ public class ContractorController {
             lab.setContactAddress(req.contactAddress);
             lab.setEsiNumber(req.esiNumber);
             lab.setUanNumber(req.uanNumber);
-            Labour created = contractorService.createLabour(code, lab);
+            Labour created = contractorService.createLabour(code, lab, req.projectIds);
             Map<String, Object> resp = new HashMap<>();
             resp.put("labour", created);
             if (age > 55)
@@ -123,5 +134,25 @@ public class ContractorController {
             @RequestParam("hours") double hours) {
         LabourUtilization saved = contractorService.setUtilization(labourCode, date, hours);
         return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{code}/projects/{projectId}/labours")
+    public ResponseEntity<?> updateProjectLabours(
+            @PathVariable String code,
+            @PathVariable Long projectId,
+            @RequestBody List<String> labourCodes) {
+        contractorService.updateProjectLabours(code, projectId, labourCodes);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/bulk-assign")
+    public ResponseEntity<Void> bulkAssign(@RequestBody BulkAssignRequest req) {
+        contractorService.bulkAssignContractors(req.ids, req.projectIds);
+        return ResponseEntity.ok().build();
+    }
+
+    public static class BulkAssignRequest {
+        public List<Long> ids;
+        public List<Long> projectIds;
     }
 }

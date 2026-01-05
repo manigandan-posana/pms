@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 import { bootstrapWorkspace } from "./workspaceSlice";
 import { Get, Post, Put, Delete } from "../../utils/apiService";
 
@@ -137,8 +138,12 @@ export const createProject = createAsyncThunk<
     dispatch(bootstrapWorkspace());
     return true;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to create project";
+    let message = "Unable to create project";
+    if (axios.isAxiosError(err) && err.response) {
+      message = err.response.data?.message || err.response.data?.error || err.response.statusText || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });
@@ -155,8 +160,12 @@ export const updateProject = createAsyncThunk<
       dispatch(bootstrapWorkspace());
       return true;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Unable to update project";
+      let message = "Unable to update project";
+      if (axios.isAxiosError(err) && err.response) {
+        message = err.response.data?.message || err.response.data?.error || err.response.statusText || message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
       return rejectWithValue(message);
     }
   }
@@ -172,8 +181,12 @@ export const deleteProject = createAsyncThunk<
     dispatch(bootstrapWorkspace());
     return true;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unable to delete project";
+    let message = "Unable to delete project";
+    if (axios.isAxiosError(err) && err.response) {
+      message = err.response.data?.message || err.response.data?.error || err.response.statusText || message;
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
     return rejectWithValue(message);
   }
 });

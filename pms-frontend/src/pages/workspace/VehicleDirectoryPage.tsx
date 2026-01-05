@@ -284,50 +284,6 @@ const VehicleDirectoryPage: React.FC = () => {
 
     return (
         <Box sx={{ p: 2 }}>
-            {/* Header with Metrics */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
-                        <Typography variant="h5" fontWeight={700}>
-                            {metrics.totalVehicles}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Total Vehicles
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
-                        <Typography variant="h5" fontWeight={700} color="success.main">
-                            {metrics.activeVehicles}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Active Vehicles
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
-                        <Typography variant="h5" fontWeight={700} color="primary.main">
-                            ₹{metrics.totalFuelCost.toLocaleString("en-IN")}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Total Fuel Cost
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
-                    <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2, boxShadow: 1 }}>
-                        <Typography variant="h5" fontWeight={700}>
-                            {metrics.totalDistance.toFixed(0)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Total Distance (km)
-                        </Typography>
-                    </Paper>
-                </Grid>
-            </Grid>
-
             {/* Action Bar */}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                 <Typography variant="h6" fontWeight={600}>

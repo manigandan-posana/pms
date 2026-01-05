@@ -6,9 +6,12 @@ import {
   Box,
   IconButton,
   Avatar,
-  Stack
+  Stack,
+  Button
 } from "@mui/material";
 import { FaBell, FaUserCircle } from "react-icons/fa";
+import { FiCommand } from "react-icons/fi";
+import { NavLink, useNavigate } from "react-router-dom";
 import ProjectSelector from "./ProjectSelector";
 
 interface AdminTopBarProps {
@@ -16,14 +19,17 @@ interface AdminTopBarProps {
   userRole?: string | null;
   pageHeading?: string;
   showProjectSelector?: boolean;
+  showWorkspaceToggle?: boolean;
 }
 
 const AdminTopBar: React.FC<AdminTopBarProps> = ({
   userName,
   userRole,
   pageHeading = "Inventory",
-  showProjectSelector = false
+  showProjectSelector = false,
+  showWorkspaceToggle = false
 }) => {
+  const navigate = useNavigate();
 
   const initials = (userName || "")
     .split(" ")
@@ -63,21 +69,35 @@ const AdminTopBar: React.FC<AdminTopBarProps> = ({
 
         {/* Right: Actions */}
         <Stack direction="row" spacing={1} alignItems="center">
+          {showWorkspaceToggle && (
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => navigate('/workspace/dashboard')}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              Switch to Workspace
+            </Button>
+          )}
           {showProjectSelector && (
-            <Box sx={{ minWidth: 160, display: { xs: 'none', sm: 'block' } }}>
+            <Box sx={{ minWidth: 160, display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 2 }}>
+              {userRole === 'ADMIN' && (
+                <Button
+                  variant="text"
+                  color="primary"
+                  component={NavLink}
+                  to="/admin/master-console"
+                  startIcon={<FiCommand />}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                  Master Console
+                </Button>
+              )}
               <ProjectSelector />
             </Box>
           )}
 
-          <IconButton
-            size="small"
-            sx={{
-              color: 'text.secondary',
-              '&:hover': { bgcolor: 'action.hover' }
-            }}
-          >
-            <FaBell size={14} />
-          </IconButton>
+          
 
           <Stack direction="row" spacing={0.75} alignItems="center">
             <Box sx={{ display: { xs: 'none', sm: 'flex' }, flexDirection: 'column', alignItems: 'flex-end' }}>

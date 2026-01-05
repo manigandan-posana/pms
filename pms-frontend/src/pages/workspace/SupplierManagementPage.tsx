@@ -3,9 +3,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronRight } from "react-icons/fi";
-import { Box, Paper, Typography, Grid, Button, Collapse, Stack, Divider } from "@mui/material";
+import { Box, Paper, Typography, Grid, Button, Collapse, Stack, Divider, Checkbox } from "@mui/material";
 
-import { loadVehicleData, createSupplier, updateSupplier, deleteSupplier } from "../../store/slices/vehicleSlice";
+import { loadVehicleData, createSupplier, updateSupplier, deleteSupplier, fetchAllSuppliers, bulkAssignSuppliers } from "../../store/slices/vehicleSlice";
+import { listProjects } from "../../store/slices/adminProjectsSlice";
 import type { RootState, AppDispatch } from "../../store/store";
 import type { Supplier, SupplierType } from "../../types/vehicle";
 
@@ -15,20 +16,32 @@ import CustomButton from "../../widgets/CustomButton";
 import CustomModal from "../../widgets/CustomModal";
 import CustomTextField from "../../widgets/CustomTextField";
 import CustomSelect from "../../widgets/CustomSelect";
+import BulkAssignDialog from "../admin/components/BulkAssignDialog";
 
-const SupplierManagementPage = () => {
+interface SupplierManagementPageProps {
+    isAdminMode?: boolean;
+}
+
+const SupplierManagementPage: React.FC<SupplierManagementPageProps> = ({ isAdminMode = false }) => {
     const dispatch = useDispatch<AppDispatch>();
     const { selectedProjectId } = useSelector((state: RootState) => state.workspace);
     const { suppliers, status } = useSelector((state: RootState) => state.vehicles);
+    const { items: adminProjects } = useSelector((state: RootState) => state.adminProjects);
 
     const loading = status === "loading";
 
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
     const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    // Bulk Assign State
+    const [selectedSupplierIds, setSelectedSupplierIds] = useState<Set<number>>(new Set());
+    const [showBulkAssign, setShowBulkAssign] = useState(false);
+
     const [supplierForm, setSupplierForm] = useState({
         supplierName: "",
         supplierType: "MATERIALS" as SupplierType,
+        projectIds: [] as number[],
         contactPerson: "",
         email: "",
         phoneNumber: "",
@@ -44,10 +57,13 @@ const SupplierManagementPage = () => {
     });
 
     useEffect(() => {
-        if (selectedProjectId) {
+        if (isAdminMode) {
+            dispatch(fetchAllSuppliers());
+            dispatch(listProjects({}));
+        } else if (selectedProjectId) {
             dispatch(loadVehicleData(Number(selectedProjectId)));
         }
-    }, [selectedProjectId, dispatch]);
+    }, [selectedProjectId, isAdminMode, dispatch]);
 
     const metrics = useMemo(() => {
         const totalSuppliers = suppliers.length;
@@ -57,17 +73,25 @@ const SupplierManagementPage = () => {
     }, [suppliers]);
 
     const handleAddSupplier = async () => {
-        if (!selectedProjectId || !supplierForm.supplierName || !supplierForm.supplierType) {
+        // For non-admin (workspace), create under the current project so backend validation passes
+        const createProjectIds = isAdminMode
+            ? (supplierForm.projectIds.length > 0 ? supplierForm.projectIds : [])
+            : (selectedProjectId ? [Number(selectedProjectId)] : []);
+        const linkProjectIds = !isAdminMode && selectedProjectId ? [Number(selectedProjectId)] : [];
+
+        if (!supplierForm.supplierName || !supplierForm.supplierType) {
             toast.error("Please fill in supplier name and type");
             return;
         }
 
         try {
             if (editingSupplier) {
+                const effectiveProjectIds = !isAdminMode && selectedProjectId ? [Number(selectedProjectId)] : supplierForm.projectIds;
                 await dispatch(
                     updateSupplier({
                         id: editingSupplier.id,
                         data: {
+                            projectIds: effectiveProjectIds,
                             supplierName: supplierForm.supplierName,
                             supplierType: supplierForm.supplierType,
                             contactPerson: supplierForm.contactPerson || undefined,
@@ -87,9 +111,10 @@ const SupplierManagementPage = () => {
                 ).unwrap();
                 toast.success("Supplier updated successfully");
             } else {
-                await dispatch(
+                const createdSupplier = await dispatch(
                     createSupplier({
-                        projectId: Number(selectedProjectId),
+                        projectId: createProjectIds[0] || undefined, // Backward compatibility/primary project
+                        projectIds: createProjectIds,
                         supplierName: supplierForm.supplierName,
                         supplierType: supplierForm.supplierType,
                         contactPerson: supplierForm.contactPerson || undefined,
@@ -106,10 +131,19 @@ const SupplierManagementPage = () => {
                         businessType: supplierForm.businessType || undefined,
                     })
                 ).unwrap();
+
+                // No additional linking required for non-admin: supplier is created with the current project
+
                 toast.success("Supplier added successfully");
             }
             setShowSupplierDialog(false);
             resetSupplierForm();
+            // Refresh list
+            if (isAdminMode) {
+                dispatch(fetchAllSuppliers());
+            } else if (selectedProjectId) {
+                dispatch(loadVehicleData(Number(selectedProjectId)));
+            }
         } catch (error) {
             toast.error(editingSupplier ? "Failed to update supplier" : "Failed to add supplier");
             console.error(error);
@@ -121,6 +155,7 @@ const SupplierManagementPage = () => {
         setSupplierForm({
             supplierName: supplier.supplierName,
             supplierType: supplier.supplierType,
+            projectIds: supplier.projects?.map(p => Number(p.id)) || [],
             contactPerson: supplier.contactPerson || "",
             email: supplier.email || "",
             phoneNumber: supplier.phoneNumber || "",
@@ -143,6 +178,11 @@ const SupplierManagementPage = () => {
         try {
             await dispatch(deleteSupplier(id)).unwrap();
             toast.success("Supplier deleted successfully");
+            if (isAdminMode) {
+                dispatch(fetchAllSuppliers());
+            } else if (selectedProjectId) {
+                dispatch(loadVehicleData(Number(selectedProjectId)));
+            }
         } catch (error) {
             toast.error("Failed to delete supplier");
             console.error(error);
@@ -154,6 +194,7 @@ const SupplierManagementPage = () => {
         setSupplierForm({
             supplierName: "",
             supplierType: "MATERIALS",
+            projectIds: [],
             contactPerson: "",
             email: "",
             phoneNumber: "",
@@ -179,7 +220,33 @@ const SupplierManagementPage = () => {
         setExpandedRows(newExpanded);
     };
 
+    const handleSelectOne = (id: number, checked: boolean) => {
+        const newSet = new Set(selectedSupplierIds);
+        if (checked) {
+            newSet.add(id);
+        } else {
+            newSet.delete(id);
+        }
+        setSelectedSupplierIds(newSet);
+    };
+
     const supplierColumns: ColumnDef<Supplier>[] = [
+        ...(isAdminMode ? [{
+            field: "select",
+            header: "",
+            width: "50px",
+            align: "center",
+            style: { padding: "0 8px" },
+            // @ts-expect-error - React 19 type compatibility
+            body: (row) => (
+                <Checkbox
+                    size="small"
+                    checked={selectedSupplierIds.has(row.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => handleSelectOne(row.id, e.target.checked)}
+                />
+            )
+        } as ColumnDef<Supplier>] : []),
         {
             field: "expand",
             header: "",
@@ -202,7 +269,7 @@ const SupplierManagementPage = () => {
             field: "code",
             header: "Code",
             sortable: true,
-            width: "150px",
+            width: "100px",
             // @ts-expect-error - React 19 type compatibility
             body: (row) => (
                 <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600, color: "primary.main" }}>
@@ -221,6 +288,23 @@ const SupplierManagementPage = () => {
                 </Typography>
             ),
         },
+        ...(isAdminMode ? [{
+            field: "projects",
+            header: "Projects",
+            // @ts-expect-error - React 19 type compatibility
+            body: (row) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {row.projects?.slice(0, 3).map((p) => (
+                        <Box key={p.id} sx={{ bgcolor: 'grey.100', px: 1, borderRadius: 1, border: 1, borderColor: 'divider' }}>
+                            <Typography variant="caption">{p.name || p.code}</Typography>
+                        </Box>
+                    ))}
+                    {(row.projects?.length || 0) > 3 && (
+                        <Typography variant="caption" color="text.secondary">+{(row.projects?.length || 0) - 3} more</Typography>
+                    )}
+                </Box>
+            )
+        }] : []),
         {
             field: "supplierType",
             header: "Type",
@@ -381,54 +465,24 @@ const SupplierManagementPage = () => {
 
     return (
         <Box sx={{ p: 2 }}>
-            {/* Metrics */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
+                
                 <Grid item xs={12} md={3}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700}>
-                            {metrics.totalSuppliers}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Total Suppliers
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700} color="warning.main">
-                            {metrics.fuelSuppliers}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Fuel Suppliers
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <Paper sx={{ p: 2, textAlign: "center", borderRadius: 2 }}>
-                        <Typography variant="h4" fontWeight={700} color="info.main">
-                            {metrics.materialSuppliers}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            Material Suppliers
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <Paper
-                        sx={{
-                            p: 2,
-                            textAlign: "center",
-                            borderRadius: 2,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            height: "100%",
-                        }}
-                    >
                         {/* @ts-expect-error - React 19 type compatibility */}
                         <CustomButton label="Add Supplier" startIcon={<FiPlus />} onClick={() => setShowSupplierDialog(true)} />
-                    </Paper>
                 </Grid>
+                {isAdminMode && selectedSupplierIds.size > 0 && (
+                    <Grid item xs={12}>
+                        <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography variant="body2">{selectedSupplierIds.size} selected</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Button variant="outlined" onClick={() => setShowBulkAssign(true)} size="small">
+                                    Bulk Assign Projects
+                                </Button>
+                            </Stack>
+                        </Paper>
+                    </Grid>
+                )}
             </Grid>
 
             {/* Supplier Table */}
@@ -440,6 +494,8 @@ const SupplierManagementPage = () => {
                             columns={supplierColumns}
                             loading={loading}
                             onRowClick={() => toggleRowExpansion(supplier.id)}
+                        // We need to pass down a prop if we want to show checkboxes in the header, but standard table doesn't have it
+                        // For now, per-row table means no global header checkbox easily, but we can manage local state
                         />
                         <Collapse in={expandedRows.has(supplier.id)} timeout="auto" unmountOnExit>
                             {renderExpandedRow(supplier)}
@@ -648,6 +704,21 @@ const SupplierManagementPage = () => {
                     </Box>
                 </Box>
             </CustomModal>
+
+            {isAdminMode && (
+                <BulkAssignDialog
+                    open={showBulkAssign}
+                    onClose={() => {
+                        setShowBulkAssign(false);
+                        setSelectedSupplierIds(new Set());
+                    }}
+                    resourceType="suppliers"
+                    selectedIds={Array.from(selectedSupplierIds)}
+                    onSuccess={() => {
+                        dispatch(fetchAllSuppliers());
+                    }}
+                />
+            )}
         </Box>
     );
 };

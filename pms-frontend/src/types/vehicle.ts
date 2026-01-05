@@ -60,10 +60,16 @@ export interface FuelEntry {
   updatedAt: string;
 }
 
+export interface Project {
+  id: string;
+  code: string;
+  name: string;
+  projectManager?: string;
+}
+
 export interface Supplier {
   id: number;
-  projectId: number;
-  projectCode: string;
+  projects?: Project[];
   code: string;
   supplierName: string;
   supplierType: SupplierType;
@@ -137,7 +143,9 @@ export interface CloseFuelEntryRequest {
 }
 
 export interface CreateSupplierRequest {
-  projectId: number;
+  projectIds?: number[];
+  // keeping projectId for backward compatibility if needed, but preferably use projectIds
+  projectId?: number;
   supplierName: string;
   supplierType: SupplierType;
   contactPerson?: string;
@@ -155,6 +163,7 @@ export interface CreateSupplierRequest {
 }
 
 export interface UpdateSupplierRequest {
+  projectIds?: number[];
   supplierName: string;
   supplierType: SupplierType;
   contactPerson?: string;

@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface ContractorRepository extends JpaRepository<Contractor, Long> {
     Optional<Contractor> findByCode(String code);
+
+    java.util.List<Contractor> findByProjectsId(Long projectId);
 }

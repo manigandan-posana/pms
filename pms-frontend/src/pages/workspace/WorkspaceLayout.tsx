@@ -30,6 +30,7 @@ interface WorkspaceLayoutProps {
 
 // Helper to get page heading based on route
 const getPageHeading = (pathname: string): string => {
+  if (pathname.includes("/workspace/project-overview")) return "Project Overview";
   if (pathname.includes("/workspace/inventory")) return "Inventory Management";
   if (pathname.includes("/workspace/bom")) return "Bill of Materials";
   if (pathname.includes("/workspace/inward/create")) return "Create Inward";
@@ -42,7 +43,6 @@ const getPageHeading = (pathname: string): string => {
   if (pathname.includes("/workspace/transfer/detail")) return "Transfer Details";
   if (pathname.includes("/workspace/transfer")) return "Transfer Register";
   if (pathname.includes("/workspace/materials")) return "Material Directory";
-  if (pathname.includes("/workspace/my-projects")) return "My Projects";
   if (pathname.includes("/workspace/projects")) return "Project Management";
   if (pathname.includes("/workspace/users")) return "User Management";
   if (pathname.includes("/workspace/vehicles/directory")) return "Vehicle Directory";
@@ -76,6 +76,8 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     (state) => state.workspace as unknown as WorkspaceStateShape
   );
 
+  const currentProject = useSelector((state: RootState) => (state.workspace as any).currentProject);
+
   // Only bootstrap workspace on initial mount or when token changes, not on every navigation
   useEffect(() => {
     if (!token) return;
@@ -108,7 +110,14 @@ const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       permissions={permissions}
     >
       {status === "loading" && <GlobalLoader />}
-      <Outlet />
+      {!currentProject ? (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <h2>No Project Selected</h2>
+          <p>Please select a project from the top bar.</p>
+        </div>
+      ) : (
+        <Outlet />
+      )}
     </SidebarLayout>
   );
 };

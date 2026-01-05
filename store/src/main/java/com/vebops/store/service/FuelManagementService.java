@@ -57,11 +57,9 @@ public class FuelManagementService {
             FuelType fuelType,
             String search,
             LocalDate startDate,
-            LocalDate endDate
-    ) {
+            LocalDate endDate) {
         Specification<FuelEntry> spec = Specification.where(
-                (root, query, cb) -> cb.equal(root.get("project").get("id"), projectId)
-        );
+                (root, query, cb) -> cb.equal(root.get("project").get("id"), projectId));
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
@@ -88,8 +86,7 @@ public class FuelManagementService {
                 var supplierJoin = root.join("supplier", JoinType.LEFT);
                 return cb.or(
                         cb.like(cb.lower(vehicleJoin.get("vehicleName")), term),
-                        cb.like(cb.lower(supplierJoin.get("supplierName")), term)
-                );
+                        cb.like(cb.lower(supplierJoin.get("supplierName")), term));
             });
         }
         return fuelEntryRepository.findAll(spec, Sort.by("date").descending()).stream()
@@ -246,18 +243,20 @@ public class FuelManagementService {
     }
 
     public List<SupplierDto> getSuppliersByProject(Long projectId) {
-        return supplierRepository.findByProjectId(projectId).stream()
+        return supplierRepository.findByProjectsId(projectId).stream()
                 .map(SupplierDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public SupplierDto createSupplier(CreateSupplierRequest request) {
-        Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new NotFoundException("Project not found with id: " + request.getProjectId()));
+        List<Project> projects = projectRepository.findAllById(request.getProjectIds());
+        if (projects.isEmpty()) {
+            throw new NotFoundException("No projects found with provided IDs");
+        }
 
         Supplier supplier = new Supplier();
-        supplier.setProject(project);
+        supplier.setProjects(new java.util.HashSet<>(projects));
         supplier.setSupplierName(request.getSupplierName());
         supplier.setContactPerson(request.getContactPerson());
         supplier.setPhoneNumber(request.getPhoneNumber());

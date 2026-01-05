@@ -2,6 +2,7 @@ export type ContractorType = "Work" | "Labour";
 
 export interface Contractor {
     id: string;
+    numericId?: number;
     name: string;
     mobile: string;
     email: string;

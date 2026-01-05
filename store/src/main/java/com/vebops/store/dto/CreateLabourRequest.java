@@ -12,4 +12,5 @@ public class CreateLabourRequest {
     public String contactAddress;
     public String esiNumber;
     public String uanNumber;
+    public java.util.List<Long> projectIds;
 }

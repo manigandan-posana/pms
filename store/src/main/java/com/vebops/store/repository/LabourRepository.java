@@ -8,5 +8,8 @@ import java.util.Optional;
 
 public interface LabourRepository extends JpaRepository<Labour, Long> {
     Optional<Labour> findByCode(String code);
+
     List<Labour> findByContractor(Contractor contractor);
+
+    List<Labour> findByContractorAndProjectsId(Contractor contractor, Long projectId);
 }
